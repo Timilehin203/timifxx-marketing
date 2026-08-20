@@ -1,0 +1,92 @@
+/* =========================
+   ORDER PAGE
+========================= */
+
+.form-page {
+  padding: 90px 0;
+  max-width: 820px;
+}
+
+.order-form,
+.tracking-form {
+  display: grid;
+  gap: 18px;
+  padding: 28px;
+  background: rgba(13, 27, 45, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 20px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.16);
+}
+
+.order-form label,
+.tracking-form label {
+  display: grid;
+  gap: 8px;
+  color: #dce8f3;
+  font-weight: 700;
+}
+
+.order-form input,
+.order-form select,
+.order-form textarea,
+.tracking-form input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: #081522;
+  color: #eef6ff;
+  padding: 13px 14px;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.order-form input:focus,
+.order-form select:focus,
+.order-form textarea:focus,
+.tracking-form input:focus {
+  border-color: #229ed9;
+  box-shadow: 0 0 0 3px rgba(34, 158, 217, 0.1);
+}
+
+.order-form textarea {
+  resize: vertical;
+  min-height: 140px;
+}
+
+.order-form button,
+.tracking-form button {
+  margin-top: 4px;
+}
+
+.form-message {
+  min-height: 24px;
+  margin: 0;
+}
+
+.status-result {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  background: #0d1b2d;
+  line-height: 2;
+}
+
+.status-result strong {
+  color: #eef6ff;
+}
+
+@media (max-width: 600px) {
+
+  .form-page {
+    padding: 60px 0;
+  }
+
+  .order-form,
+  .tracking-form {
+    padding: 20px;
+  }
+
+}
