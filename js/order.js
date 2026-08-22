@@ -33,6 +33,14 @@ const message =
   document.getElementById('formMessage');
 
 
+const submitButton =
+  form
+    ? form.querySelector(
+        'button[type="submit"]'
+      )
+    : null;
+
+
 /*
 |--------------------------------------------------------------------------
 | LOAD SERVICES
@@ -68,7 +76,7 @@ async function loadServices() {
     if (!response.ok) {
 
       throw new Error(
-        `Unable to load services. Server returned ${response.status}.`
+        'Unable to load services.'
       );
 
     }
@@ -84,7 +92,9 @@ async function loadServices() {
         : [];
 
 
-    if (services.length === 0) {
+    if (
+      services.length === 0
+    ) {
 
       serviceSelect.innerHTML =
         '<option value="">No services available</option>';
@@ -103,11 +113,15 @@ async function loadServices() {
     ) {
 
       const option =
-        document.createElement('option');
+        document.createElement(
+          'option'
+        );
 
 
       const price =
-        Number(service.price);
+        Number(
+          service.price
+        );
 
 
       const formattedPrice =
@@ -117,7 +131,8 @@ async function loadServices() {
 
 
       const priceText =
-        service.price_type === 'starting_from'
+        service.price_type ===
+        'starting_from'
           ? `Starting from $${formattedPrice}`
           : `$${formattedPrice}`;
 
@@ -149,18 +164,23 @@ async function loadServices() {
       ).get('service');
 
 
-    if (requestedService) {
+    if (
+      requestedService
+    ) {
 
       const serviceExists =
         Array.from(
           serviceSelect.options
         ).some(
           option =>
-            option.value === requestedService
+            option.value ===
+            requestedService
         );
 
 
-      if (serviceExists) {
+      if (
+        serviceExists
+      ) {
 
         serviceSelect.value =
           requestedService;
@@ -181,10 +201,12 @@ async function loadServices() {
       '<option value="">Unable to load services</option>';
 
 
-    if (message) {
+    if (
+      message
+    ) {
 
       message.textContent =
-        'Unable to load services. Please refresh the page and try again.';
+        'Unable to load services. Please refresh and try again.';
 
     }
 
@@ -195,72 +217,87 @@ async function loadServices() {
 
 /*
 |--------------------------------------------------------------------------
-| ORDER SUBMISSION
-|--------------------------------------------------------------------------
-|
-| For now, the customer is directed to Telegram with the selected
-| service and order details already prepared.
-|
+| CREATE ORDER
 |--------------------------------------------------------------------------
 */
 
-if (form) {
+async function createOrder(
+  orderData
+) {
+
+  const response =
+    await fetch(
+      apiUrl('/api/orders'),
+      {
+        method: 'POST',
+
+        headers: {
+          'Content-Type':
+            'application/json',
+
+          Accept:
+            'application/json'
+        },
+
+        body:
+          JSON.stringify(
+            orderData
+          )
+      }
+    );
+
+
+  const data =
+    await response.json()
+      .catch(
+        () => ({
+          success: false,
+          message:
+            'Invalid server response.'
+        })
+      );
+
+
+  if (
+    !response.ok ||
+    !data.success
+  ) {
+
+    throw new Error(
+      data.message ||
+      'Unable to create order.'
+    );
+
+  }
+
+
+  return data;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ORDER SUBMISSION
+|--------------------------------------------------------------------------
+*/
+
+if (
+  form
+) {
 
   form.addEventListener(
     'submit',
-    function (event) {
+    async function (
+      event
+    ) {
 
       event.preventDefault();
 
 
-      const service =
-        serviceSelect.options[
-          serviceSelect.selectedIndex
-        ];
-
-
-      const serviceName =
-        service
-          ? service.textContent
-          : 'Not selected';
-
-
-      const name =
-        document
-          .getElementById('name')
-          .value
-          .trim();
-
-
-      const email =
-        document
-          .getElementById('email')
-          .value
-          .trim();
-
-
-      const telegramUsername =
-        document
-          .getElementById('telegramUsername')
-          .value
-          .trim();
-
-
-      const whatsapp =
-        document
-          .getElementById('whatsapp')
-          .value
-          .trim();
-
-
-      const orderDetails =
-        document
-          .getElementById('message')
-          .value
-          .trim();
-
-
-      if (!serviceSelect.value) {
+      if (
+        !serviceSelect.value
+      ) {
 
         message.textContent =
           'Please select a service.';
@@ -270,64 +307,170 @@ if (form) {
       }
 
 
-      if (!name) {
+      const orderData = {
+
+        serviceId:
+          Number(
+            serviceSelect.value
+          ),
+
+        name:
+          document
+            .getElementById('name')
+            .value
+            .trim(),
+
+        email:
+          document
+            .getElementById('email')
+            .value
+            .trim(),
+
+        telegramUsername:
+          document
+            .getElementById(
+              'telegramUsername'
+            )
+            .value
+            .trim(),
+
+        whatsapp:
+          document
+            .getElementById(
+              'whatsapp'
+            )
+            .value
+            .trim(),
+
+        message:
+          document
+            .getElementById('message')
+            .value
+            .trim()
+
+      };
+
+
+      try {
+
+        if (
+          submitButton
+        ) {
+
+          submitButton.disabled =
+            true;
+
+
+          submitButton.textContent =
+            'Creating Order...';
+
+        }
+
 
         message.textContent =
-          'Please enter your name.';
-
-        return;
-
-      }
+          'Creating your order...';
 
 
-      if (!email) {
+        const data =
+          await createOrder(
+            orderData
+          );
+
+
+        const order =
+          data.order;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SAVE ORDER NUMBER
+        |--------------------------------------------------------------------------
+        */
+
+        localStorage.setItem(
+          'timifxx_latest_order',
+          order.order_number
+        );
+
 
         message.textContent =
-          'Please enter your email address.';
-
-        return;
-
-      }
+          `Order created successfully. Your order number is ${order.order_number}. Redirecting you to Telegram...`;
 
 
-      const telegramMessage =
-        `Hello TimiFxx Marketing!
+        /*
+        |--------------------------------------------------------------------------
+        | TELEGRAM MESSAGE
+        |--------------------------------------------------------------------------
+        */
 
-I would like to place an order.
+        const telegramMessage =
+          `Hello TimiFxx Marketing!
+
+I have created a new order.
+
+Order Number:
+${order.order_number}
 
 Service:
-${serviceName}
+${order.service_name}
 
-Name:
-${name}
+Order Status:
+${order.status}
 
-Email:
-${email}
-
-Telegram Username:
-${telegramUsername || 'Not provided'}
-
-WhatsApp:
-${whatsapp || 'Not provided'}
-
-Order Details:
-${orderDetails || 'Not provided'}
-
-Please let me know the next step to finalize the deal.`;
+Please let me know the next step to finalize my order.`;
 
 
-      const telegramUrl =
-        `https://t.me/timifxx203?text=${encodeURIComponent(
-          telegramMessage
-        )}`;
+        const telegramUrl =
+          `https://t.me/timifxx203?text=${encodeURIComponent(
+            telegramMessage
+          )}`;
 
 
-      message.textContent =
-        'Opening Telegram so you can finalize your order...';
+        /*
+        |--------------------------------------------------------------------------
+        | REDIRECT TO TELEGRAM
+        |--------------------------------------------------------------------------
+        */
+
+        setTimeout(
+          () => {
+
+            window.location.href =
+              telegramUrl;
+
+          },
+          1500
+        );
+
+      } catch (
+        error
+      ) {
+
+        console.error(
+          'Order creation error:',
+          error
+        );
 
 
-      window.location.href =
-        telegramUrl;
+        message.textContent =
+          error.message ||
+          'Unable to create your order. Please try again.';
+
+
+        if (
+          submitButton
+        ) {
+
+          submitButton.disabled =
+            false;
+
+
+          submitButton.textContent =
+            'Continue to Telegram';
+
+        }
+
+      }
 
     }
   );
