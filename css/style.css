@@ -54,13 +54,10 @@ textarea {
 }
 
 .container {
-  width: min(
-    1120px,
-    calc(100% - 40px)
-  );
-
+  width: min(1120px, calc(100% - 40px));
   margin: 0 auto;
 }
+
 
 /* =========================
    HEADER
@@ -72,12 +69,7 @@ textarea {
   z-index: 100;
 
   background:
-    rgba(
-      7,
-      17,
-      31,
-      0.86
-    );
+    rgba(7, 17, 31, 0.86);
 
   backdrop-filter:
     blur(16px);
@@ -90,11 +82,8 @@ textarea {
   min-height: 72px;
 
   display: flex;
-
   align-items: center;
-
-  justify-content:
-    space-between;
+  justify-content: space-between;
 
   gap: 20px;
 }
@@ -102,9 +91,7 @@ textarea {
 .brand {
   font-weight: 800;
   font-size: 1.15rem;
-
-  letter-spacing:
-    -0.02em;
+  letter-spacing: -0.02em;
 }
 
 .brand span {
@@ -113,13 +100,11 @@ textarea {
 
 .nav-links {
   display: flex;
-
   align-items: center;
 
   gap: 22px;
 
   color: var(--muted);
-
   font-size: 0.94rem;
 }
 
@@ -135,6 +120,7 @@ textarea {
   transform:
     translateY(-1px);
 }
+
 
 /* =========================
    HERO
@@ -164,8 +150,7 @@ textarea {
 
   font-weight: 800;
 
-  letter-spacing:
-    0.14em;
+  letter-spacing: 0.14em;
 
   margin:
     0 0 12px;
@@ -236,6 +221,7 @@ p {
   margin-top: 28px;
 }
 
+
 /* =========================
    BUTTONS
 ========================= */
@@ -292,9 +278,6 @@ p {
 .button.secondary {
   background:
     var(--surface-2);
-
-  color:
-    var(--text);
 }
 
 .button.secondary:hover {
@@ -302,8 +285,7 @@ p {
 }
 
 .button.ghost {
-  background:
-    transparent;
+  background: transparent;
 }
 
 .button.ghost:hover {
@@ -315,6 +297,7 @@ p {
       0.04
     );
 }
+
 
 /* =========================
    HERO CARD
@@ -345,12 +328,7 @@ p {
 
   box-shadow:
     0 30px 90px
-    rgba(
-      0,
-      0,
-      0,
-      0.25
-    );
+    rgba(0, 0, 0, 0.25);
 }
 
 .telegram-mark {
@@ -377,13 +355,9 @@ p {
 
   box-shadow:
     0 15px 35px
-    rgba(
-      34,
-      158,
-      217,
-      0.2
-    );
+    rgba(34, 158, 217, 0.2);
 }
+
 
 /* =========================
    SECTIONS
@@ -404,6 +378,7 @@ p {
   margin-top: 0;
 }
 
+
 /* =========================
    SERVICES
 ========================= */
@@ -412,10 +387,7 @@ p {
   display: grid;
 
   grid-template-columns:
-    repeat(
-      3,
-      1fr
-    );
+    repeat(3, 1fr);
 
   gap: 18px;
 }
@@ -423,12 +395,7 @@ p {
 .service-card,
 .loading-card {
   background:
-    rgba(
-      13,
-      27,
-      45,
-      0.82
-    );
+    rgba(13, 27, 45, 0.82);
 
   border:
     1px solid var(--border);
@@ -444,71 +411,32 @@ p {
     background 0.2s ease;
 }
 
-.service-card {
-  display: flex;
-
-  flex-direction: column;
-}
-
 .service-card:hover {
   transform:
     translateY(-4px);
 
   border-color:
-    rgba(
-      34,
-      158,
-      217,
-      0.35
-    );
+    rgba(34, 158, 217, 0.35);
 
   background:
-    rgba(
-      17,
-      36,
-      58,
-      0.92
-    );
+    rgba(17, 36, 58, 0.92);
 }
 
 .service-card h3 {
   margin:
     0 0 10px;
 
-  font-size:
-    1.05rem;
+  font-size: 1.05rem;
 }
 
 .service-card p {
-  font-size:
-    0.92rem;
+  font-size: 0.92rem;
 
   min-height: 70px;
 }
 
-.service-meta {
-  margin-top: auto;
-
-  padding-top: 10px;
-
-  color:
-    var(--muted);
-
-  font-size:
-    0.82rem;
-}
-
-.service-meta span {
-  display: inline-flex;
-
-  align-items: center;
-
-  gap: 5px;
-}
-
 .price {
-  font-size:
-    1.35rem;
+  font-size: 1.35rem;
 
   font-weight: 800;
 
@@ -517,32 +445,13 @@ p {
 }
 
 .price small {
-  color:
-    var(--muted);
+  color: var(--muted);
 
-  font-size:
-    0.75rem;
+  font-size: 0.75rem;
 
   font-weight: 600;
 }
 
-.service-card .button {
-  width: 100%;
-}
-
-.loading-card {
-  grid-column:
-    1 / -1;
-
-  text-align: center;
-
-  color:
-    var(--muted);
-}
-
-.retry-button {
-  margin-top: 16px;
-}
 
 /* =========================
    FEATURES
@@ -574,12 +483,7 @@ p {
   border-radius: 14px;
 
   background:
-    rgba(
-      13,
-      27,
-      45,
-      0.65
-    );
+    rgba(13, 27, 45, 0.65);
 
   transition:
     transform 0.2s ease,
@@ -591,12 +495,7 @@ p {
     translateY(-2px);
 
   border-color:
-    rgba(
-      34,
-      158,
-      217,
-      0.25
-    );
+    rgba(34, 158, 217, 0.25);
 }
 
 .feature-list strong,
@@ -605,13 +504,13 @@ p {
 }
 
 .feature-list span {
-  color:
-    var(--muted);
+  color: var(--muted);
 
   margin-top: 6px;
 
   line-height: 1.6;
 }
+
 
 /* =========================
    CTA
@@ -627,18 +526,8 @@ p {
   background:
     linear-gradient(
       120deg,
-      rgba(
-        34,
-        158,
-        217,
-        0.17
-      ),
-      rgba(
-        13,
-        27,
-        45,
-        0.9
-      )
+      rgba(34, 158, 217, 0.17),
+      rgba(13, 27, 45, 0.9)
     );
 
   border:
@@ -646,8 +535,7 @@ p {
 
   display: flex;
 
-  justify-content:
-    space-between;
+  justify-content: space-between;
 
   align-items: center;
 
@@ -657,6 +545,7 @@ p {
 .cta h2 {
   margin-bottom: 0;
 }
+
 
 /* =========================
    FOOTER
@@ -673,35 +562,17 @@ p {
 .footer-inner {
   display: flex;
 
-  justify-content:
-    space-between;
+  justify-content: space-between;
 
   align-items: center;
 
-  color:
-    var(--muted);
+  color: var(--muted);
 }
 
 .footer-inner a {
-  color:
-    var(--blue);
+  color: var(--blue);
 }
 
-/* =========================
-   FORM CONTROLS
-========================= */
-
-input,
-select,
-textarea {
-  color:
-    var(--text);
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: #60758b;
-}
 
 /* =========================
    RESPONSIVE
@@ -712,8 +583,7 @@ textarea::placeholder {
 ) {
 
   .hero {
-    grid-template-columns:
-      1fr;
+    grid-template-columns: 1fr;
 
     gap: 35px;
   }
@@ -724,15 +594,11 @@ textarea::placeholder {
 
   .service-grid {
     grid-template-columns:
-      repeat(
-        2,
-        1fr
-      );
+      repeat(2, 1fr);
   }
 
   .split-section {
-    grid-template-columns:
-      1fr;
+    grid-template-columns: 1fr;
 
     gap: 40px;
   }
@@ -777,8 +643,7 @@ textarea::placeholder {
   }
 
   .service-grid {
-    grid-template-columns:
-      1fr;
+    grid-template-columns: 1fr;
   }
 
   .section {
@@ -787,21 +652,17 @@ textarea::placeholder {
   }
 
   .cta {
-    flex-direction:
-      column;
+    flex-direction: column;
 
-    align-items:
-      flex-start;
+    align-items: flex-start;
 
     margin-bottom: 55px;
   }
 
   .footer-inner {
-    flex-direction:
-      column;
+    flex-direction: column;
 
-    align-items:
-      flex-start;
+    align-items: flex-start;
 
     gap: 10px;
   }
@@ -814,11 +675,9 @@ textarea::placeholder {
 ) {
 
   .hero-actions {
-    flex-direction:
-      column;
+    flex-direction: column;
 
-    align-items:
-      stretch;
+    align-items: stretch;
   }
 
   .hero-actions .button {
