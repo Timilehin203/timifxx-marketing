@@ -1,22 +1,12 @@
 const API_BASE_URL =
-  window.TIMIFXX_API_BASE_URL ||
-  document
-    .querySelector(
-      'meta[name="api-base-url"]'
-    )
-    ?.content ||
   'https://timifxx-marketing-production.up.railway.app';
 
 
 function apiUrl(path) {
 
-  const baseUrl =
-    API_BASE_URL.replace(
-      /\/$/,
-      ''
-    );
-
-  return `${baseUrl}${path}`;
+  return (
+    `${API_BASE_URL.replace(/\/$/, '')}${path}`
+  );
 
 }
 
@@ -25,75 +15,36 @@ function apiUrl(path) {
 |--------------------------------------------------------------------------
 | HTML ESCAPING
 |--------------------------------------------------------------------------
-| Prevents backend data from being inserted into the page as raw HTML.
-|--------------------------------------------------------------------------
 */
 
 function escapeHtml(value) {
 
   return String(value)
+
     .replaceAll(
       '&',
       '&amp;'
     )
+
     .replaceAll(
       '<',
       '&lt;'
     )
+
     .replaceAll(
       '>',
       '&gt;'
     )
+
     .replaceAll(
       '"',
       '&quot;'
     )
+
     .replaceAll(
       "'",
       '&#039;'
     );
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| FORMAT SERVICE PRICE
-|--------------------------------------------------------------------------
-*/
-
-function formatPrice(service) {
-
-  const price =
-    Number(
-      service.price
-    );
-
-
-  if (
-    Number.isNaN(price)
-  ) {
-
-    return 'Price unavailable';
-
-  }
-
-
-  const formattedPrice =
-    `$${price.toFixed(0)}`;
-
-
-  if (
-    service.price_type ===
-    'starting_from'
-  ) {
-
-    return `Starting from ${formattedPrice}`;
-
-  }
-
-
-  return formattedPrice;
 
 }
 
@@ -113,9 +64,7 @@ async function loadServices() {
 
 
   if (!grid) {
-
     return;
-
   }
 
 
@@ -137,12 +86,10 @@ async function loadServices() {
       );
 
 
-    if (
-      !response.ok
-    ) {
+    if (!response.ok) {
 
       throw new Error(
-        `Unable to load services. Status: ${response.status}`
+        'Unable to load services.'
       );
 
     }
@@ -163,9 +110,7 @@ async function loadServices() {
     grid.innerHTML = '';
 
 
-    if (
-      services.length === 0
-    ) {
+    if (services.length === 0) {
 
       grid.innerHTML = `
         <div class="loading-card">
@@ -192,18 +137,39 @@ async function loadServices() {
         'service-card';
 
 
-      const priceText =
-        formatPrice(
-          service
+      const price =
+        Number(
+          service.price
         );
 
 
-      const turnaroundText =
+      const validPrice =
+        Number.isFinite(
+          price
+        )
+          ? price
+          : 0;
+
+
+      const priceText =
+        service.price_type ===
+        'starting_from'
+
+          ? `Starting from $${validPrice.toFixed(0)}`
+
+          : `$${validPrice.toFixed(0)}`;
+
+
+      const turnaround =
         service.turnaround_text
-          ? escapeHtml(
-              service.turnaround_text
-            )
-          : 'Contact us for details';
+          ? `
+            <span class="turnaround">
+              ${escapeHtml(
+                service.turnaround_text
+              )}
+            </span>
+          `
+          : '';
 
 
       card.innerHTML = `
@@ -217,32 +183,27 @@ async function loadServices() {
 
         <p>
           ${escapeHtml(
+
             service.description ||
+
             'Professional Telegram marketing assistance.'
+
           )}
         </p>
 
 
-        <div class="service-meta">
-
-          <span>
-            ⏱ ${turnaroundText}
-          </span>
-
-        </div>
-
-
         <div class="price">
 
-          ${escapeHtml(
-            priceText
-          )}
+          ${priceText}
 
           <small>
             USD
           </small>
 
         </div>
+
+
+        ${turnaround}
 
 
         <a
@@ -279,35 +240,11 @@ async function loadServices() {
 
         <br>
 
-        <button
-          class="button secondary retry-button"
-          type="button"
-          id="retryServicesButton"
-        >
-          Try Again
-        </button>
+        Please refresh the page and try again.
 
       </div>
 
     `;
-
-
-    const retryButton =
-      document.getElementById(
-        'retryServicesButton'
-      );
-
-
-    if (
-      retryButton
-    ) {
-
-      retryButton.addEventListener(
-        'click',
-        loadServices
-      );
-
-    }
 
   }
 
@@ -316,7 +253,7 @@ async function loadServices() {
 
 /*
 |--------------------------------------------------------------------------
-| START APPLICATION
+| START
 |--------------------------------------------------------------------------
 */
 
