@@ -11,10 +11,7 @@ const API_BASE_URL =
 function apiUrl(path) {
 
   return (
-    API_BASE_URL.replace(
-      /\/$/,
-      ''
-    ) + path
+    `${API_BASE_URL.replace(/\/$/, '')}${path}`
   );
 
 }
@@ -24,31 +21,20 @@ function apiUrl(path) {
 |--------------------------------------------------------------------------
 | HTML ESCAPING
 |--------------------------------------------------------------------------
+|
+| Prevents backend data from being inserted into the page as raw HTML.
+|
+|--------------------------------------------------------------------------
 */
 
 function escapeHtml(value) {
 
-  return String(value ?? '')
-    .replaceAll(
-      '&',
-      '&amp;'
-    )
-    .replaceAll(
-      '<',
-      '&lt;'
-    )
-    .replaceAll(
-      '>',
-      '&gt;'
-    )
-    .replaceAll(
-      '"',
-      '&quot;'
-    )
-    .replaceAll(
-      "'",
-      '&#039;'
-    );
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 
 }
 
@@ -58,58 +44,132 @@ function escapeHtml(value) {
 | SERVICE AVATARS
 |--------------------------------------------------------------------------
 |
-| Each service has its own unique visual avatar.
+| Each service receives its own visual icon.
 |
+|--------------------------------------------------------------------------
 */
 
-function getServiceAvatar(slug) {
+function getServiceAvatar(service) {
 
-  const avatars = {
-
-    'already-approved-channel':
-      '📢',
-
-    'already-approved-bot':
-      '🤖',
-
-    'already-approved-miniapp':
-      '📱',
-
-    'approval-assistance':
-      '✓',
-
-    'ad-setup':
-      '📣',
-
-    'ad-copy-creation':
-      '✍',
-
-    'campaign-management':
-      '📊',
-
-    'declined-review':
-      '🔍',
-
-    'destination-compliance':
-      '🛡',
-
-    'campaign-audit':
-      '📈'
-
-  };
+  const slug =
+    String(service.slug || '')
+      .toLowerCase();
 
 
-  return (
-    avatars[slug] ||
-    'T'
-  );
+  const name =
+    String(service.name || '')
+      .toLowerCase();
+
+
+  if (
+    slug.includes('channel') ||
+    name.includes('channel')
+  ) {
+
+    return '📢';
+
+  }
+
+
+  if (
+    slug.includes('bot') ||
+    name.includes('bot')
+  ) {
+
+    return '🤖';
+
+  }
+
+
+  if (
+    slug.includes('miniapp') ||
+    slug.includes('mini-app') ||
+    name.includes('mini app')
+  ) {
+
+    return '📱';
+
+  }
+
+
+  if (
+    slug.includes('approval') ||
+    name.includes('approval')
+  ) {
+
+    return '✅';
+
+  }
+
+
+  if (
+    slug.includes('setup') ||
+    name.includes('setup')
+  ) {
+
+    return '⚙️';
+
+  }
+
+
+  if (
+    slug.includes('copy') ||
+    name.includes('copy')
+  ) {
+
+    return '✍️';
+
+  }
+
+
+  if (
+    slug.includes('management') ||
+    name.includes('management')
+  ) {
+
+    return '📈';
+
+  }
+
+
+  if (
+    slug.includes('declined') ||
+    name.includes('declined')
+  ) {
+
+    return '🔍';
+
+  }
+
+
+  if (
+    slug.includes('compliance') ||
+    name.includes('compliance')
+  ) {
+
+    return '🛡️';
+
+  }
+
+
+  if (
+    slug.includes('audit') ||
+    name.includes('audit')
+  ) {
+
+    return '📊';
+
+  }
+
+
+  return '🚀';
 
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| PRICE FORMATTER
+| PRICE FORMATTING
 |--------------------------------------------------------------------------
 */
 
@@ -120,7 +180,7 @@ function formatPrice(service) {
 
 
   if (
-    !Number.isFinite(price)
+    Number.isNaN(price)
   ) {
 
     return 'Contact us';
@@ -133,8 +193,7 @@ function formatPrice(service) {
 
 
   if (
-    service.price_type ===
-    'starting_from'
+    service.price_type === 'starting_from'
   ) {
 
     return (
@@ -164,9 +223,7 @@ async function loadServices() {
 
 
   if (!grid) {
-
     return;
-
   }
 
 
@@ -174,27 +231,18 @@ async function loadServices() {
 
     const response =
       await fetch(
-        apiUrl(
-          '/api/services'
-        ),
+        apiUrl('/api/services'),
         {
-
           method: 'GET',
 
           headers: {
-
-            Accept:
-              'application/json'
-
+            Accept: 'application/json'
           }
-
         }
       );
 
 
-    if (
-      !response.ok
-    ) {
+    if (!response.ok) {
 
       throw new Error(
         'Unable to load services.'
@@ -208,9 +256,7 @@ async function loadServices() {
 
 
     const services =
-      Array.isArray(
-        data.services
-      )
+      Array.isArray(data.services)
         ? data.services
         : [];
 
@@ -223,13 +269,13 @@ async function loadServices() {
     ) {
 
       grid.innerHTML = `
-
         <div class="loading-card">
 
-          No services are currently available.
+          <span>
+            No services are currently available.
+          </span>
 
         </div>
-
       `;
 
       return;
@@ -253,7 +299,7 @@ async function loadServices() {
 
       const avatar =
         getServiceAvatar(
-          service.slug
+          service
         );
 
 
@@ -272,7 +318,7 @@ async function loadServices() {
 
         <div class="service-avatar">
 
-          ${escapeHtml(avatar)}
+          ${avatar}
 
         </div>
 
@@ -296,46 +342,55 @@ async function loadServices() {
         </p>
 
 
-        <div class="service-meta">
+        <div class="service-bottom">
 
-          <div class="price">
 
-            ${escapeHtml(
-              priceText
-            )}
+          <div class="service-meta">
 
-            <small>
-              USD
-            </small>
+
+            <div class="price">
+
+              ${escapeHtml(
+                priceText
+              )}
+
+              ${
+                priceText !==
+                'Contact us'
+                  ? '<small>USD</small>'
+                  : ''
+              }
+
+            </div>
+
+
+            <div class="turnaround">
+
+              <strong>
+                Turnaround
+              </strong>
+
+              ${escapeHtml(
+                turnaround
+              )}
+
+            </div>
+
 
           </div>
 
 
-          <div class="turnaround">
+          <a
+            class="button secondary"
+            href="order.html?service=${encodeURIComponent(service.id)}"
+          >
 
-            <strong>
-              Turnaround
-            </strong>
+            Order Service
 
-            ${escapeHtml(
-              turnaround
-            )}
+          </a>
 
-          </div>
 
         </div>
-
-
-        <a
-          class="button secondary"
-          href="order.html?service=${encodeURIComponent(
-            service.id
-          )}"
-        >
-
-          Order Service
-
-        </a>
 
       `;
 
@@ -358,11 +413,13 @@ async function loadServices() {
 
       <div class="loading-card">
 
-        Unable to load services.
+        <span>
+          Unable to load services.
+        </span>
 
-        <br>
-
-        Please refresh and try again.
+        <small>
+          Please refresh the page and try again.
+        </small>
 
       </div>
 
