@@ -1,11 +1,20 @@
 const API_BASE_URL =
+  window.TIMIFXX_API_BASE_URL ||
+  document
+    .querySelector(
+      'meta[name="api-base-url"]'
+    )
+    ?.content ||
   'https://timifxx-marketing-production.up.railway.app';
 
 
 function apiUrl(path) {
 
   return (
-    `${API_BASE_URL.replace(/\/$/, '')}${path}`
+    API_BASE_URL.replace(
+      /\/$/,
+      ''
+    ) + path
   );
 
 }
@@ -19,32 +28,123 @@ function apiUrl(path) {
 
 function escapeHtml(value) {
 
-  return String(value)
-
+  return String(value ?? '')
     .replaceAll(
       '&',
       '&amp;'
     )
-
     .replaceAll(
       '<',
       '&lt;'
     )
-
     .replaceAll(
       '>',
       '&gt;'
     )
-
     .replaceAll(
       '"',
       '&quot;'
     )
-
     .replaceAll(
       "'",
       '&#039;'
     );
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| SERVICE AVATARS
+|--------------------------------------------------------------------------
+|
+| Each service has its own unique visual avatar.
+|
+*/
+
+function getServiceAvatar(slug) {
+
+  const avatars = {
+
+    'already-approved-channel':
+      '📢',
+
+    'already-approved-bot':
+      '🤖',
+
+    'already-approved-miniapp':
+      '📱',
+
+    'approval-assistance':
+      '✓',
+
+    'ad-setup':
+      '📣',
+
+    'ad-copy-creation':
+      '✍',
+
+    'campaign-management':
+      '📊',
+
+    'declined-review':
+      '🔍',
+
+    'destination-compliance':
+      '🛡',
+
+    'campaign-audit':
+      '📈'
+
+  };
+
+
+  return (
+    avatars[slug] ||
+    'T'
+  );
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| PRICE FORMATTER
+|--------------------------------------------------------------------------
+*/
+
+function formatPrice(service) {
+
+  const price =
+    Number(service.price);
+
+
+  if (
+    !Number.isFinite(price)
+  ) {
+
+    return 'Contact us';
+
+  }
+
+
+  const formattedPrice =
+    `$${price.toFixed(0)}`;
+
+
+  if (
+    service.price_type ===
+    'starting_from'
+  ) {
+
+    return (
+      `Starting from ${formattedPrice}`
+    );
+
+  }
+
+
+  return formattedPrice;
 
 }
 
@@ -64,7 +164,9 @@ async function loadServices() {
 
 
   if (!grid) {
+
     return;
+
   }
 
 
@@ -76,17 +178,23 @@ async function loadServices() {
           '/api/services'
         ),
         {
+
           method: 'GET',
 
           headers: {
+
             Accept:
               'application/json'
+
           }
+
         }
       );
 
 
-    if (!response.ok) {
+    if (
+      !response.ok
+    ) {
 
       throw new Error(
         'Unable to load services.'
@@ -110,12 +218,18 @@ async function loadServices() {
     grid.innerHTML = '';
 
 
-    if (services.length === 0) {
+    if (
+      services.length === 0
+    ) {
 
       grid.innerHTML = `
+
         <div class="loading-card">
+
           No services are currently available.
+
         </div>
+
       `;
 
       return;
@@ -137,73 +251,79 @@ async function loadServices() {
         'service-card';
 
 
-      const price =
-        Number(
-          service.price
+      const avatar =
+        getServiceAvatar(
+          service.slug
         );
 
 
-      const validPrice =
-        Number.isFinite(
-          price
-        )
-          ? price
-          : 0;
-
-
       const priceText =
-        service.price_type ===
-        'starting_from'
-
-          ? `Starting from $${validPrice.toFixed(0)}`
-
-          : `$${validPrice.toFixed(0)}`;
+        formatPrice(
+          service
+        );
 
 
       const turnaround =
-        service.turnaround_text
-          ? `
-            <span class="turnaround">
-              ${escapeHtml(
-                service.turnaround_text
-              )}
-            </span>
-          `
-          : '';
+        service.turnaround_text ||
+        'Contact for details';
 
 
       card.innerHTML = `
 
-        <h3>
-          ${escapeHtml(
-            service.name
-          )}
-        </h3>
+        <div class="service-avatar">
 
-
-        <p>
-          ${escapeHtml(
-
-            service.description ||
-
-            'Professional Telegram marketing assistance.'
-
-          )}
-        </p>
-
-
-        <div class="price">
-
-          ${priceText}
-
-          <small>
-            USD
-          </small>
+          ${escapeHtml(avatar)}
 
         </div>
 
 
-        ${turnaround}
+        <h3>
+
+          ${escapeHtml(
+            service.name
+          )}
+
+        </h3>
+
+
+        <p>
+
+          ${escapeHtml(
+            service.description ||
+            'Professional Telegram marketing assistance.'
+          )}
+
+        </p>
+
+
+        <div class="service-meta">
+
+          <div class="price">
+
+            ${escapeHtml(
+              priceText
+            )}
+
+            <small>
+              USD
+            </small>
+
+          </div>
+
+
+          <div class="turnaround">
+
+            <strong>
+              Turnaround
+            </strong>
+
+            ${escapeHtml(
+              turnaround
+            )}
+
+          </div>
+
+        </div>
 
 
         <a
@@ -212,7 +332,9 @@ async function loadServices() {
             service.id
           )}"
         >
+
           Order Service
+
         </a>
 
       `;
@@ -240,7 +362,7 @@ async function loadServices() {
 
         <br>
 
-        Please refresh the page and try again.
+        Please refresh and try again.
 
       </div>
 
