@@ -18,9 +18,7 @@ const ordersRouter =
   require('./routes/orders');
 
 
-const {
-  requestLogger
-} =
+const requestLogger =
   require('./middleware/requestLogger');
 
 
