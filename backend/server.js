@@ -4,6 +4,7 @@ require('dotenv').config();
 const express =
   require('express');
 
+
 const cors =
   require('cors');
 
@@ -11,11 +12,17 @@ const cors =
 const healthRouter =
   require('./routes/health');
 
+
 const servicesRouter =
   require('./routes/services');
 
+
 const ordersRouter =
   require('./routes/orders');
+
+
+const adminRouter =
+  require('./routes/admin');
 
 
 const requestLogger =
@@ -66,17 +73,27 @@ app.use(
         : true,
 
     methods: [
+
       'GET',
+
       'POST',
+
       'PUT',
+
       'PATCH',
+
       'DELETE',
+
       'OPTIONS'
+
     ],
 
     allowedHeaders: [
+
       'Content-Type',
+
       'Authorization'
+
     ]
 
   })
@@ -91,15 +108,23 @@ app.use(
 
 app.use(
   express.json({
-    limit: '100kb'
+
+    limit:
+      '100kb'
+
   })
 );
 
 
 app.use(
   express.urlencoded({
-    extended: false,
-    limit: '100kb'
+
+    extended:
+      false,
+
+    limit:
+      '100kb'
+
   })
 );
 
@@ -117,17 +142,21 @@ app.use(
 
 /*
 |--------------------------------------------------------------------------
-| BASIC ROUTES
+| BASIC ROUTE
 |--------------------------------------------------------------------------
 */
 
 app.get(
   '/',
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
 
     res.json({
 
-      success: true,
+      success:
+        true,
 
       project:
         'TimiFxx Marketing',
@@ -144,6 +173,12 @@ app.get(
 );
 
 
+/*
+|--------------------------------------------------------------------------
+| PUBLIC API ROUTES
+|--------------------------------------------------------------------------
+*/
+
 app.use(
   '/api/health',
   healthRouter
@@ -159,6 +194,18 @@ app.use(
 app.use(
   '/api/orders',
   ordersRouter
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN API ROUTES
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+  '/api/admin',
+  adminRouter
 );
 
 
