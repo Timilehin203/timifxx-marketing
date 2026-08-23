@@ -1,5 +1,5 @@
 /* =========================
-   ORDER PAGE
+   ORDER STATUS PAGE
 ========================= */
 
 .form-page {
@@ -7,16 +7,27 @@
   max-width: 820px;
 }
 
+
+/* =========================
+   FORMS
+========================= */
+
 .order-form,
 .tracking-form {
   display: grid;
   gap: 18px;
   padding: 28px;
-  background: rgba(13, 27, 45, 0.86);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  background:
+    rgba(13, 27, 45, 0.86);
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.09);
   border-radius: 20px;
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.16);
+  box-shadow:
+    0 25px 70px
+    rgba(0, 0, 0, 0.16);
 }
+
 
 .order-form label,
 .tracking-form label {
@@ -26,12 +37,15 @@
   font-weight: 700;
 }
 
+
 .order-form input,
 .order-form select,
 .order-form textarea,
 .tracking-form input {
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   background: #081522;
   color: #eef6ff;
@@ -42,41 +56,202 @@
     box-shadow 0.2s ease;
 }
 
+
 .order-form input:focus,
 .order-form select:focus,
 .order-form textarea:focus,
 .tracking-form input:focus {
   border-color: #229ed9;
-  box-shadow: 0 0 0 3px rgba(34, 158, 217, 0.1);
+  box-shadow:
+    0 0 0 3px
+    rgba(34, 158, 217, 0.1);
 }
+
 
 .order-form textarea {
   resize: vertical;
   min-height: 140px;
 }
 
+
 .order-form button,
 .tracking-form button {
   margin-top: 4px;
 }
+
+
+/* =========================
+   FORM MESSAGE
+========================= */
 
 .form-message {
   min-height: 24px;
   margin: 0;
 }
 
+
+/* =========================
+   STATUS RESULT
+========================= */
+
 .status-result {
   margin-top: 24px;
-  padding: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 18px;
-  background: #0d1b2d;
-  line-height: 2;
+  padding: 28px;
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.09);
+  border-radius: 20px;
+  background:
+    linear-gradient(
+      145deg,
+      #11243a,
+      #0d1b2d
+    );
+  box-shadow:
+    0 25px 70px
+    rgba(0, 0, 0, 0.14);
 }
 
-.status-result strong {
-  color: #eef6ff;
+
+.status-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom:
+    1px solid
+    rgba(255, 255, 255, 0.09);
 }
+
+
+.status-label {
+  color: #94a8bd;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+
+/* =========================
+   STATUS BADGES
+========================= */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background:
+    rgba(34, 158, 217, 0.15);
+  color: #72cfff;
+  border:
+    1px solid
+    rgba(34, 158, 217, 0.3);
+}
+
+
+.status-pending {
+  background:
+    rgba(245, 166, 35, 0.12);
+  color: #f5b642;
+  border-color:
+    rgba(245, 166, 35, 0.3);
+}
+
+
+.status-paid {
+  background:
+    rgba(52, 211, 153, 0.12);
+  color: #62e6b0;
+  border-color:
+    rgba(52, 211, 153, 0.3);
+}
+
+
+.status-in_progress {
+  background:
+    rgba(34, 158, 217, 0.15);
+  color: #72cfff;
+  border-color:
+    rgba(34, 158, 217, 0.3);
+}
+
+
+.status-waiting_customer {
+  background:
+    rgba(168, 85, 247, 0.12);
+  color: #c99aff;
+  border-color:
+    rgba(168, 85, 247, 0.3);
+}
+
+
+.status-completed {
+  background:
+    rgba(52, 211, 153, 0.12);
+  color: #62e6b0;
+  border-color:
+    rgba(52, 211, 153, 0.3);
+}
+
+
+.status-cancelled,
+.status-declined {
+  background:
+    rgba(239, 68, 68, 0.12);
+  color: #ff8d8d;
+  border-color:
+    rgba(239, 68, 68, 0.3);
+}
+
+
+/* =========================
+   STATUS DETAILS
+========================= */
+
+.status-details {
+  display: grid;
+  gap: 14px;
+}
+
+
+.status-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px;
+  background:
+    rgba(7, 17, 31, 0.5);
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+}
+
+
+.status-item span {
+  color: #94a8bd;
+  font-size: 0.9rem;
+}
+
+
+.status-item strong {
+  color: #eef6ff;
+  text-align: right;
+  word-break: break-word;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
 
 @media (max-width: 600px) {
 
@@ -84,9 +259,33 @@
     padding: 60px 0;
   }
 
+
   .order-form,
   .tracking-form {
     padding: 20px;
+  }
+
+
+  .status-result {
+    padding: 20px;
+  }
+
+
+  .status-result-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+
+  .status-item {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+
+  .status-item strong {
+    text-align: left;
   }
 
 }
