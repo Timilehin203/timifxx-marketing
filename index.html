@@ -29,6 +29,11 @@
     href="css/style.css"
   >
 
+  <link
+    rel="stylesheet"
+    href="css/admin.css"
+  >
+
 </head>
 
 
@@ -63,6 +68,10 @@
 
         <a href="order-status.html">
           Track Order
+        </a>
+
+        <a href="#admin">
+          Admin
         </a>
 
         <a
@@ -648,6 +657,251 @@
     </section>
 
 
+    <!-- =========================
+         PRIVATE ADMIN AREA
+    ========================== -->
+
+    <section
+      id="admin"
+      class="section container admin-page-section"
+    >
+
+      <!-- ADMIN LOGIN -->
+
+      <div
+        id="loginScreen"
+        class="admin-login-panel"
+      >
+
+        <div class="section-heading">
+
+          <p class="eyebrow">
+            PRIVATE AREA
+          </p>
+
+          <h2>
+            Admin Dashboard
+          </h2>
+
+          <p>
+            Enter your administrator access key to manage orders.
+          </p>
+
+        </div>
+
+
+        <form
+          id="loginForm"
+          class="admin-login-form"
+        >
+
+          <label for="adminKey">
+            Admin Access Key
+          </label>
+
+          <input
+            id="adminKey"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Enter your administrator access key"
+            required
+          >
+
+          <button
+            class="button primary"
+            type="submit"
+          >
+            Login
+          </button>
+
+          <p
+            id="loginMessage"
+            class="admin-message"
+            aria-live="polite"
+          ></p>
+
+        </form>
+
+      </div>
+
+
+      <!-- ADMIN DASHBOARD -->
+
+      <div
+        id="dashboard"
+        class="admin-dashboard-panel"
+        hidden
+      >
+
+        <div class="admin-dashboard-header">
+
+          <div>
+
+            <p class="eyebrow">
+              PRIVATE AREA
+            </p>
+
+            <h2>
+              Admin Dashboard
+            </h2>
+
+            <p>
+              Manage customer orders and update their current status.
+            </p>
+
+          </div>
+
+
+          <button
+            id="logoutButton"
+            class="button ghost"
+            type="button"
+          >
+            Logout
+          </button>
+
+        </div>
+
+
+        <!-- ORDER SUMMARY -->
+
+        <div class="admin-summary-grid">
+
+          <article class="admin-summary-card">
+
+            <span>
+              Total Orders
+            </span>
+
+            <strong id="totalOrders">
+              0
+            </strong>
+
+          </article>
+
+
+          <article class="admin-summary-card">
+
+            <span>
+              Pending
+            </span>
+
+            <strong id="pendingOrders">
+              0
+            </strong>
+
+          </article>
+
+
+          <article class="admin-summary-card">
+
+            <span>
+              In Progress
+            </span>
+
+            <strong id="progressOrders">
+              0
+            </strong>
+
+          </article>
+
+
+          <article class="admin-summary-card">
+
+            <span>
+              Completed
+            </span>
+
+            <strong id="completedOrders">
+              0
+            </strong>
+
+          </article>
+
+        </div>
+
+
+        <!-- ORDER TOOLS -->
+
+        <div class="admin-orders-toolbar">
+
+          <label>
+
+            Filter Orders
+
+            <select id="statusFilter">
+
+              <option value="">
+                All Statuses
+              </option>
+
+              <option value="pending">
+                Pending
+              </option>
+
+              <option value="paid">
+                Paid
+              </option>
+
+              <option value="in_progress">
+                In Progress
+              </option>
+
+              <option value="waiting_customer">
+                Waiting Customer
+              </option>
+
+              <option value="completed">
+                Completed
+              </option>
+
+              <option value="cancelled">
+                Cancelled
+              </option>
+
+              <option value="declined">
+                Declined
+              </option>
+
+            </select>
+
+          </label>
+
+
+          <button
+            id="refreshButton"
+            class="button secondary"
+            type="button"
+          >
+            Refresh Orders
+          </button>
+
+        </div>
+
+
+        <p
+          id="ordersMessage"
+          class="admin-message"
+          aria-live="polite"
+        ></p>
+
+
+        <div
+          id="ordersContainer"
+          class="admin-orders-container"
+        >
+
+          <div class="orders-loading">
+            Loading orders...
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
   </main>
 
 
@@ -687,6 +941,10 @@
 
         <a href="order-status.html">
           Track Order
+        </a>
+
+        <a href="#admin">
+          Admin
         </a>
 
         <a
