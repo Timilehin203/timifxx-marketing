@@ -154,15 +154,6 @@ function clearAdminKey() {
 
 /*
 |--------------------------------------------------------------------------
-| CURRENT ORDERS
-|--------------------------------------------------------------------------
-*/
-
-let currentOrders = [];
-
-
-/*
-|--------------------------------------------------------------------------
 | HTML ESCAPING
 |--------------------------------------------------------------------------
 */
@@ -246,10 +237,8 @@ async function adminFetch(
         'Admin access key is missing.'
       );
 
-
     error.status =
       401;
-
 
     throw error;
 
@@ -271,14 +260,12 @@ async function adminFetch(
           Authorization:
             `Bearer ${adminKey}`,
 
-          ...(
-            options.body
-              ? {
-                  'Content-Type':
-                    'application/json'
-                }
-              : {}
-          ),
+          ...(options.body
+            ? {
+                'Content-Type':
+                  'application/json'
+              }
+            : {}),
 
           ...(
             options.headers || {}
@@ -317,111 +304,6 @@ async function adminFetch(
 
 
   return data;
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| CHECK ADMIN ACCESS
-|--------------------------------------------------------------------------
-*/
-
-async function checkAdminAccess() {
-
-  return adminFetch(
-    '/api/admin/check'
-  );
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| LOGIN
-|--------------------------------------------------------------------------
-*/
-
-if (loginForm) {
-
-  loginForm.addEventListener(
-    'submit',
-    async event => {
-
-      event.preventDefault();
-
-
-      const key =
-        adminKeyInput.value
-          .trim();
-
-
-      if (!key) {
-
-        loginMessage.textContent =
-          'Enter your admin access key.';
-
-        return;
-
-      }
-
-
-      loginMessage.textContent =
-        'Checking access...';
-
-
-      setAdminKey(
-        key
-      );
-
-
-      try {
-
-        /*
-        |--------------------------------------------------------------------------
-        | VERIFY ADMIN KEY FIRST
-        |--------------------------------------------------------------------------
-        */
-
-        await checkAdminAccess();
-
-
-        loginMessage.textContent =
-          'Access granted. Loading dashboard...';
-
-
-        showDashboard();
-
-
-        await loadOrders();
-
-
-        loginMessage.textContent =
-          '';
-
-      } catch (error) {
-
-        console.error(
-          'Admin login error:',
-          error
-        );
-
-
-        clearAdminKey();
-
-
-        showLogin();
-
-
-        loginMessage.textContent =
-          error.status === 401
-            ? 'Invalid admin access key.'
-            : 'Unable to connect to the admin system.';
-
-      }
-
-    }
-  );
 
 }
 
@@ -488,6 +370,111 @@ function showLogin() {
 
 /*
 |--------------------------------------------------------------------------
+| ADMIN ACCESS CHECK
+|--------------------------------------------------------------------------
+*/
+
+async function checkAdminAccess() {
+
+  return adminFetch(
+    '/api/admin/check'
+  );
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| LOGIN
+|--------------------------------------------------------------------------
+*/
+
+if (loginForm) {
+
+  loginForm.addEventListener(
+    'submit',
+    async event => {
+
+      event.preventDefault();
+
+
+      const key =
+        adminKeyInput.value
+          .trim();
+
+
+      if (!key) {
+
+        loginMessage.textContent =
+          'Enter your admin access key.';
+
+        return;
+
+      }
+
+
+      loginMessage.textContent =
+        'Checking access...';
+
+
+      setAdminKey(
+        key
+      );
+
+
+      try {
+
+        /*
+        |--------------------------------------------------------------------------
+        | FIRST CHECK ACCESS
+        |--------------------------------------------------------------------------
+        */
+
+        await checkAdminAccess();
+
+
+        loginMessage.textContent =
+          'Access granted. Loading dashboard...';
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | THEN LOAD ORDERS
+        |--------------------------------------------------------------------------
+        */
+
+        await loadOrders();
+
+
+        showDashboard();
+
+      } catch (error) {
+
+        console.error(
+          'Admin login error:',
+          error
+        );
+
+
+        clearAdminKey();
+
+
+        loginMessage.textContent =
+          error.status === 401
+            ? 'Invalid admin access key.'
+            : error.message ||
+              'Unable to connect to the admin system.';
+
+      }
+
+    }
+  );
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
 | LOAD ORDERS
 |--------------------------------------------------------------------------
 */
@@ -523,7 +510,7 @@ async function loadOrders() {
       );
 
 
-    currentOrders =
+    const orders =
       Array.isArray(
         data.orders
       )
@@ -532,20 +519,20 @@ async function loadOrders() {
 
 
     updateSummary(
-      currentOrders
+      orders
     );
 
 
     renderOrders(
-      currentOrders
+      orders
     );
 
 
     if (ordersMessage) {
 
       ordersMessage.textContent =
-        `${currentOrders.length} order${
-          currentOrders.length === 1
+        `${orders.length} order${
+          orders.length === 1
             ? ''
             : 's'
         } loaded.`;
@@ -553,7 +540,7 @@ async function loadOrders() {
     }
 
 
-    return currentOrders;
+    return orders;
 
   } catch (error) {
 
@@ -596,7 +583,8 @@ async function loadOrders() {
     if (ordersMessage) {
 
       ordersMessage.textContent =
-        error.message;
+        error.message ||
+        'Unable to load orders.';
 
     }
 
@@ -671,11 +659,6 @@ function renderOrders(
   orders
 ) {
 
-  if (!ordersContainer) {
-    return;
-  }
-
-
   const filter =
     statusFilter
       ? statusFilter.value
@@ -730,16 +713,8 @@ function renderOrders(
 
           const price =
             Number(
-              order.price
+              order.price || 0
             );
-
-
-          const priceText =
-            Number.isFinite(
-              price
-            )
-              ? `$${price.toFixed(2)}`
-              : 'N/A';
 
 
           return `
@@ -859,7 +834,7 @@ function renderOrders(
                   </span>
 
                   <strong>
-                    ${priceText}
+                    $${price.toFixed(2)}
                   </strong>
 
                 </div>
@@ -1004,7 +979,9 @@ function createStatusOptions(
               : ''
           }
         >
-          ${formatStatus(status)}
+          ${formatStatus(
+            status
+          )}
         </option>
 
       `
@@ -1065,6 +1042,10 @@ document.addEventListener(
       button.textContent;
 
 
+    const newStatus =
+      statusSelect.value;
+
+
     button.disabled =
       true;
 
@@ -1075,39 +1056,106 @@ document.addEventListener(
 
     try {
 
-      await adminFetch(
-        `/api/admin/orders/${encodeURIComponent(
-          orderNumber
-        )}`,
-        {
+      const data =
+        await adminFetch(
+          `/api/admin/orders/${encodeURIComponent(
+            orderNumber
+          )}`,
+          {
 
-          method:
-            'PATCH',
+            method:
+              'PATCH',
 
-          body:
-            JSON.stringify({
+            body:
+              JSON.stringify({
 
-              status:
-                statusSelect.value,
+                status:
+                  newStatus,
 
-              admin_note:
-                noteInput.value
+                admin_note:
+                  noteInput.value
+                    .trim()
 
-            })
+              })
 
-        }
-      );
+          }
+        );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | CONFIRM UPDATED STATUS
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        !data.order
+      ) {
+
+        throw new Error(
+          'The server did not return the updated order.'
+        );
+
+      }
+
+
+      if (
+        data.order.status !==
+        newStatus
+      ) {
+
+        throw new Error(
+          `Status update failed. Server returned "${data.order.status}".`
+        );
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | SUCCESS
+      |--------------------------------------------------------------------------
+      */
+
+      button.textContent =
+        'Saved!';
 
 
       if (ordersMessage) {
 
         ordersMessage.textContent =
-          `${orderNumber} updated successfully.`;
+          `${orderNumber} changed to ${formatStatus(
+            data.order.status
+          )}.`;
 
       }
 
 
-      await loadOrders();
+      /*
+      |--------------------------------------------------------------------------
+      | RELOAD UPDATED DATA
+      |--------------------------------------------------------------------------
+      */
+
+      setTimeout(
+        async () => {
+
+          try {
+
+            await loadOrders();
+
+          } catch (error) {
+
+            console.error(
+              'Reload error:',
+              error
+            );
+
+          }
+
+        },
+        500
+      );
 
     } catch (error) {
 
@@ -1128,7 +1176,8 @@ document.addEventListener(
       if (ordersMessage) {
 
         ordersMessage.textContent =
-          error.message;
+          error.message ||
+          'Unable to update order.';
 
       }
 
@@ -1150,9 +1199,17 @@ if (statusFilter) {
     'change',
     () => {
 
-      renderOrders(
-        currentOrders
-      );
+      loadOrders()
+        .catch(
+          error => {
+
+            console.error(
+              'Filter error:',
+              error
+            );
+
+          }
+        );
 
     }
   );
@@ -1170,20 +1227,19 @@ if (refreshButton) {
 
   refreshButton.addEventListener(
     'click',
-    async () => {
+    () => {
 
-      try {
+      loadOrders()
+        .catch(
+          error => {
 
-        await loadOrders();
+            console.error(
+              'Refresh error:',
+              error
+            );
 
-      } catch (error) {
-
-        console.error(
-          'Refresh error:',
-          error
+          }
         );
-
-      }
 
     }
   );
@@ -1205,19 +1261,7 @@ if (logoutButton) {
 
       clearAdminKey();
 
-      currentOrders =
-        [];
-
-
       showLogin();
-
-
-      if (loginMessage) {
-
-        loginMessage.textContent =
-          'You have been logged out.';
-
-      }
 
     }
   );
@@ -1250,40 +1294,23 @@ document.addEventListener(
 
     try {
 
-      /*
-      |--------------------------------------------------------------------------
-      | CHECK SAVED SESSION
-      |--------------------------------------------------------------------------
-      */
-
       await checkAdminAccess();
 
+      await loadOrders();
 
       showDashboard();
-
-
-      await loadOrders();
 
     } catch (error) {
 
       console.error(
-        'Admin session error:',
+        'Admin startup error:',
         error
       );
 
 
       clearAdminKey();
 
-
       showLogin();
-
-
-      if (loginMessage) {
-
-        loginMessage.textContent =
-          'Your previous admin session has expired. Please login again.';
-
-      }
 
     }
 
