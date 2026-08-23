@@ -3,7 +3,8 @@ const express =
 
 const {
   query
-} = require('../config/database');
+} =
+  require('../config/database');
 
 
 const router =
@@ -59,14 +60,21 @@ function cleanText(
 |
 | Public order tracking endpoint.
 |
-| Only non-sensitive order information is returned.
+| Returns:
+| - Current order information
+| - Public status history
 |
 |--------------------------------------------------------------------------
 */
 
 router.get(
   '/status/:orderNumber',
-  async (req, res, next) => {
+
+  async (
+    req,
+    res,
+    next
+  ) => {
 
     try {
 
@@ -96,19 +104,33 @@ router.get(
       }
 
 
-      const result =
+      /*
+      |--------------------------------------------------------------------------
+      | GET ORDER
+      |--------------------------------------------------------------------------
+      */
+
+      const orderResult =
         await query(
           `
           SELECT
+            o.id,
             o.order_number,
             s.name AS service_name,
             o.status,
             o.price,
-            o.created_at
+            o.created_at,
+            o.updated_at,
+            o.completed_at
+
           FROM orders o
+
           INNER JOIN services s
             ON s.id = o.service_id
-          WHERE o.order_number = $1
+
+          WHERE
+            o.order_number = $1
+
           LIMIT 1
           `,
           [
@@ -118,7 +140,7 @@ router.get(
 
 
       if (
-        result.rows.length === 0
+        orderResult.rows.length === 0
       ) {
 
         return res.status(404).json({
@@ -133,18 +155,86 @@ router.get(
       }
 
 
+      const order =
+        orderResult.rows[0];
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | GET STATUS HISTORY
+      |--------------------------------------------------------------------------
+      */
+
+      const historyResult =
+        await query(
+          `
+          SELECT
+            old_status,
+            new_status,
+            note,
+            created_at
+
+          FROM order_status_history
+
+          WHERE
+            order_id = $1
+
+          ORDER BY
+            created_at ASC
+          `,
+          [
+            order.id
+          ]
+        );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | RESPONSE
+      |--------------------------------------------------------------------------
+      */
+
       res.json({
 
         success: true,
 
-        order:
-          result.rows[0]
+        order: {
+
+          order_number:
+            order.order_number,
+
+          service_name:
+            order.service_name,
+
+          status:
+            order.status,
+
+          price:
+            order.price,
+
+          created_at:
+            order.created_at,
+
+          updated_at:
+            order.updated_at,
+
+          completed_at:
+            order.completed_at
+
+        },
+
+        history:
+          historyResult.rows
 
       });
 
-    } catch (error) {
+    } catch (
+      error
+    ) {
 
-      next(error);
+      next(
+        error
+      );
 
     }
 
@@ -164,7 +254,12 @@ router.get(
 
 router.post(
   '/',
-  async (req, res, next) => {
+
+  async (
+    req,
+    res,
+    next
+  ) => {
 
     try {
 
@@ -273,11 +368,6 @@ router.post(
       |--------------------------------------------------------------------------
       | GET SERVICE
       |--------------------------------------------------------------------------
-      |
-      | Price is always taken from the database.
-      | The customer cannot choose their own price.
-      |
-      |--------------------------------------------------------------------------
       */
 
       const serviceResult =
@@ -289,8 +379,11 @@ router.post(
             price,
             price_type,
             is_active
+
           FROM services
+
           WHERE id = $1
+
           LIMIT 1
           `,
           [
@@ -420,13 +513,9 @@ router.post(
 
           break;
 
-        } catch (error) {
-
-          /*
-          |--------------------------------------------------------------------------
-          | PostgreSQL duplicate key error
-          |--------------------------------------------------------------------------
-          */
+        } catch (
+          error
+        ) {
 
           if (
             error.code === '23505'
@@ -525,9 +614,13 @@ router.post(
 
       });
 
-    } catch (error) {
+    } catch (
+      error
+    ) {
 
-      next(error);
+      next(
+        error
+      );
 
     }
 
