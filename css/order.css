@@ -9,7 +9,7 @@
 
 
 /* =========================
-   FORMS
+   ORDER FORM
 ========================= */
 
 .order-form,
@@ -17,15 +17,10 @@
   display: grid;
   gap: 18px;
   padding: 28px;
-  background:
-    rgba(13, 27, 45, 0.86);
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.09);
+  background: rgba(13, 27, 45, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 20px;
-  box-shadow:
-    0 25px 70px
-    rgba(0, 0, 0, 0.16);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.16);
 }
 
 
@@ -43,9 +38,7 @@
 .order-form textarea,
 .tracking-form input {
   width: 100%;
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   background: #081522;
   color: #eef6ff;
@@ -62,9 +55,7 @@
 .order-form textarea:focus,
 .tracking-form input:focus {
   border-color: #229ed9;
-  box-shadow:
-    0 0 0 3px
-    rgba(34, 158, 217, 0.1);
+  box-shadow: 0 0 0 3px rgba(34, 158, 217, 0.1);
 }
 
 
@@ -80,10 +71,6 @@
 }
 
 
-/* =========================
-   FORM MESSAGE
-========================= */
-
 .form-message {
   min-height: 24px;
   margin: 0;
@@ -96,156 +83,212 @@
 
 .status-result {
   margin-top: 24px;
-  padding: 28px;
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.09);
-  border-radius: 20px;
-  background:
-    linear-gradient(
-      145deg,
-      #11243a,
-      #0d1b2d
-    );
-  box-shadow:
-    0 25px 70px
-    rgba(0, 0, 0, 0.14);
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  background: #0d1b2d;
+  line-height: 1.7;
 }
 
 
-.status-result-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding-bottom: 20px;
-  margin-bottom: 20px;
-  border-bottom:
-    1px solid
-    rgba(255, 255, 255, 0.09);
-}
-
-
-.status-label {
-  color: #94a8bd;
-  font-size: 0.9rem;
-  font-weight: 700;
+.status-result strong {
+  color: #eef6ff;
 }
 
 
 /* =========================
-   STATUS BADGES
+   CURRENT ORDER STATUS
 ========================= */
 
-.status-badge {
+.current-order-status {
+  margin-bottom: 24px;
+  padding: 22px;
+  border-radius: 18px;
+  background: rgba(34, 158, 217, 0.08);
+  border: 1px solid rgba(34, 158, 217, 0.2);
+}
+
+
+.current-order-status span {
+  display: block;
+  margin-bottom: 8px;
+  color: #94a8bd;
+  font-size: 0.85rem;
+}
+
+
+.tracking-status {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 7px 12px;
+  padding: 9px 16px;
   border-radius: 999px;
-  font-size: 0.8rem;
+  font-size: 1rem;
   font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  background:
-    rgba(34, 158, 217, 0.15);
-  color: #72cfff;
-  border:
-    1px solid
-    rgba(34, 158, 217, 0.3);
-}
-
-
-.status-pending {
-  background:
-    rgba(245, 166, 35, 0.12);
-  color: #f5b642;
-  border-color:
-    rgba(245, 166, 35, 0.3);
-}
-
-
-.status-paid {
-  background:
-    rgba(52, 211, 153, 0.12);
-  color: #62e6b0;
-  border-color:
-    rgba(52, 211, 153, 0.3);
-}
-
-
-.status-in_progress {
-  background:
-    rgba(34, 158, 217, 0.15);
-  color: #72cfff;
-  border-color:
-    rgba(34, 158, 217, 0.3);
-}
-
-
-.status-waiting_customer {
-  background:
-    rgba(168, 85, 247, 0.12);
-  color: #c99aff;
-  border-color:
-    rgba(168, 85, 247, 0.3);
-}
-
-
-.status-completed {
-  background:
-    rgba(52, 211, 153, 0.12);
-  color: #62e6b0;
-  border-color:
-    rgba(52, 211, 153, 0.3);
-}
-
-
-.status-cancelled,
-.status-declined {
-  background:
-    rgba(239, 68, 68, 0.12);
-  color: #ff8d8d;
-  border-color:
-    rgba(239, 68, 68, 0.3);
+  background: #11243a;
+  color: #eef6ff;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 
 /* =========================
-   STATUS DETAILS
+   STATUS COLORS
 ========================= */
 
-.status-details {
+.tracking-status-pending {
+  border-color: rgba(255, 196, 0, 0.45);
+}
+
+
+.tracking-status-paid {
+  border-color: rgba(34, 158, 217, 0.6);
+}
+
+
+.tracking-status-in_progress {
+  border-color: rgba(34, 158, 217, 0.8);
+}
+
+
+.tracking-status-waiting_customer {
+  border-color: rgba(255, 196, 0, 0.6);
+}
+
+
+.tracking-status-completed {
+  border-color: rgba(80, 200, 120, 0.7);
+}
+
+
+.tracking-status-cancelled,
+.tracking-status-declined {
+  border-color: rgba(255, 90, 90, 0.7);
+}
+
+
+/* =========================
+   ORDER SUMMARY
+========================= */
+
+.order-summary {
   display: grid;
-  gap: 14px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding-bottom: 28px;
 }
 
 
-.status-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 16px;
-  background:
-    rgba(7, 17, 31, 0.5);
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.06);
+.order-summary div {
+  display: grid;
+  gap: 7px;
+  padding: 18px;
   border-radius: 14px;
+  background: #081522;
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 
-.status-item span {
+.order-summary span {
   color: #94a8bd;
-  font-size: 0.9rem;
+  font-size: 0.78rem;
 }
 
 
-.status-item strong {
+.order-summary strong {
   color: #eef6ff;
-  text-align: right;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+
+/* =========================
+   STATUS HISTORY
+========================= */
+
+.status-history {
+  margin-top: 10px;
+  padding-top: 26px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+
+.status-history h2 {
+  margin: 0 0 24px;
+  color: #eef6ff;
+  font-size: 1.35rem;
+}
+
+
+/* =========================
+   HISTORY ITEM
+========================= */
+
+.status-history-item {
+  position: relative;
+  padding: 0 0 28px 26px;
+  margin-left: 8px;
+  border-left: 2px solid rgba(34, 158, 217, 0.3);
+}
+
+
+.status-history-item:last-child {
+  padding-bottom: 0;
+  border-left-color: transparent;
+}
+
+
+/* Timeline Circle */
+
+.status-history-item::before {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  left: -7px;
+  top: 5px;
+  border-radius: 50%;
+  background: #229ed9;
+  box-shadow:
+    0 0 0 4px rgba(34, 158, 217, 0.1);
+}
+
+
+/* Status Name */
+
+.status-history-status {
+  font-weight: 800;
+  color: #eef6ff;
+  margin-bottom: 6px;
+}
+
+
+/* Status Message */
+
+.status-history-item p {
+  margin: 0 0 7px;
+  color: #c7d7e6;
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+
+/* Date */
+
+.status-history-item time {
+  color: #94a8bd;
+  font-size: 0.8rem;
+}
+
+
+/* =========================
+   EMPTY HISTORY
+========================= */
+
+.status-history-empty {
+  padding: 25px;
+  text-align: center;
+  border-radius: 14px;
+  background: #081522;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: #94a8bd;
 }
 
 
@@ -271,21 +314,45 @@
   }
 
 
-  .status-result-header {
-    align-items: flex-start;
-    flex-direction: column;
+  .order-summary {
+    grid-template-columns: 1fr;
   }
 
 
-  .status-item {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 6px;
+  .current-order-status {
+    padding: 18px;
   }
 
 
-  .status-item strong {
-    text-align: left;
+  .status-history-item {
+    padding-left: 22px;
+  }
+
+}
+
+
+@media (max-width: 400px) {
+
+  .form-page {
+    padding: 45px 0;
+  }
+
+
+  .order-form,
+  .tracking-form,
+  .status-result {
+    border-radius: 16px;
+  }
+
+
+  .order-summary div {
+    padding: 15px;
+  }
+
+
+  .tracking-status {
+    font-size: 0.9rem;
+    padding: 8px 13px;
   }
 
 }
