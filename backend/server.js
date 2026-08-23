@@ -60,100 +60,13 @@ const allowedOrigins =
     .filter(Boolean);
 
 
-/*
-|--------------------------------------------------------------------------
-| CORS CONFIGURATION
-|--------------------------------------------------------------------------
-|
-| If FRONTEND_URL is configured, only those origins
-| are allowed.
-|
-| Otherwise requests are allowed so the frontend can
-| communicate with the Railway API.
-|
-|--------------------------------------------------------------------------
-*/
-
 app.use(
   cors({
 
-    origin(
-      origin,
-      callback
-    ) {
-
-      /*
-      |--------------------------------------------------------------------------
-      | Allow requests without Origin
-      |--------------------------------------------------------------------------
-      |
-      | This includes direct browser requests,
-      | server requests and some development tools.
-      |
-      |--------------------------------------------------------------------------
-      */
-
-      if (!origin) {
-
-        return callback(
-          null,
-          true
-        );
-
-      }
-
-
-      /*
-      |--------------------------------------------------------------------------
-      | No specific frontend configured
-      |--------------------------------------------------------------------------
-      */
-
-      if (
-        allowedOrigins.length === 0
-      ) {
-
-        return callback(
-          null,
-          true
-        );
-
-      }
-
-
-      /*
-      |--------------------------------------------------------------------------
-      | Check allowed frontend origins
-      |--------------------------------------------------------------------------
-      */
-
-      if (
-        allowedOrigins.includes(
-          origin
-        )
-      ) {
-
-        return callback(
-          null,
-          true
-        );
-
-      }
-
-
-      console.warn(
-        `Blocked by CORS: ${origin}`
-      );
-
-
-      return callback(
-        new Error(
-          'Not allowed by CORS.'
-        )
-      );
-
-    },
-
+    origin:
+      allowedOrigins.length > 0
+        ? allowedOrigins
+        : true,
 
     methods: [
       'GET',
@@ -164,15 +77,10 @@ app.use(
       'OPTIONS'
     ],
 
-
     allowedHeaders: [
       'Content-Type',
       'Authorization'
-    ],
-
-
-    credentials:
-      false
+    ]
 
   })
 );
@@ -186,23 +94,15 @@ app.use(
 
 app.use(
   express.json({
-
-    limit:
-      '100kb'
-
+    limit: '100kb'
   })
 );
 
 
 app.use(
   express.urlencoded({
-
-    extended:
-      false,
-
-    limit:
-      '100kb'
-
+    extended: false,
+    limit: '100kb'
   })
 );
 
@@ -226,15 +126,11 @@ app.use(
 
 app.get(
   '/',
-  (
-    req,
-    res
-  ) => {
+  (req, res) => {
 
     res.json({
 
-      success:
-        true,
+      success: true,
 
       project:
         'TimiFxx Marketing',
@@ -277,11 +173,7 @@ app.use(
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC ORDER ROUTES
-|--------------------------------------------------------------------------
-|
-| Create orders and track orders.
-|
+| CUSTOMER ORDER ROUTES
 |--------------------------------------------------------------------------
 */
 
@@ -296,15 +188,10 @@ app.use(
 | ADMIN ROUTES
 |--------------------------------------------------------------------------
 |
-| IMPORTANT:
-|
-| The admin dashboard sends requests to:
+| This connects:
 |
 | GET   /api/admin/orders
 | PATCH /api/admin/orders/:orderNumber
-|
-| These routes require the admin authorization
-| handled inside backend/routes/admin.js
 |
 |--------------------------------------------------------------------------
 */
@@ -328,7 +215,7 @@ app.use(
 
 /*
 |--------------------------------------------------------------------------
-| GLOBAL ERROR HANDLER
+| ERROR HANDLER
 |--------------------------------------------------------------------------
 */
 
@@ -349,29 +236,6 @@ app.listen(
 
     console.log(
       `TimiFxx Marketing API listening on port ${PORT}`
-    );
-
-
-    console.log(
-      `Environment: ${
-        process.env.NODE_ENV ||
-        'development'
-      }`
-    );
-
-
-    console.log(
-      'Public API: /api/services'
-    );
-
-
-    console.log(
-      'Orders API: /api/orders'
-    );
-
-
-    console.log(
-      'Admin API: /api/admin/orders'
     );
 
   }
