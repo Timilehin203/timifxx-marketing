@@ -4,7 +4,6 @@ require('dotenv').config();
 const express =
   require('express');
 
-
 const cors =
   require('cors');
 
@@ -12,14 +11,11 @@ const cors =
 const healthRouter =
   require('./routes/health');
 
-
 const servicesRouter =
   require('./routes/services');
 
-
 const ordersRouter =
   require('./routes/orders');
-
 
 const adminRouter =
   require('./routes/admin');
@@ -64,37 +60,119 @@ const allowedOrigins =
     .filter(Boolean);
 
 
+/*
+|--------------------------------------------------------------------------
+| CORS CONFIGURATION
+|--------------------------------------------------------------------------
+|
+| If FRONTEND_URL is configured, only those origins
+| are allowed.
+|
+| Otherwise requests are allowed so the frontend can
+| communicate with the Railway API.
+|
+|--------------------------------------------------------------------------
+*/
+
 app.use(
   cors({
 
-    origin:
-      allowedOrigins.length > 0
-        ? allowedOrigins
-        : true,
+    origin(
+      origin,
+      callback
+    ) {
+
+      /*
+      |--------------------------------------------------------------------------
+      | Allow requests without Origin
+      |--------------------------------------------------------------------------
+      |
+      | This includes direct browser requests,
+      | server requests and some development tools.
+      |
+      |--------------------------------------------------------------------------
+      */
+
+      if (!origin) {
+
+        return callback(
+          null,
+          true
+        );
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | No specific frontend configured
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        allowedOrigins.length === 0
+      ) {
+
+        return callback(
+          null,
+          true
+        );
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Check allowed frontend origins
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        allowedOrigins.includes(
+          origin
+        )
+      ) {
+
+        return callback(
+          null,
+          true
+        );
+
+      }
+
+
+      console.warn(
+        `Blocked by CORS: ${origin}`
+      );
+
+
+      return callback(
+        new Error(
+          'Not allowed by CORS.'
+        )
+      );
+
+    },
+
 
     methods: [
-
       'GET',
-
       'POST',
-
       'PUT',
-
       'PATCH',
-
       'DELETE',
-
       'OPTIONS'
-
     ],
 
+
     allowedHeaders: [
-
       'Content-Type',
-
       'Authorization'
+    ],
 
-    ]
+
+    credentials:
+      false
 
   })
 );
@@ -175,7 +253,7 @@ app.get(
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC API ROUTES
+| HEALTH ROUTES
 |--------------------------------------------------------------------------
 */
 
@@ -185,11 +263,27 @@ app.use(
 );
 
 
+/*
+|--------------------------------------------------------------------------
+| SERVICES ROUTES
+|--------------------------------------------------------------------------
+*/
+
 app.use(
   '/api/services',
   servicesRouter
 );
 
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC ORDER ROUTES
+|--------------------------------------------------------------------------
+|
+| Create orders and track orders.
+|
+|--------------------------------------------------------------------------
+*/
 
 app.use(
   '/api/orders',
@@ -199,7 +293,19 @@ app.use(
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN API ROUTES
+| ADMIN ROUTES
+|--------------------------------------------------------------------------
+|
+| IMPORTANT:
+|
+| The admin dashboard sends requests to:
+|
+| GET   /api/admin/orders
+| PATCH /api/admin/orders/:orderNumber
+|
+| These routes require the admin authorization
+| handled inside backend/routes/admin.js
+|
 |--------------------------------------------------------------------------
 */
 
@@ -211,7 +317,7 @@ app.use(
 
 /*
 |--------------------------------------------------------------------------
-| 404
+| 404 HANDLER
 |--------------------------------------------------------------------------
 */
 
@@ -222,7 +328,7 @@ app.use(
 
 /*
 |--------------------------------------------------------------------------
-| ERROR HANDLER
+| GLOBAL ERROR HANDLER
 |--------------------------------------------------------------------------
 */
 
@@ -243,6 +349,29 @@ app.listen(
 
     console.log(
       `TimiFxx Marketing API listening on port ${PORT}`
+    );
+
+
+    console.log(
+      `Environment: ${
+        process.env.NODE_ENV ||
+        'development'
+      }`
+    );
+
+
+    console.log(
+      'Public API: /api/services'
+    );
+
+
+    console.log(
+      'Orders API: /api/orders'
+    );
+
+
+    console.log(
+      'Admin API: /api/admin/orders'
     );
 
   }
