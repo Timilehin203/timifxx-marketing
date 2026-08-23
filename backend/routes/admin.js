@@ -85,12 +85,6 @@ function requireAdmin(
 |--------------------------------------------------------------------------
 | ADMIN ACCESS CHECK
 |--------------------------------------------------------------------------
-|
-| GET /api/admin/check
-|
-| Used by the frontend to verify that the admin access key is valid.
-|
-|--------------------------------------------------------------------------
 */
 
 router.get(
@@ -98,10 +92,7 @@ router.get(
 
   requireAdmin,
 
-  (
-    req,
-    res
-  ) => {
+  (req, res) => {
 
     res.json({
 
@@ -118,7 +109,7 @@ router.get(
 
 /*
 |--------------------------------------------------------------------------
-| VALID ORDER STATUSES
+| VALID STATUSES
 |--------------------------------------------------------------------------
 */
 
@@ -143,7 +134,7 @@ const VALID_STATUSES = [
 
 /*
 |--------------------------------------------------------------------------
-| GET /api/admin/orders
+| GET ALL ORDERS
 |--------------------------------------------------------------------------
 */
 
@@ -177,7 +168,6 @@ router.get(
             o.completed_at,
             o.created_at,
             o.updated_at,
-
             s.name AS service_name
 
           FROM orders o
@@ -185,28 +175,22 @@ router.get(
           INNER JOIN services s
             ON s.id = o.service_id
 
-          ORDER BY
-            o.created_at DESC
+          ORDER BY o.created_at DESC
           `
         );
 
 
-      res.json({
+      return res.json({
 
         success: true,
 
-        orders:
-          result.rows
+        orders: result.rows
 
       });
 
-    } catch (
-      error
-    ) {
+    } catch (error) {
 
-      next(
-        error
-      );
+      next(error);
 
     }
 
@@ -216,7 +200,7 @@ router.get(
 
 /*
 |--------------------------------------------------------------------------
-| PATCH /api/admin/orders/:orderNumber
+| UPDATE ORDER
 |--------------------------------------------------------------------------
 */
 
@@ -359,23 +343,19 @@ router.patch(
         await query(
           `
           UPDATE orders
-
           SET
-
             status = $1,
-
             admin_note = $2,
-
             completed_at =
               CASE
                 WHEN $1 = 'completed'
                 THEN NOW()
                 ELSE NULL
               END,
-
             updated_at = NOW()
 
-          WHERE id = $3
+          WHERE
+            order_number = $3
 
           RETURNING
             id,
@@ -387,16 +367,27 @@ router.patch(
             updated_at
           `,
           [
-
             status,
-
-            adminNote ||
-              null,
-
-            currentOrder.id
-
+            adminNote || null,
+            orderNumber
           ]
         );
+
+
+      if (
+        updateResult.rows.length === 0
+      ) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Unable to update order.'
+
+        });
+
+      }
 
 
       const updatedOrder =
@@ -405,52 +396,35 @@ router.patch(
 
       /*
       |--------------------------------------------------------------------------
-      | CREATE STATUS HISTORY
+      | SAVE STATUS HISTORY
       |--------------------------------------------------------------------------
       */
 
       if (
-        currentOrder.status !==
-        status
+        currentOrder.status !== status
       ) {
 
         await query(
           `
           INSERT INTO order_status_history (
-
             order_id,
-
             old_status,
-
             new_status,
-
             note
-
           )
-
           VALUES (
-
             $1,
-
             $2,
-
             $3,
-
             $4
-
           )
           `,
           [
-
             currentOrder.id,
-
             currentOrder.status,
-
             status,
-
             adminNote ||
               `Order status changed to ${status}.`
-
           ]
         );
 
@@ -459,29 +433,29 @@ router.patch(
 
       /*
       |--------------------------------------------------------------------------
-      | RESPONSE
+      | SUCCESS RESPONSE
       |--------------------------------------------------------------------------
       */
 
-      res.json({
+      return res.json({
 
         success: true,
 
         message:
           'Order updated successfully.',
 
-        order:
-          updatedOrder
+        order: updatedOrder
 
       });
 
-    } catch (
-      error
-    ) {
+    } catch (error) {
 
-      next(
+      console.error(
+        'ADMIN ORDER UPDATE ERROR:',
         error
       );
+
+      next(error);
 
     }
 
