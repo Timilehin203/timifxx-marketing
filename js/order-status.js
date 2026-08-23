@@ -1,17 +1,23 @@
 const API_BASE_URL =
   window.TIMIFXX_API_BASE_URL ||
-  document.querySelector(
-    'meta[name="api-base-url"]'
-  )?.content ||
-  'https://timifxx-marketing-production.up.railway.app';
+  document
+    .querySelector(
+      'meta[name="api-base-url"]'
+    )
+    ?.content ||
+  '';
 
 
-function apiUrl(path) {
+function apiUrl(
+  path
+) {
 
-  return `${API_BASE_URL.replace(
-    /\/$/,
-    ''
-  )}${path}`;
+  return `${
+    API_BASE_URL.replace(
+      /\/$/,
+      ''
+    )
+  }${path}`;
 
 }
 
@@ -46,9 +52,13 @@ const result =
 |--------------------------------------------------------------------------
 */
 
-function escapeHtml(value) {
+function escapeHtml(
+  value
+) {
 
-  return String(value)
+  return String(
+    value ?? ''
+  )
     .replaceAll(
       '&',
       '&amp;'
@@ -75,7 +85,33 @@ function escapeHtml(value) {
 
 /*
 |--------------------------------------------------------------------------
-| ORDER NUMBER VALIDATION
+| FORMAT STATUS
+|--------------------------------------------------------------------------
+*/
+
+function formatStatus(
+  status
+) {
+
+  return String(
+    status || ''
+  )
+    .replaceAll(
+      '_',
+      ' '
+    )
+    .replace(
+      /\b\w/g,
+      character =>
+        character.toUpperCase()
+    );
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| VALIDATE ORDER NUMBER
 |--------------------------------------------------------------------------
 */
 
@@ -92,41 +128,25 @@ function isValidOrderNumber(
 
 /*
 |--------------------------------------------------------------------------
-| FORMAT STATUS
-|--------------------------------------------------------------------------
-*/
-
-function formatStatus(status) {
-
-  return String(
-    status || ''
-  )
-    .replaceAll(
-      '_',
-      ' '
-    )
-    .replace(
-      /\b\w/g,
-      function (letter) {
-
-        return letter.toUpperCase();
-
-      }
-    );
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
 | FORMAT DATE
 |--------------------------------------------------------------------------
 */
 
-function formatDate(dateValue) {
+function formatDate(
+  value
+) {
+
+  if (!value) {
+
+    return 'Unknown';
+
+  }
+
 
   const date =
-    new Date(dateValue);
+    new Date(
+      value
+    );
 
 
   if (
@@ -135,7 +155,7 @@ function formatDate(dateValue) {
     )
   ) {
 
-    return 'Unavailable';
+    return 'Unknown';
 
   }
 
@@ -147,73 +167,131 @@ function formatDate(dateValue) {
 
 /*
 |--------------------------------------------------------------------------
-| SHOW MESSAGE
+| RENDER HISTORY
 |--------------------------------------------------------------------------
 */
 
-function showMessage(
-  text
+function renderHistory(
+  history
 ) {
 
-  result.hidden = false;
+  if (
+    !Array.isArray(history) ||
+    history.length === 0
+  ) {
 
-  result.textContent =
-    text;
+    return `
+      <div class="status-history-empty">
+        No status updates yet.
+      </div>
+    `;
+
+  }
+
+
+  return `
+
+    <div class="status-history">
+
+      <h2>
+        Order Updates
+      </h2>
+
+      ${history
+        .map(
+          item => `
+
+            <div class="status-history-item">
+
+              <div class="status-history-status">
+
+                ${escapeHtml(
+                  formatStatus(
+                    item.new_status
+                  )
+                )}
+
+              </div>
+
+
+              <p>
+
+                ${escapeHtml(
+                  item.note ||
+                  'Order status updated.'
+                )}
+
+              </p>
+
+
+              <time>
+
+                ${escapeHtml(
+                  formatDate(
+                    item.created_at
+                  )
+                )}
+
+              </time>
+
+            </div>
+
+          `
+        )
+        .join(
+          ''
+        )}
+
+    </div>
+
+  `;
 
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| SHOW ORDER
+| RENDER ORDER
 |--------------------------------------------------------------------------
 */
 
-function showOrder(
-  order
+function renderOrder(
+  order,
+  history
 ) {
-
-  const price =
-    Number(
-      order.price
-    );
-
-
-  const formattedPrice =
-    Number.isFinite(price)
-      ? `$${price.toFixed(2)}`
-      : 'Unavailable';
-
-
-  result.hidden = false;
-
 
   result.innerHTML = `
 
-    <div class="status-result-header">
+    <div class="current-order-status">
 
-      <span class="status-label">
-        Order Status
-      </span>
+      <div>
 
-      <span class="status-badge status-${escapeHtml(
-        order.status
-      )}">
+        <span>
+          Current Status
+        </span>
 
-        ${escapeHtml(
-          formatStatus(
+        <strong
+          class="tracking-status tracking-status-${escapeHtml(
             order.status
-          )
-        )}
+          )}"
+        >
 
-      </span>
+          ${escapeHtml(
+            formatStatus(
+              order.status
+            )
+          )}
+
+        </strong>
+
+      </div>
 
     </div>
 
 
-    <div class="status-details">
+    <div class="order-summary">
 
-      <div class="status-item">
+      <div>
 
         <span>
           Order Number
@@ -228,7 +306,7 @@ function showOrder(
       </div>
 
 
-      <div class="status-item">
+      <div>
 
         <span>
           Service
@@ -243,23 +321,25 @@ function showOrder(
       </div>
 
 
-      <div class="status-item">
+      <div>
 
         <span>
           Price
         </span>
 
         <strong>
-          ${formattedPrice}
+          $${Number(
+            order.price
+          ).toFixed(2)}
         </strong>
 
       </div>
 
 
-      <div class="status-item">
+      <div>
 
         <span>
-          Created
+          Order Created
         </span>
 
         <strong>
@@ -273,6 +353,11 @@ function showOrder(
       </div>
 
     </div>
+
+
+    ${renderHistory(
+      history
+    )}
 
   `;
 
@@ -289,6 +374,7 @@ if (form) {
 
   form.addEventListener(
     'submit',
+
     async function (
       event
     ) {
@@ -302,28 +388,30 @@ if (form) {
           .toUpperCase();
 
 
-      input.value =
-        orderNumber;
-
-
       if (
         !isValidOrderNumber(
           orderNumber
         )
       ) {
 
-        showMessage(
-          'Please enter a valid order number. Example: TMF-2026-123456'
-        );
+        result.hidden =
+          false;
+
+
+        result.textContent =
+          'Invalid order number.';
 
         return;
 
       }
 
 
-      showMessage(
-        'Checking your order...'
-      );
+      result.hidden =
+        false;
+
+
+      result.textContent =
+        'Checking order...';
 
 
       try {
@@ -336,70 +424,46 @@ if (form) {
               )}`
             ),
             {
-
               method:
                 'GET',
 
               headers: {
-
                 Accept:
                   'application/json'
-
               }
-
             }
           );
 
 
-        let data;
-
-
-        try {
-
-          data =
-            await response.json();
-
-        } catch (error) {
-
-          throw new Error(
-            'Invalid server response.'
-          );
-
-        }
-
-
-        if (!response.ok) {
-
-          showMessage(
-            data.message ||
-            'Order not found.'
-          );
-
-          return;
-
-        }
+        const data =
+          await response
+            .json()
+            .catch(
+              () => ({})
+            );
 
 
         if (
-          !data.success ||
-          !data.order
+          !response.ok
         ) {
 
-          showMessage(
-            'Order information could not be loaded.'
-          );
+          result.textContent =
+            data.message ||
+            'Order not found.';
 
           return;
 
         }
 
 
-        showOrder(
-          data.order
+        renderOrder(
+          data.order,
+          data.history
         );
 
-
-      } catch (error) {
+      } catch (
+        error
+      ) {
 
         console.error(
           'Order tracking error:',
@@ -407,9 +471,8 @@ if (form) {
         );
 
 
-        showMessage(
-          'Unable to check your order status. Please try again.'
-        );
+        result.textContent =
+          'Unable to check order status. Please try again.';
 
       }
 
@@ -421,20 +484,22 @@ if (form) {
 
 /*
 |--------------------------------------------------------------------------
-| LOAD ORDER NUMBER FROM URL
+| OPTIONAL ORDER NUMBER FROM URL
 |--------------------------------------------------------------------------
 */
 
 document.addEventListener(
   'DOMContentLoaded',
+
   function () {
 
     const requestedOrder =
       new URLSearchParams(
         window.location.search
-      ).get(
-        'order'
-      );
+      )
+        .get(
+          'order'
+        );
 
 
     if (
