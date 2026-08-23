@@ -1,11 +1,13 @@
 require('dotenv').config();
 
-
 const express =
   require('express');
 
 const cors =
   require('cors');
+
+const path =
+  require('path');
 
 
 const healthRouter =
@@ -44,6 +46,39 @@ const PORT =
 
 /*
 |--------------------------------------------------------------------------
+| PATHS
+|--------------------------------------------------------------------------
+|
+| Your project structure should be:
+|
+| project/
+| ├── backend/
+| |   ├── server.js
+| |   ├── routes/
+| |   ├── config/
+| |   └── middleware/
+| |
+| ├── index.html
+| ├── admin.html
+| |
+| ├── css/
+| |   └── admin.css
+| |
+| └── js/
+|     └── admin.js
+|
+|--------------------------------------------------------------------------
+*/
+
+const FRONTEND_PATH =
+  path.join(
+    __dirname,
+    '..'
+  );
+
+
+/*
+|--------------------------------------------------------------------------
 | CORS
 |--------------------------------------------------------------------------
 */
@@ -57,7 +92,9 @@ const allowedOrigins =
       origin =>
         origin.trim()
     )
-    .filter(Boolean);
+    .filter(
+      Boolean
+    );
 
 
 app.use(
@@ -120,35 +157,6 @@ app.use(
 
 /*
 |--------------------------------------------------------------------------
-| BASIC ROUTE
-|--------------------------------------------------------------------------
-*/
-
-app.get(
-  '/',
-  (req, res) => {
-
-    res.json({
-
-      success: true,
-
-      project:
-        'TimiFxx Marketing',
-
-      message:
-        'TimiFxx Marketing API is running.',
-
-      status:
-        'online'
-
-    });
-
-  }
-);
-
-
-/*
-|--------------------------------------------------------------------------
 | API ROUTES
 |--------------------------------------------------------------------------
 */
@@ -173,13 +181,112 @@ app.use(
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN ROUTES
+| ADMIN API ROUTES
 |--------------------------------------------------------------------------
 */
 
 app.use(
   '/api/admin',
   adminRouter
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN DASHBOARD
+|--------------------------------------------------------------------------
+|
+| This makes the dashboard available at:
+|
+| https://timifxx-marketing-production.up.railway.app/admin
+|
+|--------------------------------------------------------------------------
+*/
+
+app.get(
+  '/admin',
+  (
+    req,
+    res
+  ) => {
+
+    res.sendFile(
+      path.join(
+        FRONTEND_PATH,
+        'admin.html'
+      )
+    );
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN HTML DIRECT ACCESS
+|--------------------------------------------------------------------------
+*/
+
+app.get(
+  '/admin.html',
+  (
+    req,
+    res
+  ) => {
+
+    res.sendFile(
+      path.join(
+        FRONTEND_PATH,
+        'admin.html'
+      )
+    );
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| MAIN WEBSITE
+|--------------------------------------------------------------------------
+*/
+
+app.get(
+  '/',
+  (
+    req,
+    res
+  ) => {
+
+    res.sendFile(
+      path.join(
+        FRONTEND_PATH,
+        'index.html'
+      )
+    );
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| STATIC FILES
+|--------------------------------------------------------------------------
+|
+| Serves:
+|
+| /css/admin.css
+| /js/admin.js
+| /images/...
+|
+|--------------------------------------------------------------------------
+*/
+
+app.use(
+  express.static(
+    FRONTEND_PATH
+  )
 );
 
 
@@ -216,7 +323,11 @@ app.listen(
   () => {
 
     console.log(
-      `TimiFxx Marketing API listening on port ${PORT}`
+      `TimiFxx Marketing website and API running on port ${PORT}`
+    );
+
+    console.log(
+      `Admin dashboard available at /admin`
     );
 
   }
