@@ -154,6 +154,15 @@ function clearAdminKey() {
 
 /*
 |--------------------------------------------------------------------------
+| CURRENT ORDERS
+|--------------------------------------------------------------------------
+*/
+
+let currentOrders = [];
+
+
+/*
+|--------------------------------------------------------------------------
 | HTML ESCAPING
 |--------------------------------------------------------------------------
 */
@@ -200,7 +209,7 @@ function formatStatus(
 ) {
 
   return String(
-    status
+    status || ''
   )
     .replaceAll(
       '_',
@@ -230,6 +239,23 @@ async function adminFetch(
     getAdminKey();
 
 
+  if (!adminKey) {
+
+    const error =
+      new Error(
+        'Admin access key is missing.'
+      );
+
+
+    error.status =
+      401;
+
+
+    throw error;
+
+  }
+
+
   const response =
     await fetch(
       apiUrl(path),
@@ -245,12 +271,14 @@ async function adminFetch(
           Authorization:
             `Bearer ${adminKey}`,
 
-          ...(options.body
-            ? {
-                'Content-Type':
-                  'application/json'
-              }
-            : {}),
+          ...(
+            options.body
+              ? {
+                  'Content-Type':
+                    'application/json'
+                }
+              : {}
+          ),
 
           ...(
             options.headers || {}
@@ -289,6 +317,21 @@ async function adminFetch(
 
 
   return data;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CHECK ADMIN ACCESS
+|--------------------------------------------------------------------------
+*/
+
+async function checkAdminAccess() {
+
+  return adminFetch(
+    '/api/admin/check'
+  );
 
 }
 
@@ -334,14 +377,40 @@ if (loginForm) {
 
       try {
 
-        await loadOrders();
+        /*
+        |--------------------------------------------------------------------------
+        | VERIFY ADMIN KEY FIRST
+        |--------------------------------------------------------------------------
+        */
+
+        await checkAdminAccess();
+
+
+        loginMessage.textContent =
+          'Access granted. Loading dashboard...';
 
 
         showDashboard();
 
+
+        await loadOrders();
+
+
+        loginMessage.textContent =
+          '';
+
       } catch (error) {
 
+        console.error(
+          'Admin login error:',
+          error
+        );
+
+
         clearAdminKey();
+
+
+        showLogin();
 
 
         loginMessage.textContent =
@@ -365,12 +434,20 @@ if (loginForm) {
 
 function showDashboard() {
 
-  loginScreen.hidden =
-    true;
+  if (loginScreen) {
+
+    loginScreen.hidden =
+      true;
+
+  }
 
 
-  dashboard.hidden =
-    false;
+  if (dashboard) {
+
+    dashboard.hidden =
+      false;
+
+  }
 
 }
 
@@ -383,16 +460,28 @@ function showDashboard() {
 
 function showLogin() {
 
-  dashboard.hidden =
-    true;
+  if (dashboard) {
+
+    dashboard.hidden =
+      true;
+
+  }
 
 
-  loginScreen.hidden =
-    false;
+  if (loginScreen) {
+
+    loginScreen.hidden =
+      false;
+
+  }
 
 
-  adminKeyInput.value =
-    '';
+  if (adminKeyInput) {
+
+    adminKeyInput.value =
+      '';
+
+  }
 
 }
 
@@ -410,8 +499,12 @@ async function loadOrders() {
   }
 
 
-  ordersMessage.textContent =
-    '';
+  if (ordersMessage) {
+
+    ordersMessage.textContent =
+      '';
+
+  }
 
 
   ordersContainer.innerHTML =
@@ -430,7 +523,7 @@ async function loadOrders() {
       );
 
 
-    const orders =
+    currentOrders =
       Array.isArray(
         data.orders
       )
@@ -439,21 +532,28 @@ async function loadOrders() {
 
 
     updateSummary(
-      orders
+      currentOrders
     );
 
 
     renderOrders(
-      orders
+      currentOrders
     );
 
 
-    ordersMessage.textContent =
-      `${orders.length} order${
-        orders.length === 1
-          ? ''
-          : 's'
-      } loaded.`;
+    if (ordersMessage) {
+
+      ordersMessage.textContent =
+        `${currentOrders.length} order${
+          currentOrders.length === 1
+            ? ''
+            : 's'
+        } loaded.`;
+
+    }
+
+
+    return currentOrders;
 
   } catch (error) {
 
@@ -471,10 +571,16 @@ async function loadOrders() {
 
       showLogin();
 
-      loginMessage.textContent =
-        'Your session has expired. Please login again.';
 
-      return;
+      if (loginMessage) {
+
+        loginMessage.textContent =
+          'Your session has expired. Please login again.';
+
+      }
+
+
+      throw error;
 
     }
 
@@ -487,8 +593,13 @@ async function loadOrders() {
       `;
 
 
-    ordersMessage.textContent =
-      error.message;
+    if (ordersMessage) {
+
+      ordersMessage.textContent =
+        error.message;
+
+    }
+
 
     throw error;
 
@@ -507,29 +618,45 @@ function updateSummary(
   orders
 ) {
 
-  totalOrders.textContent =
-    orders.length;
+  if (totalOrders) {
+
+    totalOrders.textContent =
+      orders.length;
+
+  }
 
 
-  pendingOrders.textContent =
-    orders.filter(
-      order =>
-        order.status === 'pending'
-    ).length;
+  if (pendingOrders) {
+
+    pendingOrders.textContent =
+      orders.filter(
+        order =>
+          order.status === 'pending'
+      ).length;
+
+  }
 
 
-  progressOrders.textContent =
-    orders.filter(
-      order =>
-        order.status === 'in_progress'
-    ).length;
+  if (progressOrders) {
+
+    progressOrders.textContent =
+      orders.filter(
+        order =>
+          order.status === 'in_progress'
+      ).length;
+
+  }
 
 
-  completedOrders.textContent =
-    orders.filter(
-      order =>
-        order.status === 'completed'
-    ).length;
+  if (completedOrders) {
+
+    completedOrders.textContent =
+      orders.filter(
+        order =>
+          order.status === 'completed'
+      ).length;
+
+  }
 
 }
 
@@ -544,8 +671,15 @@ function renderOrders(
   orders
 ) {
 
+  if (!ordersContainer) {
+    return;
+  }
+
+
   const filter =
-    statusFilter.value;
+    statusFilter
+      ? statusFilter.value
+      : '';
 
 
   const filteredOrders =
@@ -579,9 +713,11 @@ function renderOrders(
         order => {
 
           const createdDate =
-            new Date(
-              order.created_at
-            ).toLocaleString();
+            order.created_at
+              ? new Date(
+                  order.created_at
+                ).toLocaleString()
+              : 'Unknown';
 
 
           const message =
@@ -590,6 +726,20 @@ function renderOrders(
                   order.message
                 )
               : 'No additional details provided.';
+
+
+          const price =
+            Number(
+              order.price
+            );
+
+
+          const priceText =
+            Number.isFinite(
+              price
+            )
+              ? `$${price.toFixed(2)}`
+              : 'N/A';
 
 
           return `
@@ -709,9 +859,7 @@ function renderOrders(
                   </span>
 
                   <strong>
-                    $${Number(
-                      order.price
-                    ).toFixed(2)}
+                    ${priceText}
                   </strong>
 
                 </div>
@@ -856,9 +1004,7 @@ function createStatusOptions(
               : ''
           }
         >
-
           ${formatStatus(status)}
-
         </option>
 
       `
@@ -953,26 +1099,15 @@ document.addEventListener(
       );
 
 
-      button.textContent =
-        'Saved!';
+      if (ordersMessage) {
 
+        ordersMessage.textContent =
+          `${orderNumber} updated successfully.`;
 
-      ordersMessage.textContent =
-        `${orderNumber} updated successfully.`;
+      }
 
 
       await loadOrders();
-
-
-      setTimeout(
-        () => {
-
-          button.textContent =
-            originalText;
-
-        },
-        1000
-      );
 
     } catch (error) {
 
@@ -990,8 +1125,12 @@ document.addEventListener(
         originalText;
 
 
-      ordersMessage.textContent =
-        error.message;
+      if (ordersMessage) {
+
+        ordersMessage.textContent =
+          error.message;
+
+      }
 
     }
 
@@ -1009,7 +1148,13 @@ if (statusFilter) {
 
   statusFilter.addEventListener(
     'change',
-    loadOrders
+    () => {
+
+      renderOrders(
+        currentOrders
+      );
+
+    }
   );
 
 }
@@ -1025,7 +1170,22 @@ if (refreshButton) {
 
   refreshButton.addEventListener(
     'click',
-    loadOrders
+    async () => {
+
+      try {
+
+        await loadOrders();
+
+      } catch (error) {
+
+        console.error(
+          'Refresh error:',
+          error
+        );
+
+      }
+
+    }
   );
 
 }
@@ -1045,7 +1205,19 @@ if (logoutButton) {
 
       clearAdminKey();
 
+      currentOrders =
+        [];
+
+
       showLogin();
+
+
+      if (loginMessage) {
+
+        loginMessage.textContent =
+          'You have been logged out.';
+
+      }
 
     }
   );
@@ -1078,15 +1250,40 @@ document.addEventListener(
 
     try {
 
-      await loadOrders();
+      /*
+      |--------------------------------------------------------------------------
+      | CHECK SAVED SESSION
+      |--------------------------------------------------------------------------
+      */
+
+      await checkAdminAccess();
+
 
       showDashboard();
 
+
+      await loadOrders();
+
     } catch (error) {
+
+      console.error(
+        'Admin session error:',
+        error
+      );
+
 
       clearAdminKey();
 
+
       showLogin();
+
+
+      if (loginMessage) {
+
+        loginMessage.textContent =
+          'Your previous admin session has expired. Please login again.';
+
+      }
 
     }
 
