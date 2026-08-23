@@ -83,32 +83,6 @@ function requireAdmin(
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN ACCESS CHECK
-|--------------------------------------------------------------------------
-*/
-
-router.get(
-  '/check',
-
-  requireAdmin,
-
-  (req, res) => {
-
-    res.json({
-
-      success: true,
-
-      message:
-        'Admin access granted.'
-
-    });
-
-  }
-);
-
-
-/*
-|--------------------------------------------------------------------------
 | VALID STATUSES
 |--------------------------------------------------------------------------
 */
@@ -130,6 +104,35 @@ const VALID_STATUSES = [
   'declined'
 
 ];
+
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN ACCESS CHECK
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  '/check',
+
+  requireAdmin,
+
+  (
+    req,
+    res
+  ) => {
+
+    return res.json({
+
+      success: true,
+
+      message:
+        'Admin access granted.'
+
+    });
+
+  }
+);
 
 
 /*
@@ -172,10 +175,11 @@ router.get(
 
           FROM orders o
 
-          INNER JOIN services s
+          LEFT JOIN services s
             ON s.id = o.service_id
 
-          ORDER BY o.created_at DESC
+          ORDER BY
+            o.created_at DESC
           `
         );
 
@@ -184,13 +188,24 @@ router.get(
 
         success: true,
 
-        orders: result.rows
+        orders:
+          result.rows
 
       });
 
-    } catch (error) {
+    } catch (
+      error
+    ) {
 
-      next(error);
+      console.error(
+        'ADMIN GET ORDERS ERROR:',
+        error
+      );
+
+
+      next(
+        error
+      );
 
     }
 
@@ -217,6 +232,12 @@ router.patch(
 
     try {
 
+      /*
+      |--------------------------------------------------------------------------
+      | GET AND CLEAN DATA
+      |--------------------------------------------------------------------------
+      */
+
       const orderNumber =
         String(
           req.params.orderNumber || ''
@@ -229,7 +250,8 @@ router.patch(
         String(
           req.body.status || ''
         )
-          .trim();
+          .trim()
+          .toLowerCase();
 
 
       const adminNote =
@@ -245,14 +267,32 @@ router.patch(
 
       /*
       |--------------------------------------------------------------------------
+      | DEBUG LOG
+      |--------------------------------------------------------------------------
+      */
+
+      console.log(
+        'ADMIN UPDATE REQUEST:',
+        {
+
+          orderNumber,
+
+          status,
+
+          adminNote
+
+        }
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
       | VALIDATE ORDER NUMBER
       |--------------------------------------------------------------------------
       */
 
       if (
-        !/^TMF-\d{4}-\d{6}$/.test(
-          orderNumber
-        )
+        !orderNumber
       ) {
 
         return res.status(400).json({
@@ -260,7 +300,7 @@ router.patch(
           success: false,
 
           message:
-            'Invalid order number.'
+            'Order number is required.'
 
         });
 
@@ -284,7 +324,7 @@ router.patch(
           success: false,
 
           message:
-            'Invalid order status.'
+            `Invalid order status: ${status}`
 
         });
 
@@ -293,7 +333,7 @@ router.patch(
 
       /*
       |--------------------------------------------------------------------------
-      | GET CURRENT ORDER
+      | FIND CURRENT ORDER
       |--------------------------------------------------------------------------
       */
 
@@ -302,9 +342,17 @@ router.patch(
           `
           SELECT
             id,
-            status
+            order_number,
+            status,
+            admin_note
+
           FROM orders
-          WHERE order_number = $1
+
+          WHERE
+            UPPER(
+              TRIM(order_number)
+            ) = $1
+
           LIMIT 1
           `,
           [
@@ -322,7 +370,7 @@ router.patch(
           success: false,
 
           message:
-            'Order not found.'
+            `Order "${orderNumber}" was not found.`
 
         });
 
@@ -343,19 +391,27 @@ router.patch(
         await query(
           `
           UPDATE orders
+
           SET
+
             status = $1,
+
             admin_note = $2,
+
             completed_at =
               CASE
+
                 WHEN $1 = 'completed'
                 THEN NOW()
+
                 ELSE NULL
+
               END,
+
             updated_at = NOW()
 
           WHERE
-            order_number = $3
+            id = $3
 
           RETURNING
             id,
@@ -367,23 +423,33 @@ router.patch(
             updated_at
           `,
           [
+
             status,
+
             adminNote || null,
-            orderNumber
+
+            currentOrder.id
+
           ]
         );
 
+
+      /*
+      |--------------------------------------------------------------------------
+      | CHECK UPDATE
+      |--------------------------------------------------------------------------
+      */
 
       if (
         updateResult.rows.length === 0
       ) {
 
-        return res.status(404).json({
+        return res.status(500).json({
 
           success: false,
 
           message:
-            'Unable to update order.'
+            'The database did not return the updated order.'
 
         });
 
@@ -396,37 +462,175 @@ router.patch(
 
       /*
       |--------------------------------------------------------------------------
+      | DEBUG UPDATED RESULT
+      |--------------------------------------------------------------------------
+      */
+
+      console.log(
+        'ADMIN UPDATE SUCCESS:',
+        updatedOrder
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
       | SAVE STATUS HISTORY
       |--------------------------------------------------------------------------
       */
 
       if (
-        currentOrder.status !== status
+        currentOrder.status !==
+        updatedOrder.status
       ) {
 
+        try {
+
+          await query(
+            `
+            INSERT INTO order_status_history (
+
+              order_id,
+
+              old_status,
+
+              new_status,
+
+              note
+
+            )
+
+            VALUES (
+
+              $1,
+
+              $2,
+
+              $3,
+
+              $4
+
+            )
+            `,
+            [
+
+              currentOrder.id,
+
+              currentOrder.status,
+
+              updatedOrder.status,
+
+              adminNote ||
+                `Order status changed from ${currentOrder.status} to ${updatedOrder.status}.`
+
+            ]
+          );
+
+        } catch (
+          historyError
+        ) {
+
+          /*
+          |--------------------------------------------------------------------------
+          | IMPORTANT:
+          |
+          | Do not fail the whole order update if the history table
+          | has a problem.
+          |--------------------------------------------------------------------------
+          */
+
+          console.error(
+            'ORDER HISTORY ERROR:',
+            historyError
+          );
+
+        }
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | VERIFY DATABASE SAVED THE NEW STATUS
+      |--------------------------------------------------------------------------
+      */
+
+      const verifyResult =
         await query(
           `
-          INSERT INTO order_status_history (
-            order_id,
-            old_status,
-            new_status,
-            note
-          )
-          VALUES (
-            $1,
-            $2,
-            $3,
-            $4
-          )
+          SELECT
+            id,
+            order_number,
+            status,
+            admin_note,
+            completed_at,
+            created_at,
+            updated_at
+
+          FROM orders
+
+          WHERE id = $1
+
+          LIMIT 1
           `,
           [
-            currentOrder.id,
-            currentOrder.status,
-            status,
-            adminNote ||
-              `Order status changed to ${status}.`
+            currentOrder.id
           ]
         );
+
+
+      if (
+        verifyResult.rows.length === 0
+      ) {
+
+        return res.status(500).json({
+
+          success: false,
+
+          message:
+            'Order was updated but could not be verified.'
+
+        });
+
+      }
+
+
+      const verifiedOrder =
+        verifyResult.rows[0];
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | FINAL VERIFICATION
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        verifiedOrder.status !==
+        status
+      ) {
+
+        console.error(
+          'STATUS VERIFICATION FAILED:',
+          {
+
+            requestedStatus:
+              status,
+
+            databaseStatus:
+              verifiedOrder.status
+
+          }
+        );
+
+
+        return res.status(500).json({
+
+          success: false,
+
+          message:
+            `Status was not saved correctly. Database returned "${verifiedOrder.status}".`
+
+        });
 
       }
 
@@ -442,20 +646,26 @@ router.patch(
         success: true,
 
         message:
-          'Order updated successfully.',
+          `Order updated to ${verifiedOrder.status}.`,
 
-        order: updatedOrder
+        order:
+          verifiedOrder
 
       });
 
-    } catch (error) {
+    } catch (
+      error
+    ) {
 
       console.error(
         'ADMIN ORDER UPDATE ERROR:',
         error
       );
 
-      next(error);
+
+      next(
+        error
+      );
 
     }
 
