@@ -1,7 +1,6 @@
 const express =
   require('express');
 
-
 const {
   query
 } =
@@ -46,18 +45,7 @@ function requireAdmin(
     ).trim();
 
 
-  /*
-  |--------------------------------------------------------------------------
-  | CHECK SERVER CONFIGURATION
-  |--------------------------------------------------------------------------
-  */
-
   if (!adminKey) {
-
-    console.error(
-      'ADMIN_API_KEY is not configured.'
-    );
-
 
     return res.status(500).json({
 
@@ -70,12 +58,6 @@ function requireAdmin(
 
   }
 
-
-  /*
-  |--------------------------------------------------------------------------
-  | CHECK ACCESS KEY
-  |--------------------------------------------------------------------------
-  */
 
   if (
     !token ||
@@ -126,44 +108,7 @@ const VALID_STATUSES = [
 
 /*
 |--------------------------------------------------------------------------
-| GET /api/admin/check
-|--------------------------------------------------------------------------
-|
-| Used to verify the admin key.
-|
-|--------------------------------------------------------------------------
-*/
-
-router.get(
-  '/check',
-
-  requireAdmin,
-
-  (
-    req,
-    res
-  ) => {
-
-    res.json({
-
-      success: true,
-
-      message:
-        'Admin access granted.'
-
-    });
-
-  }
-);
-
-
-/*
-|--------------------------------------------------------------------------
 | GET /api/admin/orders
-|--------------------------------------------------------------------------
-|
-| Get all customer orders.
-|
 |--------------------------------------------------------------------------
 */
 
@@ -184,31 +129,18 @@ router.get(
         await query(
           `
           SELECT
-
             o.id,
-
             o.order_number,
-
             o.customer_name,
-
             o.customer_email,
-
             o.telegram_username,
-
             o.whatsapp,
-
             o.message,
-
             o.price,
-
             o.status,
-
             o.admin_note,
-
             o.completed_at,
-
             o.created_at,
-
             o.updated_at,
 
             s.name AS service_name
@@ -250,15 +182,6 @@ router.get(
 /*
 |--------------------------------------------------------------------------
 | PATCH /api/admin/orders/:orderNumber
-|--------------------------------------------------------------------------
-|
-| Update:
-|
-| - Order status
-| - Admin note
-| - Completion time
-| - Status history
-|
 |--------------------------------------------------------------------------
 */
 
@@ -360,17 +283,11 @@ router.patch(
         await query(
           `
           SELECT
-
             id,
-
             status,
-
             admin_note
-
           FROM orders
-
           WHERE order_number = $1
-
           LIMIT 1
           `,
           [
@@ -378,12 +295,6 @@ router.patch(
           ]
         );
 
-
-      /*
-      |--------------------------------------------------------------------------
-      | ORDER NOT FOUND
-      |--------------------------------------------------------------------------
-      */
 
       if (
         currentOrderResult.rows.length === 0
@@ -417,47 +328,52 @@ router.patch(
           UPDATE orders
 
           SET
-
             status = $1,
 
             admin_note = $2,
 
             completed_at =
               CASE
-
                 WHEN $1 = 'completed'
                 THEN NOW()
-
                 ELSE NULL
+              END,
 
-              END
+            updated_at = NOW()
 
-          WHERE id = $3
+          WHERE
+            id = $3
 
           RETURNING
-
             id,
-
             order_number,
-
             status,
-
             admin_note,
-
             completed_at,
-
             updated_at
           `,
           [
-
             status,
-
             adminNote || null,
-
             currentOrder.id
-
           ]
         );
+
+
+      if (
+        updateResult.rows.length === 0
+      ) {
+
+        return res.status(500).json({
+
+          success: false,
+
+          message:
+            'Unable to update order.'
+
+        });
+
+      }
 
 
       const updatedOrder =
@@ -467,11 +383,6 @@ router.patch(
       /*
       |--------------------------------------------------------------------------
       | CREATE STATUS HISTORY
-      |--------------------------------------------------------------------------
-      |
-      | Only create a new history entry when
-      | the status actually changes.
-      |
       |--------------------------------------------------------------------------
       */
 
@@ -483,40 +394,24 @@ router.patch(
         await query(
           `
           INSERT INTO order_status_history (
-
             order_id,
-
             old_status,
-
             new_status,
-
             note
-
           )
-
           VALUES (
-
             $1,
-
             $2,
-
             $3,
-
             $4
-
           )
           `,
           [
-
             currentOrder.id,
-
             currentOrder.status,
-
             status,
-
             adminNote ||
               `Order status changed from ${currentOrder.status} to ${status}.`
-
           ]
         );
 
@@ -554,12 +449,6 @@ router.patch(
   }
 );
 
-
-/*
-|--------------------------------------------------------------------------
-| EXPORT ROUTER
-|--------------------------------------------------------------------------
-*/
 
 module.exports =
   router;
