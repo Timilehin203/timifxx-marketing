@@ -1,18 +1,28 @@
 const API_BASE_URL =
   window.TIMIFXX_API_BASE_URL ||
-  document
-    .querySelector(
-      'meta[name="api-base-url"]'
-    )
-    ?.content ||
+  document.querySelector(
+    'meta[name="api-base-url"]'
+  )?.content ||
   'https://timifxx-marketing-production.up.railway.app';
 
 
 function apiUrl(path) {
 
-  return `${API_BASE_URL.replace(/\/$/, '')}${path}`;
+  return (
+    `${API_BASE_URL.replace(/\/$/, '')}${path}`
+  );
 
 }
+
+
+/*
+|--------------------------------------------------------------------------
+| TELEGRAM
+|--------------------------------------------------------------------------
+*/
+
+const TELEGRAM_USERNAME =
+  'timifxx203';
 
 
 /*
@@ -22,23 +32,27 @@ function apiUrl(path) {
 */
 
 const serviceSelect =
-  document.getElementById('serviceId');
+  document.getElementById(
+    'serviceId'
+  );
 
 
 const form =
-  document.getElementById('orderForm');
+  document.getElementById(
+    'orderForm'
+  );
 
 
-const message =
-  document.getElementById('formMessage');
+const formMessage =
+  document.getElementById(
+    'formMessage'
+  );
 
 
 const submitButton =
-  form
-    ? form.querySelector(
-        'button[type="submit"]'
-      )
-    : null;
+  document.getElementById(
+    'submitButton'
+  );
 
 
 /*
@@ -52,10 +66,6 @@ async function loadServices() {
   if (!serviceSelect) {
     return;
   }
-
-
-  serviceSelect.innerHTML =
-    '<option value="">Loading services...</option>';
 
 
   try {
@@ -87,9 +97,15 @@ async function loadServices() {
 
 
     const services =
-      Array.isArray(data.services)
+      Array.isArray(
+        data.services
+      )
         ? data.services
         : [];
+
+
+    serviceSelect.innerHTML =
+      '<option value="">Select a service</option>';
 
 
     if (
@@ -102,10 +118,6 @@ async function loadServices() {
       return;
 
     }
-
-
-    serviceSelect.innerHTML =
-      '<option value="">Select a service</option>';
 
 
     for (
@@ -124,17 +136,11 @@ async function loadServices() {
         );
 
 
-      const formattedPrice =
-        Number.isFinite(price)
-          ? price.toFixed(0)
-          : '0';
-
-
       const priceText =
         service.price_type ===
         'starting_from'
-          ? `Starting from $${formattedPrice}`
-          : `$${formattedPrice}`;
+          ? `Starting from $${price.toFixed(0)}`
+          : `$${price.toFixed(0)}`;
 
 
       option.value =
@@ -161,31 +167,17 @@ async function loadServices() {
     const requestedService =
       new URLSearchParams(
         window.location.search
-      ).get('service');
+      ).get(
+        'service'
+      );
 
 
     if (
       requestedService
     ) {
 
-      const serviceExists =
-        Array.from(
-          serviceSelect.options
-        ).some(
-          option =>
-            option.value ===
-            requestedService
-        );
-
-
-      if (
-        serviceExists
-      ) {
-
-        serviceSelect.value =
-          requestedService;
-
-      }
+      serviceSelect.value =
+        requestedService;
 
     }
 
@@ -202,11 +194,11 @@ async function loadServices() {
 
 
     if (
-      message
+      formMessage
     ) {
 
-      message.textContent =
-        'Unable to load services. Please refresh and try again.';
+      formMessage.textContent =
+        'Unable to load services. Please refresh the page.';
 
     }
 
@@ -217,61 +209,70 @@ async function loadServices() {
 
 /*
 |--------------------------------------------------------------------------
-| CREATE ORDER
+| CREATE TELEGRAM MESSAGE
 |--------------------------------------------------------------------------
 */
 
-async function createOrder(
-  orderData
+function createTelegramMessage(
+  order
 ) {
 
-  const response =
-    await fetch(
-      apiUrl('/api/orders'),
-      {
-        method: 'POST',
-
-        headers: {
-          'Content-Type':
-            'application/json',
-
-          Accept:
-            'application/json'
-        },
-
-        body:
-          JSON.stringify(
-            orderData
-          )
-      }
-    );
+  const orderNumber =
+    order.order_number ||
+    order.orderNumber ||
+    'Not available';
 
 
-  const data =
-    await response.json()
-      .catch(
-        () => ({
-          success: false,
-          message:
-            'Invalid server response.'
-        })
-      );
+  const serviceName =
+    order.service_name ||
+    order.serviceName ||
+    'Not available';
 
 
-  if (
-    !response.ok ||
-    !data.success
-  ) {
-
-    throw new Error(
-      data.message ||
-      'Unable to create order.'
-    );
-
-  }
+  const orderStatus =
+    order.status ||
+    'pending';
 
 
-  return data;
+  const orderPrice =
+    order.price
+      ? `$${Number(order.price).toFixed(2)} USD`
+      : 'Not available';
+
+
+  const telegramMessage = [
+
+    'Hello TimiFxx Marketing!',
+
+    '',
+
+    'I have created a new order.',
+
+    '',
+
+    `Order Number: ${orderNumber}`,
+
+    '',
+
+    `Service: ${serviceName}`,
+
+    '',
+
+    `Price: ${orderPrice}`,
+
+    '',
+
+    `Order Status: ${orderStatus}`,
+
+    '',
+
+    'Please let me know the next step to finalize my order.'
+
+  ]
+    .join('\n');
+
+
+  return telegramMessage;
 
 }
 
@@ -296,132 +297,210 @@ if (
 
 
       if (
-        !serviceSelect.value
+        !formMessage
       ) {
-
-        message.textContent =
-          'Please select a service.';
 
         return;
 
       }
 
 
-      const orderData = {
+      const serviceId =
+        serviceSelect.value;
 
-        serviceId:
-          Number(
-            serviceSelect.value
-          ),
 
-        name:
-          document
-            .getElementById('name')
-            .value
-            .trim(),
+      const name =
+        document.getElementById(
+          'name'
+        ).value.trim();
 
-        email:
-          document
-            .getElementById('email')
-            .value
-            .trim(),
 
-        telegramUsername:
-          document
-            .getElementById(
-              'telegramUsername'
-            )
-            .value
-            .trim(),
+      const email =
+        document.getElementById(
+          'email'
+        ).value.trim();
 
-        whatsapp:
-          document
-            .getElementById(
-              'whatsapp'
-            )
-            .value
-            .trim(),
 
-        message:
-          document
-            .getElementById('message')
-            .value
-            .trim()
+      const telegramUsername =
+        document.getElementById(
+          'telegramUsername'
+        ).value.trim();
 
-      };
+
+      const whatsapp =
+        document.getElementById(
+          'whatsapp'
+        ).value.trim();
+
+
+      const message =
+        document.getElementById(
+          'message'
+        ).value.trim();
+
+
+      formMessage.textContent =
+        'Creating your order...';
+
+
+      if (
+        submitButton
+      ) {
+
+        submitButton.disabled =
+          true;
+
+
+        submitButton.textContent =
+          'Creating Order...';
+
+      }
 
 
       try {
 
+        const response =
+          await fetch(
+            apiUrl('/api/orders'),
+            {
+
+              method:
+                'POST',
+
+              headers: {
+
+                'Content-Type':
+                  'application/json',
+
+                Accept:
+                  'application/json'
+
+              },
+
+              body:
+                JSON.stringify({
+
+                  serviceId:
+                    Number(
+                      serviceId
+                    ),
+
+                  name,
+
+                  email,
+
+                  telegramUsername,
+
+                  whatsapp,
+
+                  message
+
+                })
+
+            }
+          );
+
+
+        const data =
+          await response.json();
+
+
+        console.log(
+          'Order API response:',
+          data
+        );
+
+
         if (
-          submitButton
+          !response.ok ||
+          !data.success
         ) {
 
-          submitButton.disabled =
-            true;
-
-
-          submitButton.textContent =
-            'Creating Order...';
+          throw new Error(
+            data.message ||
+            'Unable to create your order.'
+          );
 
         }
 
 
-        message.textContent =
-          'Creating your order...';
+        /*
+        |--------------------------------------------------------------------------
+        | GET ORDER DATA
+        |--------------------------------------------------------------------------
+        */
+
+        const order =
+          data.order ||
+          {};
 
 
-        const data =
-          await createOrder(
-            orderData
+        const orderNumber =
+          order.order_number ||
+          order.orderNumber;
+
+
+        const serviceName =
+          order.service_name ||
+          order.serviceName ||
+          serviceSelect.options[
+            serviceSelect.selectedIndex
+          ].textContent;
+
+
+        if (
+          !orderNumber
+        ) {
+
+          throw new Error(
+            'Order was created but no order number was returned.'
+          );
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | SUCCESS MESSAGE
+        |--------------------------------------------------------------------------
+        */
+
+        formMessage.textContent =
+          `Order created successfully. Your order number is ${orderNumber}. Redirecting you to Telegram...`;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | PREPARE TELEGRAM ORDER DATA
+        |--------------------------------------------------------------------------
+        */
+
+        const telegramOrder = {
+
+          order_number:
+            orderNumber,
+
+          service_name:
+            serviceName,
+
+          price:
+            order.price,
+
+          status:
+            order.status ||
+            'pending'
+
+        };
+
+
+        const telegramMessage =
+          createTelegramMessage(
+            telegramOrder
           );
 
 
-        const order =
-          data.order;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | SAVE ORDER NUMBER
-        |--------------------------------------------------------------------------
-        */
-
-        localStorage.setItem(
-          'timifxx_latest_order',
-          order.order_number
-        );
-
-
-        message.textContent =
-          `Order created successfully. Your order number is ${order.order_number}. Redirecting you to Telegram...`;
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | TELEGRAM MESSAGE
-        |--------------------------------------------------------------------------
-        */
-
-        const telegramMessage =
-          `Hello TimiFxx Marketing!
-
-I have created a new order.
-
-Order Number:
-${order.order_number}
-
-Service:
-${order.service_name}
-
-Order Status:
-${order.status}
-
-Please let me know the next step to finalize my order.`;
-
-
         const telegramUrl =
-          `https://t.me/timifxx203?text=${encodeURIComponent(
+          `https://t.me/${TELEGRAM_USERNAME}?text=${encodeURIComponent(
             telegramMessage
           )}`;
 
@@ -432,8 +511,8 @@ Please let me know the next step to finalize my order.`;
         |--------------------------------------------------------------------------
         */
 
-        setTimeout(
-          () => {
+        window.setTimeout(
+          function () {
 
             window.location.href =
               telegramUrl;
@@ -452,7 +531,7 @@ Please let me know the next step to finalize my order.`;
         );
 
 
-        message.textContent =
+        formMessage.textContent =
           error.message ||
           'Unable to create your order. Please try again.';
 
@@ -466,7 +545,7 @@ Please let me know the next step to finalize my order.`;
 
 
           submitButton.textContent =
-            'Continue to Telegram';
+            'Submit Order';
 
         }
 
