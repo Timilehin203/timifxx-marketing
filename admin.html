@@ -10,9 +10,19 @@
     content="width=device-width, initial-scale=1.0"
   >
 
+  <meta
+    name="api-base-url"
+    content="https://timifxx-marketing-production.up.railway.app"
+  >
+
   <title>
-    Admin | TimiFxx Marketing
+    Admin Dashboard | TimiFxx Marketing
   </title>
+
+  <link
+    rel="stylesheet"
+    href="css/style.css"
+  >
 
   <link
     rel="stylesheet"
@@ -24,31 +34,287 @@
 
 <body>
 
-  <main class="admin-placeholder">
 
-    <div class="admin-card">
+  <!-- LOGIN -->
+
+  <main
+    id="loginScreen"
+    class="admin-login"
+  >
+
+    <section
+      class="admin-login-card"
+    >
 
       <p class="eyebrow">
         PRIVATE AREA
       </p>
 
       <h1>
-        TimiFxx Marketing Admin
+        Admin Dashboard
       </h1>
 
       <p>
-        This is the private administrator area.
-        Authentication and management controls will be
-        connected to the secure backend in the admin stage.
+        Enter your administrator access key to manage orders.
       </p>
 
-      <a href="index.html">
-        Return to website
-      </a>
 
-    </div>
+      <form
+        id="loginForm"
+        class="admin-login-form"
+      >
+
+        <label for="adminKey">
+
+          Admin access key
+
+          <input
+            id="adminKey"
+            type="password"
+            required
+            autocomplete="current-password"
+            placeholder="Enter admin access key"
+          >
+
+        </label>
+
+
+        <button
+          class="button primary"
+          type="submit"
+        >
+          Login
+        </button>
+
+
+        <p
+          id="loginMessage"
+          class="admin-message"
+          aria-live="polite"
+        ></p>
+
+      </form>
+
+    </section>
 
   </main>
+
+
+  <!-- DASHBOARD -->
+
+  <main
+    id="dashboard"
+    class="admin-dashboard"
+    hidden
+  >
+
+    <header
+      class="admin-header"
+    >
+
+      <div
+        class="admin-header-inner"
+      >
+
+        <div>
+
+          <p class="eyebrow">
+            TIMIFXX MARKETING
+          </p>
+
+          <h1>
+            Order Dashboard
+          </h1>
+
+        </div>
+
+
+        <div
+          class="admin-header-actions"
+        >
+
+          <a
+            class="button ghost"
+            href="index.html"
+          >
+            View Website
+          </a>
+
+
+          <button
+            id="refreshButton"
+            class="button secondary"
+            type="button"
+          >
+            Refresh
+          </button>
+
+
+          <button
+            id="logoutButton"
+            class="button ghost"
+            type="button"
+          >
+            Logout
+          </button>
+
+        </div>
+
+      </div>
+
+    </header>
+
+
+    <section
+      class="admin-main"
+    >
+
+      <div
+        class="admin-summary"
+      >
+
+        <article>
+
+          <span>
+            Total Orders
+          </span>
+
+          <strong
+            id="totalOrders"
+          >
+            0
+          </strong>
+
+        </article>
+
+
+        <article>
+
+          <span>
+            Pending
+          </span>
+
+          <strong
+            id="pendingOrders"
+          >
+            0
+          </strong>
+
+        </article>
+
+
+        <article>
+
+          <span>
+            In Progress
+          </span>
+
+          <strong
+            id="progressOrders"
+          >
+            0
+          </strong>
+
+        </article>
+
+
+        <article>
+
+          <span>
+            Completed
+          </span>
+
+          <strong
+            id="completedOrders"
+          >
+            0
+          </strong>
+
+        </article>
+
+      </div>
+
+
+      <div
+        class="admin-toolbar"
+      >
+
+        <div>
+
+          <h2>
+            Incoming Orders
+          </h2>
+
+          <p
+            id="ordersMessage"
+            class="admin-message"
+          ></p>
+
+        </div>
+
+
+        <select
+          id="statusFilter"
+        >
+
+          <option value="">
+            All statuses
+          </option>
+
+          <option value="pending">
+            Pending
+          </option>
+
+          <option value="paid">
+            Paid
+          </option>
+
+          <option value="in_progress">
+            In Progress
+          </option>
+
+          <option value="waiting_customer">
+            Waiting for Customer
+          </option>
+
+          <option value="completed">
+            Completed
+          </option>
+
+          <option value="cancelled">
+            Cancelled
+          </option>
+
+          <option value="declined">
+            Declined
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div
+        id="ordersContainer"
+        class="orders-container"
+      >
+
+        <div
+          class="orders-loading"
+        >
+          Loading orders...
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <script
+    src="js/admin.js"
+  ></script>
 
 </body>
 
