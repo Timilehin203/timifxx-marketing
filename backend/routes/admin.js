@@ -1,22 +1,95 @@
 const express =
   require('express');
 
-
 const {
   query
 } =
   require('../config/database');
 
 
-const adminAuth =
-  require('../middleware/adminAuth');
-
-
 const router =
   express.Router();
 
 
-const allowedStatuses = [
+/*
+|--------------------------------------------------------------------------
+| ADMIN AUTHENTICATION
+|--------------------------------------------------------------------------
+*/
+
+function requireAdmin(
+  req,
+  res,
+  next
+) {
+
+  const authorization =
+    String(
+      req.headers.authorization || ''
+    );
+
+
+  const token =
+    authorization.startsWith(
+      'Bearer '
+    )
+      ? authorization.slice(
+          7
+        ).trim()
+      : '';
+
+
+  const adminKey =
+    String(
+      process.env.ADMIN_API_KEY || ''
+    );
+
+
+  if (
+    !adminKey
+  ) {
+
+    return res.status(500).json({
+
+      success: false,
+
+      message:
+        'Admin authentication is not configured.'
+
+    });
+
+  }
+
+
+  if (
+    !token ||
+    token !== adminKey
+  ) {
+
+    return res.status(401).json({
+
+      success: false,
+
+      message:
+        'Invalid admin access key.'
+
+    });
+
+  }
+
+
+  next();
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| VALID ORDER STATUSES
+|--------------------------------------------------------------------------
+*/
+
+const VALID_STATUSES = [
 
   'pending',
 
@@ -37,27 +110,19 @@ const allowedStatuses = [
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN AUTHENTICATION
-|--------------------------------------------------------------------------
-*/
-
-router.use(
-  adminAuth
-);
-
-
-/*
-|--------------------------------------------------------------------------
 | GET /api/admin/orders
 |--------------------------------------------------------------------------
 |
-| Returns all orders.
+| Get all orders for the admin dashboard.
 |
 |--------------------------------------------------------------------------
 */
 
 router.get(
   '/orders',
+
+  requireAdmin,
+
   async (
     req,
     res,
@@ -80,14 +145,11 @@ router.get(
             o.price,
             o.status,
             o.admin_note,
+            o.completed_at,
             o.created_at,
             o.updated_at,
-            o.completed_at,
 
-            s.id AS service_id,
-            s.name AS service_name,
-            s.slug AS service_slug,
-            s.turnaround_text
+            s.name AS service_name
 
           FROM orders o
 
@@ -109,111 +171,13 @@ router.get(
 
       });
 
-    } catch (error) {
+    } catch (
+      error
+    ) {
 
-      next(error);
-
-    }
-
-  }
-);
-
-
-/*
-|--------------------------------------------------------------------------
-| GET /api/admin/orders/:orderNumber
-|--------------------------------------------------------------------------
-|
-| Returns one complete order.
-|
-|--------------------------------------------------------------------------
-*/
-
-router.get(
-  '/orders/:orderNumber',
-  async (
-    req,
-    res,
-    next
-  ) => {
-
-    try {
-
-      const orderNumber =
-        String(
-          req.params.orderNumber || ''
-        )
-          .trim()
-          .toUpperCase();
-
-
-      const result =
-        await query(
-          `
-          SELECT
-            o.id,
-            o.order_number,
-            o.customer_name,
-            o.customer_email,
-            o.telegram_username,
-            o.whatsapp,
-            o.message,
-            o.price,
-            o.status,
-            o.admin_note,
-            o.created_at,
-            o.updated_at,
-            o.completed_at,
-
-            s.id AS service_id,
-            s.name AS service_name,
-            s.slug AS service_slug,
-            s.turnaround_text
-
-          FROM orders o
-
-          INNER JOIN services s
-            ON s.id = o.service_id
-
-          WHERE
-            o.order_number = $1
-
-          LIMIT 1
-          `,
-          [
-            orderNumber
-          ]
-        );
-
-
-      if (
-        result.rows.length === 0
-      ) {
-
-        return res.status(404).json({
-
-          success: false,
-
-          message:
-            'Order not found.'
-
-        });
-
-      }
-
-
-      res.json({
-
-        success: true,
-
-        order:
-          result.rows[0]
-
-      });
-
-    } catch (error) {
-
-      next(error);
+      next(
+        error
+      );
 
     }
 
@@ -233,6 +197,9 @@ router.get(
 
 router.patch(
   '/orders/:orderNumber',
+
+  requireAdmin,
+
   async (
     req,
     res,
@@ -249,29 +216,57 @@ router.patch(
           .toUpperCase();
 
 
-      const requestedStatus =
-        req.body.status !== undefined
-          ? String(
-              req.body.status
-            )
-              .trim()
-              .toLowerCase()
-          : null;
+      const status =
+        String(
+          req.body.status || ''
+        )
+          .trim();
 
 
-      const requestedNote =
-        req.body.admin_note !== undefined
-          ? String(
-              req.body.admin_note
-            )
-              .trim()
-          : null;
+      const adminNote =
+        String(
+          req.body.admin_note || ''
+        )
+          .trim()
+          .slice(
+            0,
+            5000
+          );
 
+
+      /*
+      |--------------------------------------------------------------------------
+      | VALIDATE ORDER NUMBER
+      |--------------------------------------------------------------------------
+      */
 
       if (
-        requestedStatus !== null &&
-        !allowedStatuses.includes(
-          requestedStatus
+        !/^TMF-\d{4}-\d{6}$/.test(
+          orderNumber
+        )
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid order number.'
+
+        });
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | VALIDATE STATUS
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        !VALID_STATUSES.includes(
+          status
         )
       ) {
 
@@ -287,35 +282,20 @@ router.patch(
       }
 
 
-      if (
-        requestedNote !== null &&
-        requestedNote.length > 5000
-      ) {
+      /*
+      |--------------------------------------------------------------------------
+      | GET CURRENT ORDER
+      |--------------------------------------------------------------------------
+      */
 
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            'Admin note is too long.'
-
-        });
-
-      }
-
-
-      const existingResult =
+      const currentOrderResult =
         await query(
           `
           SELECT
             id,
             status
-
           FROM orders
-
-          WHERE
-            order_number = $1
-
+          WHERE order_number = $1
           LIMIT 1
           `,
           [
@@ -325,7 +305,7 @@ router.patch(
 
 
       if (
-        existingResult.rows.length === 0
+        currentOrderResult.rows.length === 0
       ) {
 
         return res.status(404).json({
@@ -340,15 +320,15 @@ router.patch(
       }
 
 
-      const existingOrder =
-        existingResult.rows[0];
+      const currentOrder =
+        currentOrderResult.rows[0];
 
 
-      const newStatus =
-        requestedStatus !== null
-          ? requestedStatus
-          : existingOrder.status;
-
+      /*
+      |--------------------------------------------------------------------------
+      | UPDATE ORDER
+      |--------------------------------------------------------------------------
+      */
 
       const updateResult =
         await query(
@@ -359,46 +339,51 @@ router.patch(
 
             status = $1,
 
-            admin_note = COALESCE(
-              $2,
-              admin_note
-            ),
+            admin_note = $2,
 
-            completed_at = CASE
+            completed_at =
+              CASE
+                WHEN $1 = 'completed'
+                THEN NOW()
+                ELSE NULL
+              END
 
-              WHEN $1 = 'completed'
-              THEN NOW()
-
-              ELSE completed_at
-
-            END
-
-          WHERE
-            id = $3
+          WHERE id = $3
 
           RETURNING
             id,
             order_number,
             status,
             admin_note,
-            updated_at,
-            completed_at
+            completed_at,
+            updated_at
           `,
           [
 
-            newStatus,
+            status,
 
-            requestedNote,
+            adminNote ||
+              null,
 
-            existingOrder.id
+            currentOrder.id
 
           ]
         );
 
 
+      const updatedOrder =
+        updateResult.rows[0];
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | CREATE STATUS HISTORY
+      |--------------------------------------------------------------------------
+      */
+
       if (
-        existingOrder.status !==
-        newStatus
+        currentOrder.status !==
+        status
       ) {
 
         await query(
@@ -411,9 +396,7 @@ router.patch(
 
             new_status,
 
-            note,
-
-            changed_by
+            note
 
           )
 
@@ -425,27 +408,32 @@ router.patch(
 
             $3,
 
-            $4,
-
-            NULL
+            $4
 
           )
           `,
           [
 
-            existingOrder.id,
+            currentOrder.id,
 
-            existingOrder.status,
+            currentOrder.status,
 
-            newStatus,
+            status,
 
-            requestedNote
+            adminNote ||
+              `Order status changed to ${status}.`
 
           ]
         );
 
       }
 
+
+      /*
+      |--------------------------------------------------------------------------
+      | RESPONSE
+      |--------------------------------------------------------------------------
+      */
 
       res.json({
 
@@ -455,13 +443,17 @@ router.patch(
           'Order updated successfully.',
 
         order:
-          updateResult.rows[0]
+          updatedOrder
 
       });
 
-    } catch (error) {
+    } catch (
+      error
+    ) {
 
-      next(error);
+      next(
+        error
+      );
 
     }
 
