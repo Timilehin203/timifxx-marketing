@@ -83,6 +83,41 @@ function requireAdmin(
 
 /*
 |--------------------------------------------------------------------------
+| ADMIN ACCESS CHECK
+|--------------------------------------------------------------------------
+|
+| GET /api/admin/check
+|
+| Used by the frontend to verify that the admin access key is valid.
+|
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  '/check',
+
+  requireAdmin,
+
+  (
+    req,
+    res
+  ) => {
+
+    res.json({
+
+      success: true,
+
+      message:
+        'Admin access granted.'
+
+    });
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
 | VALID ORDER STATUSES
 |--------------------------------------------------------------------------
 */
@@ -210,8 +245,7 @@ router.patch(
         String(
           req.body.status || ''
         )
-          .trim()
-          .toLowerCase();
+          .trim();
 
 
       const adminNote =
@@ -284,8 +318,7 @@ router.patch(
           `
           SELECT
             id,
-            status,
-            admin_note
+            status
           FROM orders
           WHERE order_number = $1
           LIMIT 1
@@ -328,6 +361,7 @@ router.patch(
           UPDATE orders
 
           SET
+
             status = $1,
 
             admin_note = $2,
@@ -341,8 +375,7 @@ router.patch(
 
             updated_at = NOW()
 
-          WHERE
-            id = $3
+          WHERE id = $3
 
           RETURNING
             id,
@@ -350,30 +383,20 @@ router.patch(
             status,
             admin_note,
             completed_at,
+            created_at,
             updated_at
           `,
           [
+
             status,
-            adminNote || null,
+
+            adminNote ||
+              null,
+
             currentOrder.id
+
           ]
         );
-
-
-      if (
-        updateResult.rows.length === 0
-      ) {
-
-        return res.status(500).json({
-
-          success: false,
-
-          message:
-            'Unable to update order.'
-
-        });
-
-      }
 
 
       const updatedOrder =
@@ -394,24 +417,40 @@ router.patch(
         await query(
           `
           INSERT INTO order_status_history (
+
             order_id,
+
             old_status,
+
             new_status,
+
             note
+
           )
+
           VALUES (
+
             $1,
+
             $2,
+
             $3,
+
             $4
+
           )
           `,
           [
+
             currentOrder.id,
+
             currentOrder.status,
+
             status,
+
             adminNote ||
-              `Order status changed from ${currentOrder.status} to ${status}.`
+              `Order status changed to ${status}.`
+
           ]
         );
 
