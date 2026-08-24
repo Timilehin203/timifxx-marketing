@@ -13,28 +13,150 @@ const router =
 
 /*
 |--------------------------------------------------------------------------
-| HELPERS
+| ADMIN AUTHENTICATION
 |--------------------------------------------------------------------------
 */
 
-function generateOrderNumber() {
+function requireAdmin(
+  req,
+  res,
+  next
+) {
 
-  const year =
-    new Date()
-      .getFullYear();
-
-
-  const random =
-    Math.floor(
-      100000 +
-      Math.random() * 900000
+  const authorization =
+    String(
+      req.headers.authorization || ''
     );
 
 
-  return `TMF-${year}-${random}`;
+  const token =
+    authorization.startsWith(
+      'Bearer '
+    )
+      ? authorization
+          .slice(7)
+          .trim()
+      : '';
+
+
+  const adminKey =
+    String(
+      process.env.ADMIN_API_KEY || ''
+    ).trim();
+
+
+  if (!adminKey) {
+
+    return res.status(500).json({
+
+      success: false,
+
+      message:
+        'Admin authentication is not configured.'
+
+    });
+
+  }
+
+
+  if (
+    !token ||
+    token !== adminKey
+  ) {
+
+    return res.status(401).json({
+
+      success: false,
+
+      message:
+        'Invalid admin access key.'
+
+    });
+
+  }
+
+
+  next();
 
 }
 
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN ACCESS CHECK
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  '/check',
+
+  requireAdmin,
+
+  (
+    req,
+    res
+  ) => {
+
+    return res.json({
+
+      success: true,
+
+      message:
+        'Admin access granted.'
+
+    });
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| VALID ORDER STATUSES
+|--------------------------------------------------------------------------
+*/
+
+const VALID_STATUSES = [
+
+  'pending',
+
+  'paid',
+
+  'in_progress',
+
+  'waiting_customer',
+
+  'completed',
+
+  'cancelled',
+
+  'declined'
+
+];
+
+
+/*
+|--------------------------------------------------------------------------
+| VALID PRICE TYPES
+|--------------------------------------------------------------------------
+*/
+
+const VALID_PRICE_TYPES = [
+
+  'fixed',
+
+  'starting_from',
+
+  'contact'
+
+];
+
+
+/*
+|--------------------------------------------------------------------------
+| HELPERS
+|--------------------------------------------------------------------------
+*/
 
 function cleanText(
   value,
@@ -53,22 +175,114 @@ function cleanText(
 }
 
 
+function createSlug(
+  value
+) {
+
+  return String(
+    value || ''
+  )
+    .trim()
+    .toLowerCase()
+    .replace(
+      /[^a-z0-9]+/g,
+      '-'
+    )
+    .replace(
+      /^-+|-+$/g,
+      ''
+    )
+    .slice(
+      0,
+      150
+    );
+
+}
+
+
 /*
 |--------------------------------------------------------------------------
-| GET /api/orders/status/:orderNumber
-|--------------------------------------------------------------------------
-|
-| Public order tracking endpoint.
-|
-| Returns:
-| - Current order information
-| - Public status history
-|
+| GET ALL ORDERS
 |--------------------------------------------------------------------------
 */
 
 router.get(
-  '/status/:orderNumber',
+  '/orders',
+
+  requireAdmin,
+
+  async (
+    req,
+    res,
+    next
+  ) => {
+
+    try {
+
+      const result =
+        await query(
+          `
+          SELECT
+            o.id,
+            o.order_number,
+            o.customer_name,
+            o.customer_email,
+            o.telegram_username,
+            o.whatsapp,
+            o.message,
+            o.price,
+            o.status,
+            o.admin_note,
+            o.completed_at,
+            o.created_at,
+            o.updated_at,
+
+            s.name AS service_name
+
+          FROM orders AS o
+
+          INNER JOIN services AS s
+            ON s.id = o.service_id
+
+          ORDER BY
+            o.created_at DESC
+          `
+        );
+
+
+      return res.json({
+
+        success: true,
+
+        orders:
+          result.rows
+
+      });
+
+    } catch (
+      error
+    ) {
+
+      next(
+        error
+      );
+
+    }
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| UPDATE ORDER
+|--------------------------------------------------------------------------
+*/
+
+router.patch(
+  '/orders/:orderNumber',
+
+  requireAdmin,
 
   async (
     req,
@@ -84,6 +298,20 @@ router.get(
         )
           .trim()
           .toUpperCase();
+
+
+      const status =
+        String(
+          req.body.status || ''
+        )
+          .trim();
+
+
+      const adminNote =
+        cleanText(
+          req.body.admin_note,
+          5000
+        );
 
 
       if (
@@ -104,32 +332,35 @@ router.get(
       }
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | GET ORDER
-      |--------------------------------------------------------------------------
-      */
+      if (
+        !VALID_STATUSES.includes(
+          status
+        )
+      ) {
 
-      const orderResult =
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid order status.'
+
+        });
+
+      }
+
+
+      const currentOrderResult =
         await query(
           `
           SELECT
-            o.id,
-            o.order_number,
-            s.name AS service_name,
-            o.status,
-            o.price,
-            o.created_at,
-            o.updated_at,
-            o.completed_at
+            id,
+            status
 
-          FROM orders o
-
-          INNER JOIN services s
-            ON s.id = o.service_id
+          FROM orders
 
           WHERE
-            o.order_number = $1
+            order_number = $1
 
           LIMIT 1
           `,
@@ -140,7 +371,7 @@ router.get(
 
 
       if (
-        orderResult.rows.length === 0
+        currentOrderResult.rows.length === 0
       ) {
 
         return res.status(404).json({
@@ -155,76 +386,122 @@ router.get(
       }
 
 
-      const order =
-        orderResult.rows[0];
+      const currentOrder =
+        currentOrderResult.rows[0];
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | GET STATUS HISTORY
-      |--------------------------------------------------------------------------
-      */
-
-      const historyResult =
+      const updateResult =
         await query(
           `
-          SELECT
-            old_status,
-            new_status,
-            note,
-            created_at
+          UPDATE orders
 
-          FROM order_status_history
+          SET
+
+            status = $1,
+
+            admin_note = $2,
+
+            completed_at =
+              CASE
+                WHEN $1 = 'completed'
+                THEN NOW()
+                ELSE NULL
+              END,
+
+            updated_at = NOW()
 
           WHERE
-            order_id = $1
+            order_number = $3
 
-          ORDER BY
-            created_at ASC
+          RETURNING
+
+            id,
+
+            order_number,
+
+            status,
+
+            admin_note,
+
+            completed_at,
+
+            created_at,
+
+            updated_at
           `,
           [
-            order.id
+
+            status,
+
+            adminNote || null,
+
+            orderNumber
+
           ]
         );
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | RESPONSE
-      |--------------------------------------------------------------------------
-      */
+      const updatedOrder =
+        updateResult.rows[0];
 
-      res.json({
+
+      if (
+        currentOrder.status !==
+        status
+      ) {
+
+        await query(
+          `
+          INSERT INTO order_status_history (
+
+            order_id,
+
+            old_status,
+
+            new_status,
+
+            note
+
+          )
+
+          VALUES (
+
+            $1,
+
+            $2,
+
+            $3,
+
+            $4
+
+          )
+          `,
+          [
+
+            currentOrder.id,
+
+            currentOrder.status,
+
+            status,
+
+            adminNote ||
+              `Order status changed to ${status}.`
+
+          ]
+        );
+
+      }
+
+
+      return res.json({
 
         success: true,
 
-        order: {
+        message:
+          'Order updated successfully.',
 
-          order_number:
-            order.order_number,
-
-          service_name:
-            order.service_name,
-
-          status:
-            order.status,
-
-          price:
-            order.price,
-
-          created_at:
-            order.created_at,
-
-          updated_at:
-            order.updated_at,
-
-          completed_at:
-            order.completed_at
-
-        },
-
-        history:
-          historyResult.rows
+        order:
+          updatedOrder
 
       });
 
@@ -244,16 +521,349 @@ router.get(
 
 /*
 |--------------------------------------------------------------------------
-| POST /api/orders
+| GET ALL SERVICES FOR ADMIN
 |--------------------------------------------------------------------------
-|
-| Creates a new customer order.
-|
+*/
+
+router.get(
+  '/services',
+
+  requireAdmin,
+
+  async (
+    req,
+    res,
+    next
+  ) => {
+
+    try {
+
+      const result =
+        await query(
+          `
+          SELECT
+            id,
+            name,
+            slug,
+            description,
+            price,
+            price_type,
+            turnaround_text,
+            is_active,
+            created_at,
+            updated_at
+
+          FROM services
+
+          ORDER BY
+            id ASC
+          `
+        );
+
+
+      return res.json({
+
+        success: true,
+
+        services:
+          result.rows
+
+      });
+
+    } catch (
+      error
+    ) {
+
+      next(
+        error
+      );
+
+    }
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| CREATE SERVICE
 |--------------------------------------------------------------------------
 */
 
 router.post(
-  '/',
+  '/services',
+
+  requireAdmin,
+
+  async (
+    req,
+    res,
+    next
+  ) => {
+
+    try {
+
+      const name =
+        cleanText(
+          req.body.name,
+          150
+        );
+
+
+      const description =
+        cleanText(
+          req.body.description,
+          3000
+        );
+
+
+      const turnaroundText =
+        cleanText(
+          req.body.turnaround_text,
+          150
+        );
+
+
+      const priceType =
+        cleanText(
+          req.body.price_type,
+          50
+        );
+
+
+      const price =
+        Number(
+          req.body.price
+        );
+
+
+      const isActive =
+        req.body.is_active === true;
+
+
+      if (
+        name.length < 2
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Service name must contain at least 2 characters.'
+
+        });
+
+      }
+
+
+      if (
+        !VALID_PRICE_TYPES.includes(
+          priceType
+        )
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid price type.'
+
+        });
+
+      }
+
+
+      if (
+        priceType !== 'contact' &&
+        (
+          !Number.isFinite(
+            price
+          ) ||
+          price < 0
+        )
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Please enter a valid service price.'
+
+        });
+
+      }
+
+
+      let baseSlug =
+        createSlug(
+          name
+        );
+
+
+      if (!baseSlug) {
+
+        baseSlug =
+          `service-${Date.now()}`;
+
+      }
+
+
+      let slug =
+        baseSlug;
+
+
+      let suffix =
+        1;
+
+
+      while (true) {
+
+        const slugCheck =
+          await query(
+            `
+            SELECT id
+
+            FROM services
+
+            WHERE slug = $1
+
+            LIMIT 1
+            `,
+            [
+              slug
+            ]
+          );
+
+
+        if (
+          slugCheck.rows.length === 0
+        ) {
+
+          break;
+
+        }
+
+
+        suffix += 1;
+
+
+        slug =
+          `${baseSlug}-${suffix}`;
+
+      }
+
+
+      const result =
+        await query(
+          `
+          INSERT INTO services (
+
+            name,
+
+            slug,
+
+            description,
+
+            price,
+
+            price_type,
+
+            turnaround_text,
+
+            is_active,
+
+            created_at,
+
+            updated_at
+
+          )
+
+          VALUES (
+
+            $1,
+
+            $2,
+
+            $3,
+
+            $4,
+
+            $5,
+
+            $6,
+
+            $7,
+
+            NOW(),
+
+            NOW()
+
+          )
+
+          RETURNING
+            *
+          `,
+          [
+
+            name,
+
+            slug,
+
+            description || null,
+
+            priceType === 'contact'
+              ? null
+              : price,
+
+            priceType,
+
+            turnaroundText || null,
+
+            isActive
+
+          ]
+        );
+
+
+      return res.status(201).json({
+
+        success: true,
+
+        message:
+          'Service created successfully.',
+
+        service:
+          result.rows[0]
+
+      });
+
+    } catch (
+      error
+    ) {
+
+      next(
+        error
+      );
+
+    }
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| UPDATE SERVICE
+|--------------------------------------------------------------------------
+*/
+
+router.patch(
+  '/services/:id',
+
+  requireAdmin,
 
   async (
     req,
@@ -265,51 +875,47 @@ router.post(
 
       const serviceId =
         Number(
-          req.body.serviceId
+          req.params.id
         );
 
 
-      const customerName =
+      const name =
         cleanText(
           req.body.name,
-          100
+          150
         );
 
 
-      const customerEmail =
+      const description =
         cleanText(
-          req.body.email,
-          254
-        )
-          .toLowerCase();
-
-
-      const telegramUsername =
-        cleanText(
-          req.body.telegramUsername,
-          64
+          req.body.description,
+          3000
         );
 
 
-      const whatsapp =
+      const turnaroundText =
         cleanText(
-          req.body.whatsapp,
-          32
+          req.body.turnaround_text,
+          150
         );
 
 
-      const customerMessage =
+      const priceType =
         cleanText(
-          req.body.message,
-          5000
+          req.body.price_type,
+          50
         );
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | VALIDATION
-      |--------------------------------------------------------------------------
-      */
+      const price =
+        Number(
+          req.body.price
+        );
+
+
+      const isActive =
+        req.body.is_active === true;
+
 
       if (
         !Number.isInteger(
@@ -323,7 +929,7 @@ router.post(
           success: false,
 
           message:
-            'Please select a valid service.'
+            'Invalid service.'
 
         });
 
@@ -331,7 +937,7 @@ router.post(
 
 
       if (
-        customerName.length < 2
+        name.length < 2
       ) {
 
         return res.status(400).json({
@@ -339,7 +945,7 @@ router.post(
           success: false,
 
           message:
-            'Please enter your name.'
+            'Service name must contain at least 2 characters.'
 
         });
 
@@ -347,8 +953,8 @@ router.post(
 
 
       if (
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-          customerEmail
+        !VALID_PRICE_TYPES.includes(
+          priceType
         )
       ) {
 
@@ -357,32 +963,46 @@ router.post(
           success: false,
 
           message:
-            'Please enter a valid email address.'
+            'Invalid price type.'
 
         });
 
       }
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | GET SERVICE
-      |--------------------------------------------------------------------------
-      */
+      if (
+        priceType !== 'contact' &&
+        (
+          !Number.isFinite(
+            price
+          ) ||
+          price < 0
+        )
+      ) {
 
-      const serviceResult =
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Please enter a valid service price.'
+
+        });
+
+      }
+
+
+      const existingResult =
         await query(
           `
           SELECT
             id,
-            name,
-            price,
-            price_type,
-            is_active
+            slug
 
           FROM services
 
-          WHERE id = $1
+          WHERE
+            id = $1
 
           LIMIT 1
           `,
@@ -393,7 +1013,7 @@ router.post(
 
 
       if (
-        serviceResult.rows.length === 0
+        existingResult.rows.length === 0
       ) {
 
         return res.status(404).json({
@@ -401,19 +1021,118 @@ router.post(
           success: false,
 
           message:
-            'Selected service was not found.'
+            'Service not found.'
 
         });
 
       }
 
 
-      const service =
-        serviceResult.rows[0];
+      const result =
+        await query(
+          `
+          UPDATE services
+
+          SET
+
+            name = $1,
+
+            description = $2,
+
+            price = $3,
+
+            price_type = $4,
+
+            turnaround_text = $5,
+
+            is_active = $6,
+
+            updated_at = NOW()
+
+          WHERE
+            id = $7
+
+          RETURNING
+            *
+          `,
+          [
+
+            name,
+
+            description || null,
+
+            priceType === 'contact'
+              ? null
+              : price,
+
+            priceType,
+
+            turnaroundText || null,
+
+            isActive,
+
+            serviceId
+
+          ]
+        );
+
+
+      return res.json({
+
+        success: true,
+
+        message:
+          'Service updated successfully.',
+
+        service:
+          result.rows[0]
+
+      });
+
+    } catch (
+      error
+    ) {
+
+      next(
+        error
+      );
+
+    }
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| DELETE SERVICE
+|--------------------------------------------------------------------------
+*/
+
+router.delete(
+  '/services/:id',
+
+  requireAdmin,
+
+  async (
+    req,
+    res,
+    next
+  ) => {
+
+    try {
+
+      const serviceId =
+        Number(
+          req.params.id
+        );
 
 
       if (
-        service.is_active !== true
+        !Number.isInteger(
+          serviceId
+        ) ||
+        serviceId <= 0
       ) {
 
         return res.status(400).json({
@@ -421,196 +1140,89 @@ router.post(
           success: false,
 
           message:
-            'This service is currently unavailable.'
+            'Invalid service.'
 
         });
 
       }
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | CREATE UNIQUE ORDER
-      |--------------------------------------------------------------------------
-      */
+      const orderCheck =
+        await query(
+          `
+          SELECT
+            COUNT(*)::int AS total
 
-      let orderNumber =
-        generateOrderNumber();
+          FROM orders
 
-
-      let orderCreated =
-        false;
-
-
-      let createdOrder =
-        null;
-
-
-      for (
-        let attempt = 0;
-        attempt < 10;
-        attempt++
-      ) {
-
-        orderNumber =
-          generateOrderNumber();
-
-
-        try {
-
-          const orderResult =
-            await query(
-              `
-              INSERT INTO orders (
-                order_number,
-                service_id,
-                customer_name,
-                customer_email,
-                telegram_username,
-                whatsapp,
-                message,
-                price,
-                status
-              )
-              VALUES (
-                $1,
-                $2,
-                $3,
-                $4,
-                $5,
-                $6,
-                $7,
-                $8,
-                'pending'
-              )
-              RETURNING
-                id,
-                order_number,
-                status,
-                price,
-                created_at
-              `,
-              [
-                orderNumber,
-                service.id,
-                customerName,
-                customerEmail,
-                telegramUsername || null,
-                whatsapp || null,
-                customerMessage || null,
-                service.price
-              ]
-            );
-
-
-          createdOrder =
-            orderResult.rows[0];
-
-
-          orderCreated =
-            true;
-
-
-          break;
-
-        } catch (
-          error
-        ) {
-
-          if (
-            error.code === '23505'
-          ) {
-
-            continue;
-
-          }
-
-
-          throw error;
-
-        }
-
-      }
+          WHERE
+            service_id = $1
+          `,
+          [
+            serviceId
+          ]
+        );
 
 
       if (
-        !orderCreated ||
-        !createdOrder
+        orderCheck.rows[0].total > 0
       ) {
 
-        throw new Error(
-          'Unable to generate a unique order number.'
-        );
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'This service cannot be deleted because it has existing orders. You can deactivate it instead.'
+
+        });
 
       }
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | CREATE INITIAL STATUS HISTORY
-      |--------------------------------------------------------------------------
-      */
+      const result =
+        await query(
+          `
+          DELETE FROM services
 
-      await query(
-        `
-        INSERT INTO order_status_history (
-          order_id,
-          old_status,
-          new_status,
-          note
-        )
-        VALUES (
-          $1,
-          NULL,
-          'pending',
-          'Order created.'
-        )
-        `,
-        [
-          createdOrder.id
-        ]
-      );
+          WHERE
+            id = $1
+
+          RETURNING
+            id,
+            name
+          `,
+          [
+            serviceId
+          ]
+        );
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | RESPONSE
-      |--------------------------------------------------------------------------
-      */
+      if (
+        result.rows.length === 0
+      ) {
 
-      res.status(201).json({
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Service not found.'
+
+        });
+
+      }
+
+
+      return res.json({
 
         success: true,
 
         message:
-          'Order created successfully.',
+          'Service deleted successfully.',
 
-        order: {
-
-          orderNumber:
-            createdOrder.order_number,
-
-          service:
-            service.name,
-
-          price:
-            createdOrder.price,
-
-          priceType:
-            service.price_type,
-
-          status:
-            createdOrder.status,
-
-          createdAt:
-            createdOrder.created_at
-
-        },
-
-        telegramUrl:
-          `https://t.me/timifxx203?text=${encodeURIComponent(
-            `Hello, I just placed an order on TimiFxx Marketing.\n\nOrder Number: ${createdOrder.order_number}\nService: ${service.name}`
-          )}`
+        service:
+          result.rows[0]
 
       });
 
