@@ -1,10 +1,13 @@
 require('dotenv').config();
 
+
 const express =
   require('express');
 
+
 const cors =
   require('cors');
+
 
 const path =
   require('path');
@@ -13,11 +16,14 @@ const path =
 const healthRouter =
   require('./routes/health');
 
+
 const servicesRouter =
   require('./routes/services');
 
+
 const ordersRouter =
   require('./routes/orders');
+
 
 const adminRouter =
   require('./routes/admin');
@@ -49,31 +55,36 @@ const PORT =
 | PATHS
 |--------------------------------------------------------------------------
 |
-| Your project structure should be:
+| PROJECT STRUCTURE:
 |
 | project/
+|
 | ├── backend/
-| |   ├── server.js
-| |   ├── routes/
-| |   ├── config/
-| |   └── middleware/
-| |
-| ├── index.html
-| ├── admin.html
-| |
-| ├── css/
-| |   └── admin.css
-| |
-| └── js/
-|     └── admin.js
+| │   ├── server.js
+| │   ├── routes/
+| │   ├── config/
+| │   └── middleware/
+|
+| └── frontend/
+|     ├── index.html
+|     ├── admin.html
+|     │
+|     ├── css/
+|     │   ├── style.css
+|     │   └── admin.css
+|     │
+|     └── js/
+|         └── admin.js
 |
 |--------------------------------------------------------------------------
 */
 
+
 const FRONTEND_PATH =
   path.join(
     __dirname,
-    '..'
+    '..',
+    'frontend'
   );
 
 
@@ -82,6 +93,7 @@ const FRONTEND_PATH =
 | CORS
 |--------------------------------------------------------------------------
 */
+
 
 const allowedOrigins =
   String(
@@ -106,17 +118,27 @@ app.use(
         : true,
 
     methods: [
+
       'GET',
+
       'POST',
+
       'PUT',
+
       'PATCH',
+
       'DELETE',
+
       'OPTIONS'
+
     ],
 
     allowedHeaders: [
+
       'Content-Type',
+
       'Authorization'
+
     ]
 
   })
@@ -129,17 +151,26 @@ app.use(
 |--------------------------------------------------------------------------
 */
 
+
 app.use(
   express.json({
-    limit: '100kb'
+
+    limit:
+      '100kb'
+
   })
 );
 
 
 app.use(
   express.urlencoded({
-    extended: false,
-    limit: '100kb'
+
+    extended:
+      false,
+
+    limit:
+      '100kb'
+
   })
 );
 
@@ -149,6 +180,7 @@ app.use(
 | REQUEST LOGGING
 |--------------------------------------------------------------------------
 */
+
 
 app.use(
   requestLogger
@@ -160,6 +192,7 @@ app.use(
 | API ROUTES
 |--------------------------------------------------------------------------
 */
+
 
 app.use(
   '/api/health',
@@ -185,6 +218,7 @@ app.use(
 |--------------------------------------------------------------------------
 */
 
+
 app.use(
   '/api/admin',
   adminRouter
@@ -193,15 +227,39 @@ app.use(
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN DASHBOARD
+| STATIC FRONTEND FILES
 |--------------------------------------------------------------------------
 |
-| This makes the dashboard available at:
+| This serves:
 |
-| https://timifxx-marketing-production.up.railway.app/admin
+| /css/style.css
+| /css/admin.css
+| /js/admin.js
 |
 |--------------------------------------------------------------------------
 */
+
+
+app.use(
+  express.static(
+    FRONTEND_PATH
+  )
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN DASHBOARD
+|--------------------------------------------------------------------------
+|
+| Available at:
+|
+| /admin
+| /admin.html
+|
+|--------------------------------------------------------------------------
+*/
+
 
 app.get(
   '/admin',
@@ -220,12 +278,6 @@ app.get(
   }
 );
 
-
-/*
-|--------------------------------------------------------------------------
-| ADMIN HTML DIRECT ACCESS
-|--------------------------------------------------------------------------
-*/
 
 app.get(
   '/admin.html',
@@ -251,6 +303,7 @@ app.get(
 |--------------------------------------------------------------------------
 */
 
+
 app.get(
   '/',
   (
@@ -271,30 +324,10 @@ app.get(
 
 /*
 |--------------------------------------------------------------------------
-| STATIC FILES
-|--------------------------------------------------------------------------
-|
-| Serves:
-|
-| /css/admin.css
-| /js/admin.js
-| /images/...
-|
-|--------------------------------------------------------------------------
-*/
-
-app.use(
-  express.static(
-    FRONTEND_PATH
-  )
-);
-
-
-/*
-|--------------------------------------------------------------------------
 | 404 HANDLER
 |--------------------------------------------------------------------------
 */
+
 
 app.use(
   notFoundHandler
@@ -307,6 +340,7 @@ app.use(
 |--------------------------------------------------------------------------
 */
 
+
 app.use(
   errorHandler
 );
@@ -318,6 +352,7 @@ app.use(
 |--------------------------------------------------------------------------
 */
 
+
 app.listen(
   PORT,
   () => {
@@ -325,6 +360,7 @@ app.listen(
     console.log(
       `TimiFxx Marketing website and API running on port ${PORT}`
     );
+
 
     console.log(
       `Admin dashboard available at /admin`
