@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
@@ -23,13 +22,13 @@
 
   <link
     rel="stylesheet"
-    href="/css/style.css"
+    href="css/style.css?v=3"
   >
 
 
   <link
     rel="stylesheet"
-    href="/css/admin.css"
+    href="css/admin.css?v=3"
   >
 
 </head>
@@ -38,7 +37,7 @@
 <body>
 
 
-  <!-- LOGIN -->
+  <!-- LOGIN SCREEN -->
 
   <main
     id="loginScreen"
@@ -69,9 +68,7 @@
         class="admin-login-form"
       >
 
-        <label
-          for="adminKey"
-        >
+        <label for="adminKey">
 
           Admin access key
 
@@ -116,8 +113,6 @@
   >
 
 
-    <!-- HEADER -->
-
     <header
       class="admin-header"
     >
@@ -132,6 +127,7 @@
             TIMIFXX MARKETING
           </p>
 
+
           <h1>
             Admin Dashboard
           </h1>
@@ -145,7 +141,7 @@
 
           <a
             class="button ghost"
-            href="/"
+            href="index.html"
           >
             View Website
           </a>
@@ -157,6 +153,15 @@
             type="button"
           >
             Refresh Orders
+          </button>
+
+
+          <button
+            id="refreshServicesButton"
+            class="button secondary"
+            type="button"
+          >
+            Refresh Services
           </button>
 
 
@@ -250,79 +255,78 @@
 
       <!-- ORDERS -->
 
-      <section>
+      <div
+        class="admin-toolbar"
+      >
 
-        <div
-          class="admin-toolbar"
-        >
+        <div>
 
-          <div>
-
-            <h2>
-              Incoming Orders
-            </h2>
-
-            <p
-              id="ordersMessage"
-              class="admin-message"
-            ></p>
-
-          </div>
+          <h2>
+            Incoming Orders
+          </h2>
 
 
-          <select
-            id="statusFilter"
-          >
-
-            <option value="">
-              All statuses
-            </option>
-
-            <option value="pending">
-              Pending
-            </option>
-
-            <option value="paid">
-              Paid
-            </option>
-
-            <option value="in_progress">
-              In Progress
-            </option>
-
-            <option value="waiting_customer">
-              Waiting for Customer
-            </option>
-
-            <option value="completed">
-              Completed
-            </option>
-
-            <option value="cancelled">
-              Cancelled
-            </option>
-
-            <option value="declined">
-              Declined
-            </option>
-
-          </select>
+          <p
+            id="ordersMessage"
+            class="admin-message"
+          ></p>
 
         </div>
 
 
-        <div
-          id="ordersContainer"
-          class="orders-container"
+        <select
+          id="statusFilter"
         >
 
-          <div class="orders-loading">
-            Loading orders...
-          </div>
+          <option value="">
+            All statuses
+          </option>
 
+          <option value="pending">
+            Pending
+          </option>
+
+          <option value="paid">
+            Paid
+          </option>
+
+          <option value="in_progress">
+            In Progress
+          </option>
+
+          <option value="waiting_customer">
+            Waiting for Customer
+          </option>
+
+          <option value="completed">
+            Completed
+          </option>
+
+          <option value="cancelled">
+            Cancelled
+          </option>
+
+          <option value="declined">
+            Declined
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div
+        id="ordersContainer"
+        class="orders-container"
+      >
+
+        <div
+          class="orders-loading"
+        >
+          Loading orders...
         </div>
 
-      </section>
+      </div>
 
 
       <!-- SERVICES -->
@@ -332,176 +336,160 @@
       >
 
         <div
-          class="admin-toolbar"
+          class="admin-services-header"
         >
 
           <div>
 
+            <p class="eyebrow">
+              SERVICES
+            </p>
+
+
             <h2>
-              Services Management
+              Add New Service
             </h2>
 
-            <p
-              id="serviceMessage"
-              class="admin-message"
-            ></p>
+
+            <p>
+              Create a new service that will appear on your website.
+            </p>
 
           </div>
-
-
-          <button
-            id="refreshServicesButton"
-            class="button secondary"
-            type="button"
-          >
-            Refresh Services
-          </button>
 
         </div>
 
 
-        <!-- CREATE SERVICE -->
-
-        <div
-          class="admin-service-create-card"
+        <form
+          id="createServiceForm"
+          class="create-service-form"
         >
 
-          <h3>
-            Add New Service
-          </h3>
-
-          <p>
-            Create a new service that will appear on your website.
-          </p>
-
-
-          <form
-            id="createServiceForm"
+          <div
+            class="service-form-grid"
           >
 
-            <div
-              class="service-form-grid"
-            >
+            <label>
 
-              <label>
+              Service Name
 
-                Service Name
+              <input
+                id="serviceName"
+                type="text"
+                maxlength="150"
+                required
+                placeholder="Example: Telegram Ads Setup"
+              >
 
-                <input
-                  id="serviceName"
-                  type="text"
-                  maxlength="150"
-                  required
-                  placeholder="Example: Telegram Ads Setup"
-                >
-
-              </label>
-
-
-              <label>
-
-                Price
-
-                <input
-                  id="servicePrice"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="Example: 50"
-                >
-
-              </label>
-
-
-              <label>
-
-                Price Type
-
-                <select
-                  id="servicePriceType"
-                >
-
-                  <option value="fixed">
-                    Fixed Price
-                  </option>
-
-                  <option value="starting_from">
-                    Starting From
-                  </option>
-
-                  <option value="contact">
-                    Contact Us
-                  </option>
-
-                </select>
-
-              </label>
-
-
-              <label>
-
-                Turnaround Time
-
-                <input
-                  id="serviceTurnaround"
-                  type="text"
-                  maxlength="150"
-                  placeholder="Example: 1-3 days"
-                >
-
-              </label>
-
-            </div>
+            </label>
 
 
             <label>
 
-              Service Description
-
-              <textarea
-                id="serviceDescription"
-                rows="5"
-                maxlength="3000"
-                placeholder="Describe what the customer will receive..."
-              ></textarea>
-
-            </label>
-
-
-            <label
-              class="service-active-label"
-            >
+              Price
 
               <input
-                id="serviceActive"
-                type="checkbox"
-                checked
+                id="servicePrice"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Example: 50"
               >
-
-              <span>
-                Make this service active immediately
-              </span>
 
             </label>
 
 
-            <button
-              id="createServiceButton"
-              class="button primary"
-              type="submit"
+            <label>
+
+              Price Type
+
+              <select
+                id="servicePriceType"
+              >
+
+                <option value="fixed">
+                  Fixed Price
+                </option>
+
+                <option value="starting_from">
+                  Starting From
+                </option>
+
+                <option value="contact">
+                  Contact Us
+                </option>
+
+              </select>
+
+            </label>
+
+
+            <label>
+
+              Turnaround Time
+
+              <input
+                id="serviceTurnaround"
+                type="text"
+                maxlength="150"
+                placeholder="Example: 1-3 days"
+              >
+
+            </label>
+
+          </div>
+
+
+          <label>
+
+            Service Description
+
+            <textarea
+              id="serviceDescription"
+              rows="5"
+              maxlength="3000"
+              placeholder="Describe what the customer will receive..."
+            ></textarea>
+
+          </label>
+
+
+          <label
+            class="service-active-label"
+          >
+
+            <input
+              id="serviceActive"
+              type="checkbox"
+              checked
             >
-              Create Service
-            </button>
 
-          </form>
+            <span>
+              Make this service active immediately
+            </span>
 
-        </div>
+          </label>
 
 
-        <!-- EXISTING SERVICES -->
+          <button
+            id="createServiceButton"
+            class="button primary"
+            type="submit"
+          >
+            Create Service
+          </button>
+
+
+          <p
+            id="serviceMessage"
+            class="admin-message"
+          ></p>
+
+        </form>
+
 
         <div
-          class="admin-toolbar"
+          class="existing-services-header"
         >
 
           <div>
@@ -509,6 +497,7 @@
             <h2>
               Existing Services
             </h2>
+
 
             <p>
               Edit your services directly from the dashboard.
@@ -530,7 +519,7 @@
 
         <div
           id="servicesAdminContainer"
-          class="admin-services-container"
+          class="services-admin-container"
         >
 
           <div
@@ -549,7 +538,7 @@
 
 
   <script
-    src="/js/admin.js?v=20260824"
+    src="js/admin.js?v=10"
   ></script>
 
 </body>
