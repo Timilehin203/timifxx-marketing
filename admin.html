@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
@@ -19,14 +20,16 @@
     Admin Dashboard | TimiFxx Marketing
   </title>
 
-  <link
-    rel="stylesheet"
-    href="css/style.css"
-  >
 
   <link
     rel="stylesheet"
-    href="css/admin.css"
+    href="/css/style.css"
+  >
+
+
+  <link
+    rel="stylesheet"
+    href="/css/admin.css"
   >
 
 </head>
@@ -35,24 +38,26 @@
 <body>
 
 
-  <!-- LOGIN SCREEN -->
+  <!-- LOGIN -->
 
   <main
     id="loginScreen"
-    class="admin-page-section"
+    class="admin-login"
   >
 
     <section
-      class="admin-login-panel"
+      class="admin-login-card"
     >
 
       <p class="eyebrow">
         PRIVATE AREA
       </p>
 
+
       <h1>
         Admin Dashboard
       </h1>
+
 
       <p>
         Enter your administrator access key to manage orders and services.
@@ -64,9 +69,11 @@
         class="admin-login-form"
       >
 
-        <label for="adminKey">
+        <label
+          for="adminKey"
+        >
 
-          Admin Access Key
+          Admin access key
 
           <input
             id="adminKey"
@@ -100,23 +107,23 @@
   </main>
 
 
-  <!-- ADMIN DASHBOARD -->
+  <!-- DASHBOARD -->
 
   <main
     id="dashboard"
-    class="admin-page-section"
+    class="admin-dashboard"
     hidden
   >
 
-    <section
-      class="container"
+
+    <!-- HEADER -->
+
+    <header
+      class="admin-header"
     >
 
-
-      <!-- HEADER -->
-
-      <header
-        class="admin-dashboard-header"
+      <div
+        class="admin-header-inner"
       >
 
         <div>
@@ -125,13 +132,9 @@
             TIMIFXX MARKETING
           </p>
 
-          <h2>
+          <h1>
             Admin Dashboard
-          </h2>
-
-          <p>
-            Manage your orders and view your existing services.
-          </p>
+          </h1>
 
         </div>
 
@@ -142,7 +145,7 @@
 
           <a
             class="button ghost"
-            href="index.html"
+            href="/"
           >
             View Website
           </a>
@@ -153,7 +156,7 @@
             class="button secondary"
             type="button"
           >
-            Refresh
+            Refresh Orders
           </button>
 
 
@@ -167,18 +170,23 @@
 
         </div>
 
-      </header>
+      </div>
+
+    </header>
 
 
-      <!-- SUMMARY -->
+    <section
+      class="admin-main"
+    >
 
-      <section
-        class="admin-summary-grid"
+
+      <!-- ORDER SUMMARY -->
+
+      <div
+        class="admin-summary"
       >
 
-        <article
-          class="admin-summary-card"
-        >
+        <article>
 
           <span>
             Total Orders
@@ -193,9 +201,7 @@
         </article>
 
 
-        <article
-          class="admin-summary-card"
-        >
+        <article>
 
           <span>
             Pending
@@ -210,9 +216,7 @@
         </article>
 
 
-        <article
-          class="admin-summary-card"
-        >
+        <article>
 
           <span>
             In Progress
@@ -227,9 +231,7 @@
         </article>
 
 
-        <article
-          class="admin-summary-card"
-        >
+        <article>
 
           <span>
             Completed
@@ -243,6 +245,83 @@
 
         </article>
 
+      </div>
+
+
+      <!-- ORDERS -->
+
+      <section>
+
+        <div
+          class="admin-toolbar"
+        >
+
+          <div>
+
+            <h2>
+              Incoming Orders
+            </h2>
+
+            <p
+              id="ordersMessage"
+              class="admin-message"
+            ></p>
+
+          </div>
+
+
+          <select
+            id="statusFilter"
+          >
+
+            <option value="">
+              All statuses
+            </option>
+
+            <option value="pending">
+              Pending
+            </option>
+
+            <option value="paid">
+              Paid
+            </option>
+
+            <option value="in_progress">
+              In Progress
+            </option>
+
+            <option value="waiting_customer">
+              Waiting for Customer
+            </option>
+
+            <option value="completed">
+              Completed
+            </option>
+
+            <option value="cancelled">
+              Cancelled
+            </option>
+
+            <option value="declined">
+              Declined
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div
+          id="ordersContainer"
+          class="orders-container"
+        >
+
+          <div class="orders-loading">
+            Loading orders...
+          </div>
+
+        </div>
+
       </section>
 
 
@@ -253,17 +332,13 @@
       >
 
         <div
-          class="admin-orders-toolbar"
+          class="admin-toolbar"
         >
 
           <div>
 
-            <p class="eyebrow">
-              YOUR SERVICES
-            </p>
-
             <h2>
-              Existing Services
+              Services Management
             </h2>
 
             <p
@@ -285,9 +360,177 @@
         </div>
 
 
+        <!-- CREATE SERVICE -->
+
+        <div
+          class="admin-service-create-card"
+        >
+
+          <h3>
+            Add New Service
+          </h3>
+
+          <p>
+            Create a new service that will appear on your website.
+          </p>
+
+
+          <form
+            id="createServiceForm"
+          >
+
+            <div
+              class="service-form-grid"
+            >
+
+              <label>
+
+                Service Name
+
+                <input
+                  id="serviceName"
+                  type="text"
+                  maxlength="150"
+                  required
+                  placeholder="Example: Telegram Ads Setup"
+                >
+
+              </label>
+
+
+              <label>
+
+                Price
+
+                <input
+                  id="servicePrice"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Example: 50"
+                >
+
+              </label>
+
+
+              <label>
+
+                Price Type
+
+                <select
+                  id="servicePriceType"
+                >
+
+                  <option value="fixed">
+                    Fixed Price
+                  </option>
+
+                  <option value="starting_from">
+                    Starting From
+                  </option>
+
+                  <option value="contact">
+                    Contact Us
+                  </option>
+
+                </select>
+
+              </label>
+
+
+              <label>
+
+                Turnaround Time
+
+                <input
+                  id="serviceTurnaround"
+                  type="text"
+                  maxlength="150"
+                  placeholder="Example: 1-3 days"
+                >
+
+              </label>
+
+            </div>
+
+
+            <label>
+
+              Service Description
+
+              <textarea
+                id="serviceDescription"
+                rows="5"
+                maxlength="3000"
+                placeholder="Describe what the customer will receive..."
+              ></textarea>
+
+            </label>
+
+
+            <label
+              class="service-active-label"
+            >
+
+              <input
+                id="serviceActive"
+                type="checkbox"
+                checked
+              >
+
+              <span>
+                Make this service active immediately
+              </span>
+
+            </label>
+
+
+            <button
+              id="createServiceButton"
+              class="button primary"
+              type="submit"
+            >
+              Create Service
+            </button>
+
+          </form>
+
+        </div>
+
+
+        <!-- EXISTING SERVICES -->
+
+        <div
+          class="admin-toolbar"
+        >
+
+          <div>
+
+            <h2>
+              Existing Services
+            </h2>
+
+            <p>
+              Edit your services directly from the dashboard.
+            </p>
+
+          </div>
+
+
+          <button
+            id="refreshServicesButtonBottom"
+            class="button secondary"
+            type="button"
+          >
+            Refresh Services
+          </button>
+
+        </div>
+
+
         <div
           id="servicesAdminContainer"
-          class="admin-orders-container"
+          class="admin-services-container"
         >
 
           <div
@@ -300,105 +543,13 @@
 
       </section>
 
-
-      <!-- ORDERS -->
-
-      <section
-        class="admin-orders-section"
-      >
-
-        <div
-          class="admin-orders-toolbar"
-        >
-
-          <div>
-
-            <p class="eyebrow">
-              CUSTOMER ORDERS
-            </p>
-
-            <h2>
-              Incoming Orders
-            </h2>
-
-            <p
-              id="ordersMessage"
-              class="admin-message"
-            ></p>
-
-          </div>
-
-
-          <label>
-
-            Filter Orders
-
-            <select
-              id="statusFilter"
-            >
-
-              <option value="">
-                All Statuses
-              </option>
-
-              <option value="pending">
-                Pending
-              </option>
-
-              <option value="paid">
-                Paid
-              </option>
-
-              <option value="in_progress">
-                In Progress
-              </option>
-
-              <option value="waiting_customer">
-                Waiting for Customer
-              </option>
-
-              <option value="completed">
-                Completed
-              </option>
-
-              <option value="cancelled">
-                Cancelled
-              </option>
-
-              <option value="declined">
-                Declined
-              </option>
-
-            </select>
-
-          </label>
-
-        </div>
-
-
-        <div
-          id="ordersContainer"
-          class="admin-orders-container"
-        >
-
-          <div
-            class="orders-loading"
-          >
-            Loading orders...
-          </div>
-
-        </div>
-
-      </section>
-
-
     </section>
 
   </main>
 
 
   <script
-    src="js/admin.js"
+    src="/js/admin.js?v=20260824"
   ></script>
 
 </body>
