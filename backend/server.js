@@ -1,29 +1,26 @@
 require('dotenv').config();
 
-
 const express =
   require('express');
-
 
 const cors =
   require('cors');
 
-
 const path =
   require('path');
+
+const fs =
+  require('fs');
 
 
 const healthRouter =
   require('./routes/health');
 
-
 const servicesRouter =
   require('./routes/services');
 
-
 const ordersRouter =
   require('./routes/orders');
-
 
 const adminRouter =
   require('./routes/admin');
@@ -52,24 +49,34 @@ const PORT =
 
 /*
 |--------------------------------------------------------------------------
-| FRONTEND PATH
-|--------------------------------------------------------------------------
-|
-| Your frontend folder is:
-|
-| project/
-| ├── backend/
-| └── frontend/
-|
+| FRONTEND PATH DETECTION
 |--------------------------------------------------------------------------
 */
 
-const FRONTEND_PATH =
+const frontendFolderPath =
   path.join(
     __dirname,
     '..',
     'frontend'
   );
+
+
+const projectRootPath =
+  path.join(
+    __dirname,
+    '..'
+  );
+
+
+const FRONTEND_PATH =
+  fs.existsSync(
+    path.join(
+      frontendFolderPath,
+      'index.html'
+    )
+  )
+    ? frontendFolderPath
+    : projectRootPath;
 
 
 /*
@@ -120,7 +127,7 @@ app.use(
 
 /*
 |--------------------------------------------------------------------------
-| REQUEST PARSING
+| BODY PARSING
 |--------------------------------------------------------------------------
 */
 
@@ -141,7 +148,7 @@ app.use(
 
 /*
 |--------------------------------------------------------------------------
-| REQUEST LOGGING
+| REQUEST LOGGER
 |--------------------------------------------------------------------------
 */
 
@@ -174,12 +181,6 @@ app.use(
 );
 
 
-/*
-|--------------------------------------------------------------------------
-| ADMIN API
-|--------------------------------------------------------------------------
-*/
-
 app.use(
   '/api/admin',
   adminRouter
@@ -188,13 +189,16 @@ app.use(
 
 /*
 |--------------------------------------------------------------------------
-| STATIC FRONTEND FILES
+| STATIC FILES
 |--------------------------------------------------------------------------
 */
 
 app.use(
   express.static(
-    FRONTEND_PATH
+    FRONTEND_PATH,
+    {
+      maxAge: '1h'
+    }
   )
 );
 
@@ -222,12 +226,6 @@ app.get(
   }
 );
 
-
-/*
-|--------------------------------------------------------------------------
-| ADMIN HTML
-|--------------------------------------------------------------------------
-*/
 
 app.get(
   '/admin.html',
@@ -313,6 +311,10 @@ app.listen(
 
     console.log(
       'Admin dashboard available at /admin'
+    );
+
+    console.log(
+      `Admin services API: /api/admin/services`
     );
 
   }
