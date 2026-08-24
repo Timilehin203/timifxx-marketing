@@ -1,13 +1,10 @@
 require('dotenv').config();
 
-
 const express =
   require('express');
 
-
 const cors =
   require('cors');
-
 
 const path =
   require('path');
@@ -16,14 +13,11 @@ const path =
 const healthRouter =
   require('./routes/health');
 
-
 const servicesRouter =
   require('./routes/services');
 
-
 const ordersRouter =
   require('./routes/orders');
-
 
 const adminRouter =
   require('./routes/admin');
@@ -52,33 +46,27 @@ const PORT =
 
 /*
 |--------------------------------------------------------------------------
-| PATHS
+| FRONTEND PATH
 |--------------------------------------------------------------------------
 |
-| PROJECT STRUCTURE:
+| Project structure:
 |
 | project/
-|
 | ├── backend/
 | │   ├── server.js
-| │   ├── routes/
-| │   ├── config/
-| │   └── middleware/
-|
+| │   └── routes/
+| │
 | └── frontend/
 |     ├── index.html
 |     ├── admin.html
-|     │
 |     ├── css/
 |     │   ├── style.css
 |     │   └── admin.css
-|     │
 |     └── js/
 |         └── admin.js
 |
 |--------------------------------------------------------------------------
 */
-
 
 const FRONTEND_PATH =
   path.join(
@@ -93,7 +81,6 @@ const FRONTEND_PATH =
 | CORS
 |--------------------------------------------------------------------------
 */
-
 
 const allowedOrigins =
   String(
@@ -118,27 +105,17 @@ app.use(
         : true,
 
     methods: [
-
       'GET',
-
       'POST',
-
       'PUT',
-
       'PATCH',
-
       'DELETE',
-
       'OPTIONS'
-
     ],
 
     allowedHeaders: [
-
       'Content-Type',
-
       'Authorization'
-
     ]
 
   })
@@ -151,26 +128,17 @@ app.use(
 |--------------------------------------------------------------------------
 */
 
-
 app.use(
   express.json({
-
-    limit:
-      '100kb'
-
+    limit: '100kb'
   })
 );
 
 
 app.use(
   express.urlencoded({
-
-    extended:
-      false,
-
-    limit:
-      '100kb'
-
+    extended: false,
+    limit: '100kb'
   })
 );
 
@@ -180,7 +148,6 @@ app.use(
 | REQUEST LOGGING
 |--------------------------------------------------------------------------
 */
-
 
 app.use(
   requestLogger
@@ -192,7 +159,6 @@ app.use(
 | API ROUTES
 |--------------------------------------------------------------------------
 */
-
 
 app.use(
   '/api/health',
@@ -212,13 +178,6 @@ app.use(
 );
 
 
-/*
-|--------------------------------------------------------------------------
-| ADMIN API ROUTES
-|--------------------------------------------------------------------------
-*/
-
-
 app.use(
   '/api/admin',
   adminRouter
@@ -229,16 +188,7 @@ app.use(
 |--------------------------------------------------------------------------
 | STATIC FRONTEND FILES
 |--------------------------------------------------------------------------
-|
-| This serves:
-|
-| /css/style.css
-| /css/admin.css
-| /js/admin.js
-|
-|--------------------------------------------------------------------------
 */
-
 
 app.use(
   express.static(
@@ -251,15 +201,7 @@ app.use(
 |--------------------------------------------------------------------------
 | ADMIN DASHBOARD
 |--------------------------------------------------------------------------
-|
-| Available at:
-|
-| /admin
-| /admin.html
-|
-|--------------------------------------------------------------------------
 */
-
 
 app.get(
   '/admin',
@@ -303,7 +245,6 @@ app.get(
 |--------------------------------------------------------------------------
 */
 
-
 app.get(
   '/',
   (
@@ -328,7 +269,6 @@ app.get(
 |--------------------------------------------------------------------------
 */
 
-
 app.use(
   notFoundHandler
 );
@@ -339,7 +279,6 @@ app.use(
 | ERROR HANDLER
 |--------------------------------------------------------------------------
 */
-
 
 app.use(
   errorHandler
@@ -352,7 +291,6 @@ app.use(
 |--------------------------------------------------------------------------
 */
 
-
 app.listen(
   PORT,
   () => {
@@ -361,9 +299,12 @@ app.listen(
       `TimiFxx Marketing website and API running on port ${PORT}`
     );
 
+    console.log(
+      `Frontend path: ${FRONTEND_PATH}`
+    );
 
     console.log(
-      `Admin dashboard available at /admin`
+      'Admin dashboard available at /admin'
     );
 
   }
