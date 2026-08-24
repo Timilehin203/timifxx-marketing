@@ -1,10 +1,13 @@
 require('dotenv').config();
 
+
 const express =
   require('express');
 
+
 const cors =
   require('cors');
+
 
 const path =
   require('path');
@@ -13,11 +16,14 @@ const path =
 const healthRouter =
   require('./routes/health');
 
+
 const servicesRouter =
   require('./routes/services');
 
+
 const ordersRouter =
   require('./routes/orders');
+
 
 const adminRouter =
   require('./routes/admin');
@@ -49,21 +55,11 @@ const PORT =
 | FRONTEND PATH
 |--------------------------------------------------------------------------
 |
-| Project structure:
+| Your frontend folder is:
 |
 | project/
 | ├── backend/
-| │   ├── server.js
-| │   └── routes/
-| │
 | └── frontend/
-|     ├── index.html
-|     ├── admin.html
-|     ├── css/
-|     │   ├── style.css
-|     │   └── admin.css
-|     └── js/
-|         └── admin.js
 |
 |--------------------------------------------------------------------------
 */
@@ -178,6 +174,12 @@ app.use(
 );
 
 
+/*
+|--------------------------------------------------------------------------
+| ADMIN API
+|--------------------------------------------------------------------------
+*/
+
 app.use(
   '/api/admin',
   adminRouter
@@ -220,6 +222,12 @@ app.get(
   }
 );
 
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN HTML
+|--------------------------------------------------------------------------
+*/
 
 app.get(
   '/admin.html',
