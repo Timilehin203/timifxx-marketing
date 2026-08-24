@@ -548,96 +548,586 @@ async function checkAdminAccess() {
 
 /*
 |--------------------------------------------------------------------------
-| LOGIN
+| LOAD SERVICES
 |--------------------------------------------------------------------------
 */
 
-if (loginForm) {
+async function loadServices() {
 
-  loginForm.addEventListener(
+  if (!servicesAdminContainer) {
+
+    return [];
+
+  }
+
+
+  servicesAdminContainer.innerHTML =
+    `
+      <div class="orders-loading">
+        Loading services...
+      </div>
+    `;
+
+
+  try {
+
+    const data =
+      await adminFetch(
+        '/api/admin/services'
+      );
+
+
+    const services =
+      Array.isArray(
+        data.services
+      )
+        ? data.services
+        : [];
+
+
+    renderServices(
+      services
+    );
+
+
+    if (serviceMessage) {
+
+      serviceMessage.textContent =
+        `${services.length} service${
+          services.length === 1
+            ? ''
+            : 's'
+        } loaded.`;
+
+    }
+
+
+    return services;
+
+  } catch (error) {
+
+    console.error(
+      'Service loading error:',
+      error
+    );
+
+
+    if (
+      handleSessionError(
+        error
+      )
+    ) {
+
+      return [];
+
+    }
+
+
+    servicesAdminContainer.innerHTML =
+      `
+        <div class="orders-loading">
+          Unable to load services.
+        </div>
+      `;
+
+
+    if (serviceMessage) {
+
+      serviceMessage.textContent =
+        error.message ||
+        'Unable to load services.';
+
+    }
+
+
+    return [];
+
+  }
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| RENDER SERVICES
+|--------------------------------------------------------------------------
+*/
+
+function renderServices(
+  services
+) {
+
+  if (!servicesAdminContainer) {
+
+    return;
+
+  }
+
+
+  if (
+    services.length === 0
+  ) {
+
+    servicesAdminContainer.innerHTML =
+      `
+        <div class="orders-loading">
+          No services found.
+        </div>
+      `;
+
+    return;
+
+  }
+
+
+  servicesAdminContainer.innerHTML =
+    services
+      .map(
+        service => {
+
+          const price =
+            service.price === null ||
+            service.price === undefined
+              ? ''
+              : Number(
+                  service.price
+                );
+
+
+          return `
+
+            <article
+              class="admin-service-card"
+              data-service-id="${escapeHtml(
+                service.id
+              )}"
+            >
+
+              <div
+                class="admin-service-card-header"
+              >
+
+                <div>
+
+                  <span
+                    class="service-id-label"
+                  >
+                    Service #${escapeHtml(
+                      service.id
+                    )}
+                  </span>
+
+                  <h3>
+                    ${escapeHtml(
+                      service.name
+                    )}
+                  </h3>
+
+                  <span
+                    class="service-active-status ${
+                      service.is_active
+                        ? 'service-active'
+                        : 'service-inactive'
+                    }"
+                  >
+                    ${
+                      service.is_active
+                        ? 'Active'
+                        : 'Inactive'
+                    }
+                  </span>
+
+                </div>
+
+
+                <button
+                  class="button ghost delete-service-button"
+                  type="button"
+                  data-service-id="${escapeHtml(
+                    service.id
+                  )}"
+                  data-service-name="${escapeHtml(
+                    service.name
+                  )}"
+                >
+                  Delete
+                </button>
+
+              </div>
+
+
+              <div
+                class="service-form-grid"
+              >
+
+                <label>
+
+                  Service Name
+
+                  <input
+                    class="edit-service-name"
+                    type="text"
+                    maxlength="150"
+                    value="${escapeHtml(
+                      service.name
+                    )}"
+                  >
+
+                </label>
+
+
+                <label>
+
+                  Price
+
+                  <input
+                    class="edit-service-price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value="${
+                      price === ''
+                        ? ''
+                        : escapeHtml(
+                            price
+                          )
+                    }"
+                  >
+
+                </label>
+
+
+                <label>
+
+                  Price Type
+
+                  <select
+                    class="edit-service-price-type"
+                  >
+
+                    ${createPriceTypeOptions(
+                      service.price_type
+                    )}
+
+                  </select>
+
+                </label>
+
+
+                <label>
+
+                  Turnaround Time
+
+                  <input
+                    class="edit-service-turnaround"
+                    type="text"
+                    maxlength="150"
+                    value="${escapeHtml(
+                      service.turnaround_text || ''
+                    )}"
+                  >
+
+                </label>
+
+              </div>
+
+
+              <label>
+
+                Service Description
+
+                <textarea
+                  class="edit-service-description"
+                  rows="5"
+                  maxlength="3000"
+                >${escapeHtml(
+                  service.description || ''
+                )}</textarea>
+
+              </label>
+
+
+              <label
+                class="service-active-label"
+              >
+
+                <input
+                  class="edit-service-active"
+                  type="checkbox"
+                  ${
+                    service.is_active
+                      ? 'checked'
+                      : ''
+                  }
+                >
+
+                <span>
+                  This service is active and visible to customers
+                </span>
+
+              </label>
+
+
+              <div
+                class="service-card-actions"
+              >
+
+                <button
+                  class="button primary save-service-button"
+                  type="button"
+                  data-service-id="${escapeHtml(
+                    service.id
+                  )}"
+                >
+                  Save Service
+                </button>
+
+              </div>
+
+            </article>
+
+          `;
+
+        }
+      )
+      .join('');
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| PRICE TYPE OPTIONS
+|--------------------------------------------------------------------------
+*/
+
+function createPriceTypeOptions(
+  currentType
+) {
+
+  const types = [
+
+    'fixed',
+
+    'starting_from',
+
+    'contact'
+
+  ];
+
+
+  return types
+    .map(
+      type => `
+
+        <option
+          value="${type}"
+          ${
+            type === currentType
+              ? 'selected'
+              : ''
+          }
+        >
+          ${formatPriceType(
+            type
+          )}
+        </option>
+
+      `
+    )
+    .join('');
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CREATE SERVICE
+|--------------------------------------------------------------------------
+*/
+
+if (createServiceForm) {
+
+  createServiceForm.addEventListener(
     'submit',
     async event => {
 
       event.preventDefault();
 
 
-      const key =
-        adminKeyInput.value
+      const name =
+        serviceNameInput.value
           .trim();
 
 
-      if (!key) {
+      const priceType =
+        servicePriceType.value;
 
-        loginMessage.textContent =
-          'Enter your admin access key.';
+
+      const rawPrice =
+        servicePrice.value
+          .trim();
+
+
+      let price =
+        rawPrice === ''
+          ? null
+          : Number(
+              rawPrice
+            );
+
+
+      if (
+        priceType === 'contact'
+      ) {
+
+        price =
+          null;
+
+      }
+
+
+      if (!name) {
+
+        serviceMessage.textContent =
+          'Enter a service name.';
 
         return;
 
       }
 
 
-      loginMessage.textContent =
-        'Checking access...';
+      if (
+        priceType !== 'contact' &&
+        (
+          price === null ||
+          !Number.isFinite(
+            price
+          ) ||
+          price < 0
+        )
+      ) {
+
+        serviceMessage.textContent =
+          'Enter a valid price.';
+
+        return;
+
+      }
 
 
-      setAdminKey(
-        key
-      );
+      const originalText =
+        createServiceButton.textContent;
+
+
+      createServiceButton.disabled =
+        true;
+
+
+      createServiceButton.textContent =
+        'Creating...';
+
+
+      if (serviceMessage) {
+
+        serviceMessage.textContent =
+          '';
+
+      }
 
 
       try {
 
-        await checkAdminAccess();
+        await adminFetch(
+          '/api/admin/services',
+          {
+
+            method:
+              'POST',
+
+            body:
+              JSON.stringify({
+
+                name,
+
+                description:
+                  serviceDescription.value
+                    .trim(),
+
+                price,
+
+                price_type:
+                  priceType,
+
+                turnaround_text:
+                  serviceTurnaround.value
+                    .trim(),
+
+                is_active:
+                  serviceActive.checked
+
+              })
+
+          }
+        );
 
 
-        showDashboard();
+        createServiceForm.reset();
 
 
-        loginMessage.textContent =
-          '';
+        serviceActive.checked =
+          true;
 
 
-        loadOrders()
-          .catch(
-            error => {
-
-              console.error(
-                'Order loading error:',
-                error
-              );
-
-            }
-          );
+        servicePriceType.value =
+          'fixed';
 
 
-        loadServices()
-          .catch(
-            error => {
+        if (serviceMessage) {
 
-              console.error(
-                'Service loading error:',
-                error
-              );
+          serviceMessage.textContent =
+            'Service created successfully.';
 
-            }
-          );
+        }
+
+
+        await loadServices();
 
       } catch (error) {
 
         console.error(
-          'Admin login error:',
+          'Create service error:',
           error
         );
 
 
-        clearAdminKey();
+        if (
+          handleSessionError(
+            error
+          )
+        ) {
+
+          return;
+
+        }
 
 
-        loginMessage.textContent =
-          error.status === 401
-            ? 'Invalid admin access key.'
-            : error.message ||
-              'Unable to connect to the admin system.';
+        if (serviceMessage) {
+
+          serviceMessage.textContent =
+            error.message ||
+            'Unable to create service.';
+
+        }
+
+      } finally {
+
+        createServiceButton.disabled =
+          false;
+
+
+        createServiceButton.textContent =
+          originalText;
 
       }
 
@@ -645,6 +1135,375 @@ if (loginForm) {
   );
 
 }
+
+
+/*
+|--------------------------------------------------------------------------
+| SAVE SERVICE
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener(
+  'click',
+  async event => {
+
+    const button =
+      event.target.closest(
+        '.save-service-button'
+      );
+
+
+    if (!button) {
+
+      return;
+
+    }
+
+
+    const card =
+      button.closest(
+        '.admin-service-card'
+      );
+
+
+    if (!card) {
+
+      return;
+
+    }
+
+
+    const serviceId =
+      button.dataset.serviceId;
+
+
+    const name =
+      card
+        .querySelector(
+          '.edit-service-name'
+        )
+        .value
+        .trim();
+
+
+    const priceInput =
+      card.querySelector(
+        '.edit-service-price'
+      );
+
+
+    const priceType =
+      card
+        .querySelector(
+          '.edit-service-price-type'
+        )
+        .value;
+
+
+    const description =
+      card
+        .querySelector(
+          '.edit-service-description'
+        )
+        .value
+        .trim();
+
+
+    const turnaround =
+      card
+        .querySelector(
+          '.edit-service-turnaround'
+        )
+        .value
+        .trim();
+
+
+    const isActive =
+      card
+        .querySelector(
+          '.edit-service-active'
+        )
+        .checked;
+
+
+    let price =
+      priceInput.value === ''
+        ? null
+        : Number(
+            priceInput.value
+          );
+
+
+    if (
+      priceType === 'contact'
+    ) {
+
+      price =
+        null;
+
+    }
+
+
+    if (!name) {
+
+      if (serviceMessage) {
+
+        serviceMessage.textContent =
+          'Service name cannot be empty.';
+
+      }
+
+      return;
+
+    }
+
+
+    if (
+      priceType !== 'contact' &&
+      (
+        price === null ||
+        !Number.isFinite(
+          price
+        ) ||
+        price < 0
+      )
+    ) {
+
+      if (serviceMessage) {
+
+        serviceMessage.textContent =
+          'Enter a valid service price.';
+
+      }
+
+      return;
+
+    }
+
+
+    const originalText =
+      button.textContent;
+
+
+    button.disabled =
+      true;
+
+
+    button.textContent =
+      'Saving...';
+
+
+    try {
+
+      const data =
+        await adminFetch(
+          `/api/admin/services/${encodeURIComponent(
+            serviceId
+          )}`,
+          {
+
+            method:
+              'PATCH',
+
+            body:
+              JSON.stringify({
+
+                name,
+
+                description,
+
+                price,
+
+                price_type:
+                  priceType,
+
+                turnaround_text:
+                  turnaround,
+
+                is_active:
+                  isActive
+
+              })
+
+          }
+        );
+
+
+      if (serviceMessage) {
+
+        serviceMessage.textContent =
+          `${data.service.name} updated successfully.`;
+
+      }
+
+
+      await loadServices();
+
+    } catch (error) {
+
+      console.error(
+        'Update service error:',
+        error
+      );
+
+
+      if (
+        handleSessionError(
+          error
+        )
+      ) {
+
+        return;
+
+      }
+
+
+      if (serviceMessage) {
+
+        serviceMessage.textContent =
+          error.message ||
+          'Unable to update service.';
+
+      }
+
+    } finally {
+
+      button.disabled =
+        false;
+
+
+      button.textContent =
+        originalText;
+
+    }
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| DELETE SERVICE
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener(
+  'click',
+  async event => {
+
+    const button =
+      event.target.closest(
+        '.delete-service-button'
+      );
+
+
+    if (!button) {
+
+      return;
+
+    }
+
+
+    const serviceId =
+      button.dataset.serviceId;
+
+
+    const serviceName =
+      button.dataset.serviceName ||
+      'this service';
+
+
+    const confirmed =
+      window.confirm(
+        `Are you sure you want to delete "${serviceName}"?`
+      );
+
+
+    if (!confirmed) {
+
+      return;
+
+    }
+
+
+    const originalText =
+      button.textContent;
+
+
+    button.disabled =
+      true;
+
+
+    button.textContent =
+      'Deleting...';
+
+
+    try {
+
+      const data =
+        await adminFetch(
+          `/api/admin/services/${encodeURIComponent(
+            serviceId
+          )}`,
+          {
+
+            method:
+              'DELETE'
+
+          }
+        );
+
+
+      if (serviceMessage) {
+
+        serviceMessage.textContent =
+          `${data.service.name} deleted successfully.`;
+
+      }
+
+
+      await loadServices();
+
+    } catch (error) {
+
+      console.error(
+        'Delete service error:',
+        error
+      );
+
+
+      if (
+        handleSessionError(
+          error
+        )
+      ) {
+
+        return;
+
+      }
+
+
+      if (serviceMessage) {
+
+        serviceMessage.textContent =
+          error.message ||
+          'Unable to delete service.';
+
+      }
+
+    } finally {
+
+      button.disabled =
+        false;
+
+
+      button.textContent =
+        originalText;
+
+    }
+
+  }
+);
 
 
 /*
@@ -1256,10 +2115,6 @@ document.addEventListener(
         );
 
 
-      button.textContent =
-        'Saved!';
-
-
       if (ordersMessage) {
 
         ordersMessage.textContent =
@@ -1291,14 +2146,6 @@ document.addEventListener(
       }
 
 
-      button.disabled =
-        false;
-
-
-      button.textContent =
-        originalText;
-
-
       if (ordersMessage) {
 
         ordersMessage.textContent =
@@ -1307,808 +2154,7 @@ document.addEventListener(
 
       }
 
-    }
-
-  }
-);
-
-
-/*
-|--------------------------------------------------------------------------
-| LOAD SERVICES
-|--------------------------------------------------------------------------
-*/
-
-async function loadServices() {
-
-  if (!servicesAdminContainer) {
-
-    return [];
-
-  }
-
-
-  servicesAdminContainer.innerHTML =
-    `
-      <div class="orders-loading">
-        Loading services...
-      </div>
-    `;
-
-
-  try {
-
-    const data =
-      await adminFetch(
-        '/api/admin/services'
-      );
-
-
-    const services =
-      Array.isArray(
-        data.services
-      )
-        ? data.services
-        : [];
-
-
-    renderServices(
-      services
-    );
-
-
-    return services;
-
-  } catch (error) {
-
-    console.error(
-      'Service loading error:',
-      error
-    );
-
-
-    if (
-      handleSessionError(
-        error
-      )
-    ) {
-
-      return [];
-
-    }
-
-
-    servicesAdminContainer.innerHTML =
-      `
-        <div class="orders-loading">
-          Unable to load services.
-        </div>
-      `;
-
-
-    if (serviceMessage) {
-
-      serviceMessage.textContent =
-        error.message ||
-        'Unable to load services.';
-
-    }
-
-
-    return [];
-
-  }
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| RENDER SERVICES
-|--------------------------------------------------------------------------
-*/
-
-function renderServices(
-  services
-) {
-
-  if (!servicesAdminContainer) {
-
-    return;
-
-  }
-
-
-  if (
-    services.length === 0
-  ) {
-
-    servicesAdminContainer.innerHTML =
-      `
-        <div class="orders-loading">
-          No services found. Create your first service above.
-        </div>
-      `;
-
-    return;
-
-  }
-
-
-  servicesAdminContainer.innerHTML =
-    services
-      .map(
-        service => {
-
-          const price =
-            service.price === null ||
-            service.price === undefined
-              ? ''
-              : Number(
-                  service.price
-                );
-
-
-          return `
-
-            <article
-              class="admin-service-card"
-              data-service-id="${escapeHtml(
-                service.id
-              )}"
-            >
-
-              <div class="admin-service-card-header">
-
-                <div>
-
-                  <span class="service-id-label">
-                    Service #${escapeHtml(
-                      service.id
-                    )}
-                  </span>
-
-                  <h3>
-                    ${escapeHtml(
-                      service.name
-                    )}
-                  </h3>
-
-                  <span
-                    class="service-active-status ${
-                      service.is_active
-                        ? 'service-active'
-                        : 'service-inactive'
-                    }"
-                  >
-                    ${
-                      service.is_active
-                        ? 'Active'
-                        : 'Inactive'
-                    }
-                  </span>
-
-                </div>
-
-
-                <button
-                  class="button ghost delete-service-button"
-                  type="button"
-                  data-service-id="${escapeHtml(
-                    service.id
-                  )}"
-                  data-service-name="${escapeHtml(
-                    service.name
-                  )}"
-                >
-                  Delete
-                </button>
-
-              </div>
-
-
-              <div class="service-form-grid">
-
-                <label>
-
-                  Service Name
-
-                  <input
-                    class="edit-service-name"
-                    type="text"
-                    maxlength="150"
-                    value="${escapeHtml(
-                      service.name
-                    )}"
-                  >
-
-                </label>
-
-
-                <label>
-
-                  Price
-
-                  <input
-                    class="edit-service-price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value="${
-                      price === ''
-                        ? ''
-                        : escapeHtml(
-                            price
-                          )
-                    }"
-                  >
-
-                </label>
-
-
-                <label>
-
-                  Price Type
-
-                  <select
-                    class="edit-service-price-type"
-                  >
-
-                    ${createPriceTypeOptions(
-                      service.price_type
-                    )}
-
-                  </select>
-
-                </label>
-
-
-                <label>
-
-                  Turnaround Time
-
-                  <input
-                    class="edit-service-turnaround"
-                    type="text"
-                    maxlength="150"
-                    value="${escapeHtml(
-                      service.turnaround_text || ''
-                    )}"
-                  >
-
-                </label>
-
-              </div>
-
-
-              <label>
-
-                Service Description
-
-                <textarea
-                  class="edit-service-description"
-                  rows="5"
-                  maxlength="3000"
-                >${escapeHtml(
-                  service.description || ''
-                )}</textarea>
-
-              </label>
-
-
-              <label class="service-active-label">
-
-                <input
-                  class="edit-service-active"
-                  type="checkbox"
-                  ${
-                    service.is_active
-                      ? 'checked'
-                      : ''
-                  }
-                >
-
-                <span>
-                  This service is active and visible to customers
-                </span>
-
-              </label>
-
-
-              <div class="service-card-actions">
-
-                <button
-                  class="button primary save-service-button"
-                  type="button"
-                  data-service-id="${escapeHtml(
-                    service.id
-                  )}"
-                >
-                  Save Service
-                </button>
-
-              </div>
-
-            </article>
-
-          `;
-
-        }
-      )
-      .join('');
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| PRICE TYPE OPTIONS
-|--------------------------------------------------------------------------
-*/
-
-function createPriceTypeOptions(
-  currentType
-) {
-
-  const types = [
-
-    'fixed',
-
-    'starting_from',
-
-    'contact'
-
-  ];
-
-
-  return types
-    .map(
-      type => `
-
-        <option
-          value="${type}"
-          ${
-            type === currentType
-              ? 'selected'
-              : ''
-          }
-        >
-          ${formatPriceType(
-            type
-          )}
-        </option>
-
-      `
-    )
-    .join('');
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| CREATE SERVICE
-|--------------------------------------------------------------------------
-*/
-
-if (createServiceForm) {
-
-  createServiceForm.addEventListener(
-    'submit',
-    async event => {
-
-      event.preventDefault();
-
-
-      const name =
-        serviceNameInput.value
-          .trim();
-
-
-      const priceType =
-        servicePriceType.value;
-
-
-      const rawPrice =
-        servicePrice.value
-          .trim();
-
-
-      let price =
-        rawPrice === ''
-          ? null
-          : Number(
-              rawPrice
-            );
-
-
-      if (
-        priceType === 'contact'
-      ) {
-
-        price =
-          null;
-
-      }
-
-
-      if (!name) {
-
-        serviceMessage.textContent =
-          'Enter a service name.';
-
-        return;
-
-      }
-
-
-      if (
-        priceType !== 'contact' &&
-        (
-          price === null ||
-          !Number.isFinite(
-            price
-          ) ||
-          price < 0
-        )
-      ) {
-
-        serviceMessage.textContent =
-          'Enter a valid price.';
-
-        return;
-
-      }
-
-
-      const originalText =
-        createServiceButton.textContent;
-
-
-      createServiceButton.disabled =
-        true;
-
-
-      createServiceButton.textContent =
-        'Creating...';
-
-
-      if (serviceMessage) {
-
-        serviceMessage.textContent =
-          '';
-
-      }
-
-
-      try {
-
-        await adminFetch(
-          '/api/admin/services',
-          {
-
-            method:
-              'POST',
-
-            body:
-              JSON.stringify({
-
-                name,
-
-                description:
-                  serviceDescription.value
-                    .trim(),
-
-                price,
-
-                price_type:
-                  priceType,
-
-                turnaround_text:
-                  serviceTurnaround.value
-                    .trim(),
-
-                is_active:
-                  serviceActive.checked
-
-              })
-
-          }
-        );
-
-
-        createServiceForm.reset();
-
-
-        serviceActive.checked =
-          true;
-
-
-        servicePriceType.value =
-          'fixed';
-
-
-        if (serviceMessage) {
-
-          serviceMessage.textContent =
-            'Service created successfully.';
-
-        }
-
-
-        await loadServices();
-
-
-        createServiceButton.disabled =
-          false;
-
-
-        createServiceButton.textContent =
-          originalText;
-
-      } catch (error) {
-
-        console.error(
-          'Create service error:',
-          error
-        );
-
-
-        if (
-          handleSessionError(
-            error
-          )
-        ) {
-
-          return;
-
-        }
-
-
-        createServiceButton.disabled =
-          false;
-
-
-        createServiceButton.textContent =
-          originalText;
-
-
-        if (serviceMessage) {
-
-          serviceMessage.textContent =
-            error.message ||
-            'Unable to create service.';
-
-        }
-
-      }
-
-    }
-  );
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| SAVE SERVICE
-|--------------------------------------------------------------------------
-*/
-
-document.addEventListener(
-  'click',
-  async event => {
-
-    const button =
-      event.target.closest(
-        '.save-service-button'
-      );
-
-
-    if (!button) {
-
-      return;
-
-    }
-
-
-    const card =
-      button.closest(
-        '.admin-service-card'
-      );
-
-
-    if (!card) {
-
-      return;
-
-    }
-
-
-    const serviceId =
-      button.dataset.serviceId;
-
-
-    const name =
-      card
-        .querySelector(
-          '.edit-service-name'
-        )
-        .value
-        .trim();
-
-
-    const priceInput =
-      card.querySelector(
-        '.edit-service-price'
-      );
-
-
-    const priceType =
-      card
-        .querySelector(
-          '.edit-service-price-type'
-        )
-        .value;
-
-
-    const description =
-      card
-        .querySelector(
-          '.edit-service-description'
-        )
-        .value
-        .trim();
-
-
-    const turnaround =
-      card
-        .querySelector(
-          '.edit-service-turnaround'
-        )
-        .value
-        .trim();
-
-
-    const isActive =
-      card
-        .querySelector(
-          '.edit-service-active'
-        )
-        .checked;
-
-
-    let price =
-      priceInput.value === ''
-        ? null
-        : Number(
-            priceInput.value
-          );
-
-
-    if (
-      priceType === 'contact'
-    ) {
-
-      price =
-        null;
-
-    }
-
-
-    if (!name) {
-
-      if (serviceMessage) {
-
-        serviceMessage.textContent =
-          'Service name cannot be empty.';
-
-      }
-
-      return;
-
-    }
-
-
-    if (
-      priceType !== 'contact' &&
-      (
-        price === null ||
-        !Number.isFinite(
-          price
-        ) ||
-        price < 0
-      )
-    ) {
-
-      if (serviceMessage) {
-
-        serviceMessage.textContent =
-          'Enter a valid service price.';
-
-      }
-
-      return;
-
-    }
-
-
-    const originalText =
-      button.textContent;
-
-
-    button.disabled =
-      true;
-
-
-    button.textContent =
-      'Saving...';
-
-
-    try {
-
-      const data =
-        await adminFetch(
-          `/api/admin/services/${encodeURIComponent(
-            serviceId
-          )}`,
-          {
-
-            method:
-              'PATCH',
-
-            body:
-              JSON.stringify({
-
-                name,
-
-                description,
-
-                price,
-
-                price_type:
-                  priceType,
-
-                turnaround_text:
-                  turnaround,
-
-                is_active:
-                  isActive
-
-              })
-
-          }
-        );
-
-
-      if (serviceMessage) {
-
-        serviceMessage.textContent =
-          `${data.service.name} updated successfully.`;
-
-      }
-
-
-      await loadServices();
-
-    } catch (error) {
-
-      console.error(
-        'Update service error:',
-        error
-      );
-
-
-      if (
-        handleSessionError(
-          error
-        )
-      ) {
-
-        return;
-
-      }
-
+    } finally {
 
       button.disabled =
         false;
@@ -2116,139 +2162,6 @@ document.addEventListener(
 
       button.textContent =
         originalText;
-
-
-      if (serviceMessage) {
-
-        serviceMessage.textContent =
-          error.message ||
-          'Unable to update service.';
-
-      }
-
-    }
-
-  }
-);
-
-
-/*
-|--------------------------------------------------------------------------
-| DELETE SERVICE
-|--------------------------------------------------------------------------
-*/
-
-document.addEventListener(
-  'click',
-  async event => {
-
-    const button =
-      event.target.closest(
-        '.delete-service-button'
-      );
-
-
-    if (!button) {
-
-      return;
-
-    }
-
-
-    const serviceId =
-      button.dataset.serviceId;
-
-
-    const serviceName =
-      button.dataset.serviceName ||
-      'this service';
-
-
-    const confirmed =
-      window.confirm(
-        `Are you sure you want to delete "${serviceName}"?`
-      );
-
-
-    if (!confirmed) {
-
-      return;
-
-    }
-
-
-    const originalText =
-      button.textContent;
-
-
-    button.disabled =
-      true;
-
-
-    button.textContent =
-      'Deleting...';
-
-
-    try {
-
-      const data =
-        await adminFetch(
-          `/api/admin/services/${encodeURIComponent(
-            serviceId
-          )}`,
-          {
-
-            method:
-              'DELETE'
-
-          }
-        );
-
-
-      if (serviceMessage) {
-
-        serviceMessage.textContent =
-          `${data.service.name} deleted successfully.`;
-
-      }
-
-
-      await loadServices();
-
-    } catch (error) {
-
-      console.error(
-        'Delete service error:',
-        error
-      );
-
-
-      if (
-        handleSessionError(
-          error
-        )
-      ) {
-
-        return;
-
-      }
-
-
-      button.disabled =
-        false;
-
-
-      button.textContent =
-        originalText;
-
-
-      if (serviceMessage) {
-
-        serviceMessage.textContent =
-          error.message ||
-          'Unable to delete service.';
-
-      }
 
     }
 
@@ -2320,6 +2233,90 @@ if (refreshServicesButton) {
 
 /*
 |--------------------------------------------------------------------------
+| LOGIN
+|--------------------------------------------------------------------------
+*/
+
+if (loginForm) {
+
+  loginForm.addEventListener(
+    'submit',
+    async event => {
+
+      event.preventDefault();
+
+
+      const key =
+        adminKeyInput.value
+          .trim();
+
+
+      if (!key) {
+
+        loginMessage.textContent =
+          'Enter your admin access key.';
+
+        return;
+
+      }
+
+
+      loginMessage.textContent =
+        'Checking access...';
+
+
+      setAdminKey(
+        key
+      );
+
+
+      try {
+
+        await checkAdminAccess();
+
+
+        showDashboard();
+
+
+        loginMessage.textContent =
+          '';
+
+
+        await Promise.all([
+
+          loadOrders(),
+
+          loadServices()
+
+        ]);
+
+      } catch (error) {
+
+        console.error(
+          'Admin login error:',
+          error
+        );
+
+
+        clearAdminKey();
+
+
+        loginMessage.textContent =
+          error.status === 401
+            ? 'Invalid admin access key.'
+            : error.message ||
+              'Unable to connect to the admin system.';
+
+      }
+
+    }
+  );
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
 | LOGOUT
 |--------------------------------------------------------------------------
 */
@@ -2371,30 +2368,13 @@ document.addEventListener(
       showDashboard();
 
 
-      loadOrders()
-        .catch(
-          error => {
+      await Promise.all([
 
-            console.error(
-              'Startup order error:',
-              error
-            );
+        loadOrders(),
 
-          }
-        );
+        loadServices()
 
-
-      loadServices()
-        .catch(
-          error => {
-
-            console.error(
-              'Startup service error:',
-              error
-            );
-
-          }
-        );
+      ]);
 
     } catch (error) {
 
