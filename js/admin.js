@@ -22,6 +22,12 @@ function apiUrl(
 }
 
 
+/*
+|--------------------------------------------------------------------------
+| ELEMENTS
+|--------------------------------------------------------------------------
+*/
+
 const loginScreen =
   document.getElementById(
     'loginScreen'
@@ -172,19 +178,13 @@ const refreshServicesButton =
   );
 
 
-const refreshServicesButtonBottom =
-  document.getElementById(
-    'refreshServicesButtonBottom'
-  );
-
-
 let currentOrders =
   [];
 
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN KEY
+| ADMIN KEY STORAGE
 |--------------------------------------------------------------------------
 */
 
@@ -224,7 +224,7 @@ function clearAdminKey() {
 
 /*
 |--------------------------------------------------------------------------
-| ESCAPE HTML
+| HTML ESCAPING
 |--------------------------------------------------------------------------
 */
 
@@ -287,18 +287,58 @@ function formatStatus(
 
 /*
 |--------------------------------------------------------------------------
+| FORMAT PRICE TYPE
+|--------------------------------------------------------------------------
+*/
+
+function formatPriceType(
+  type
+) {
+
+  const types = {
+
+    fixed:
+      'Fixed Price',
+
+    starting_from:
+      'Starting From',
+
+    contact:
+      'Contact Us'
+
+  };
+
+
+  return (
+    types[type] ||
+    'Fixed Price'
+  );
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
 | SHOW DASHBOARD
 |--------------------------------------------------------------------------
 */
 
 function showDashboard() {
 
-  loginScreen.hidden =
-    true;
+  if (loginScreen) {
+
+    loginScreen.hidden =
+      true;
+
+  }
 
 
-  dashboard.hidden =
-    false;
+  if (dashboard) {
+
+    dashboard.hidden =
+      false;
+
+  }
 
 }
 
@@ -313,27 +353,74 @@ function showLogin(
   message = ''
 ) {
 
-  dashboard.hidden =
-    true;
+  if (dashboard) {
+
+    dashboard.hidden =
+      true;
+
+  }
 
 
-  loginScreen.hidden =
-    false;
+  if (loginScreen) {
+
+    loginScreen.hidden =
+      false;
+
+  }
 
 
-  adminKeyInput.value =
-    '';
+  if (adminKeyInput) {
+
+    adminKeyInput.value =
+      '';
+
+  }
 
 
-  loginMessage.textContent =
-    message;
+  if (loginMessage) {
+
+    loginMessage.textContent =
+      message;
+
+  }
 
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN FETCH
+| HANDLE SESSION ERROR
+|--------------------------------------------------------------------------
+*/
+
+function handleSessionError(
+  error
+) {
+
+  if (
+    error &&
+    error.status === 401
+  ) {
+
+    clearAdminKey();
+
+    showLogin(
+      'Your session has expired. Please login again.'
+    );
+
+    return true;
+
+  }
+
+
+  return false;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN REQUEST
 |--------------------------------------------------------------------------
 */
 
@@ -353,10 +440,8 @@ async function adminFetch(
         'Admin access key is missing.'
       );
 
-
     error.status =
       401;
-
 
     throw error;
 
@@ -388,22 +473,38 @@ async function adminFetch(
   }
 
 
-  const response =
-    await fetch(
-      apiUrl(
-        path
-      ),
-      {
+  let response;
 
-        ...options,
 
-        headers,
+  try {
 
-        cache:
-          'no-store'
+    response =
+      await fetch(
+        apiUrl(path),
+        {
 
-      }
-    );
+          ...options,
+
+          headers
+
+        }
+      );
+
+  } catch (
+    networkError
+  ) {
+
+    const error =
+      new Error(
+        'Unable to connect to the server.'
+      );
+
+    error.status =
+      0;
+
+    throw error;
+
+  }
 
 
   const data =
@@ -419,13 +520,12 @@ async function adminFetch(
     const error =
       new Error(
         data.message ||
+        data.error ||
         'Request failed.'
       );
 
-
     error.status =
       response.status;
-
 
     throw error;
 
@@ -439,7 +539,68 @@ async function adminFetch(
 
 /*
 |--------------------------------------------------------------------------
-| CHECK ADMIN
+| PUBLIC API REQUEST
+|--------------------------------------------------------------------------
+*/
+
+async function publicFetch(
+  path
+) {
+
+  let response;
+
+
+  try {
+
+    response =
+      await fetch(
+        apiUrl(path),
+        {
+          headers: {
+            Accept:
+              'application/json'
+          }
+        }
+      );
+
+  } catch (
+    networkError
+  ) {
+
+    throw new Error(
+      'Unable to connect to the server.'
+    );
+
+  }
+
+
+  const data =
+    await response
+      .json()
+      .catch(
+        () => ({})
+      );
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      data.message ||
+      data.error ||
+      'Request failed.'
+    );
+
+  }
+
+
+  return data;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN ACCESS CHECK
 |--------------------------------------------------------------------------
 */
 
@@ -458,68 +619,83 @@ async function checkAdminAccess() {
 |--------------------------------------------------------------------------
 */
 
-loginForm.addEventListener(
-  'submit',
-  async event => {
+if (loginForm) {
 
-    event.preventDefault();
+  loginForm.addEventListener(
+    'submit',
+    async event => {
 
-
-    const key =
-      adminKeyInput.value
-        .trim();
+      event.preventDefault();
 
 
-    if (!key) {
+      const key =
+        adminKeyInput.value
+          .trim();
+
+
+      if (!key) {
+
+        loginMessage.textContent =
+          'Enter your admin access key.';
+
+        return;
+
+      }
+
 
       loginMessage.textContent =
-        'Enter your admin access key.';
+        'Checking access...';
 
-      return;
+
+      setAdminKey(
+        key
+      );
+
+
+      try {
+
+        await checkAdminAccess();
+
+
+        showDashboard();
+
+
+        loginMessage.textContent =
+          '';
+
+
+        await Promise.all(
+          [
+            loadOrders(),
+            loadServices()
+          ]
+        );
+
+      } catch (
+        error
+      ) {
+
+        console.error(
+          'Admin login error:',
+          error
+        );
+
+
+        clearAdminKey();
+
+
+        loginMessage.textContent =
+          error.status === 401
+            ? 'Invalid admin access key.'
+            : error.message ||
+              'Unable to connect to the admin system.';
+
+      }
 
     }
+  );
 
-
-    loginMessage.textContent =
-      'Checking access...';
-
-
-    setAdminKey(
-      key
-    );
-
-
-    try {
-
-      await checkAdminAccess();
-
-
-      showDashboard();
-
-
-      loginMessage.textContent =
-        '';
-
-
-      await loadOrders();
-
-
-      await loadServices();
-
-    } catch (
-      error
-    ) {
-
-      clearAdminKey();
-
-
-      loginMessage.textContent =
-        error.message;
-
-    }
-
-  }
-);
+}
 
 
 /*
@@ -529,6 +705,21 @@ loginForm.addEventListener(
 */
 
 async function loadOrders() {
+
+  if (!ordersContainer) {
+
+    return [];
+
+  }
+
+
+  if (ordersMessage) {
+
+    ordersMessage.textContent =
+      '';
+
+  }
+
 
   ordersContainer.innerHTML =
     `
@@ -546,7 +737,7 @@ async function loadOrders() {
       );
 
 
-    currentOrders =
+    const orders =
       Array.isArray(
         data.orders
       )
@@ -554,37 +745,73 @@ async function loadOrders() {
         : [];
 
 
+    currentOrders =
+      orders;
+
+
     updateSummary(
-      currentOrders
+      orders
     );
 
 
     renderOrders(
-      currentOrders
+      orders
     );
 
 
-    ordersMessage.textContent =
-      `${currentOrders.length} order(s) loaded.`;
+    if (ordersMessage) {
+
+      ordersMessage.textContent =
+        `${orders.length} order${
+          orders.length === 1
+            ? ''
+            : 's'
+        } loaded.`;
+
+    }
+
+
+    return orders;
 
   } catch (
     error
   ) {
 
     console.error(
-      'ORDER ERROR:',
+      'Order loading error:',
       error
     );
+
+
+    if (
+      handleSessionError(
+        error
+      )
+    ) {
+
+      return [];
+
+    }
 
 
     ordersContainer.innerHTML =
       `
         <div class="orders-loading">
-          Unable to load orders: ${escapeHtml(
-            error.message
-          )}
+          Unable to load orders.
         </div>
       `;
+
+
+    if (ordersMessage) {
+
+      ordersMessage.textContent =
+        error.message ||
+        'Unable to load orders.';
+
+    }
+
+
+    return [];
 
   }
 
@@ -593,7 +820,7 @@ async function loadOrders() {
 
 /*
 |--------------------------------------------------------------------------
-| ORDER SUMMARY
+| UPDATE SUMMARY
 |--------------------------------------------------------------------------
 */
 
@@ -601,29 +828,45 @@ function updateSummary(
   orders
 ) {
 
-  totalOrders.textContent =
-    orders.length;
+  if (totalOrders) {
+
+    totalOrders.textContent =
+      orders.length;
+
+  }
 
 
-  pendingOrders.textContent =
-    orders.filter(
-      order =>
-        order.status === 'pending'
-    ).length;
+  if (pendingOrders) {
+
+    pendingOrders.textContent =
+      orders.filter(
+        order =>
+          order.status === 'pending'
+      ).length;
+
+  }
 
 
-  progressOrders.textContent =
-    orders.filter(
-      order =>
-        order.status === 'in_progress'
-    ).length;
+  if (progressOrders) {
+
+    progressOrders.textContent =
+      orders.filter(
+        order =>
+          order.status === 'in_progress'
+      ).length;
+
+  }
 
 
-  completedOrders.textContent =
-    orders.filter(
-      order =>
-        order.status === 'completed'
-    ).length;
+  if (completedOrders) {
+
+    completedOrders.textContent =
+      orders.filter(
+        order =>
+          order.status === 'completed'
+      ).length;
+
+  }
 
 }
 
@@ -638,11 +881,20 @@ function renderOrders(
   orders
 ) {
 
+  if (!ordersContainer) {
+
+    return;
+
+  }
+
+
   const filter =
-    statusFilter.value;
+    statusFilter
+      ? statusFilter.value
+      : '';
 
 
-  const filtered =
+  const filteredOrders =
     filter
       ? orders.filter(
           order =>
@@ -652,7 +904,7 @@ function renderOrders(
 
 
   if (
-    filtered.length === 0
+    filteredOrders.length === 0
   ) {
 
     ordersContainer.innerHTML =
@@ -668,91 +920,448 @@ function renderOrders(
 
 
   ordersContainer.innerHTML =
-    filtered
+    filteredOrders
       .map(
-        order => `
+        order => {
 
-          <article class="admin-order-card">
+          const createdDate =
+            order.created_at
+              ? new Date(
+                  order.created_at
+                ).toLocaleString()
+              : 'Unknown';
 
-            <div class="order-card-top">
 
-              <div>
+          const message =
+            order.message
+              ? escapeHtml(
+                  order.message
+                )
+              : 'No additional details provided.';
 
-                <span class="order-number">
+
+          const price =
+            Number(
+              order.price || 0
+            );
+
+
+          return `
+
+            <article
+              class="admin-order-card"
+            >
+
+              <div
+                class="order-card-top"
+              >
+
+                <div>
+
+                  <span
+                    class="order-number"
+                  >
+                    ${escapeHtml(
+                      order.order_number
+                    )}
+                  </span>
+
+                  <h3>
+                    ${escapeHtml(
+                      order.service_name
+                    )}
+                  </h3>
+
+                </div>
+
+
+                <span
+                  class="status-badge status-${escapeHtml(
+                    order.status
+                  )}"
+                >
                   ${escapeHtml(
-                    order.order_number
+                    formatStatus(
+                      order.status
+                    )
                   )}
                 </span>
 
-                <h3>
-                  ${escapeHtml(
-                    order.service_name
-                  )}
-                </h3>
-
               </div>
 
-              <span
-                class="status-badge status-${escapeHtml(
-                  order.status
-                )}"
+
+              <div
+                class="order-info-grid"
               >
-                ${escapeHtml(
-                  formatStatus(
-                    order.status
-                  )
-                )}
-              </span>
 
-            </div>
+                <div>
 
-            <div class="order-info-grid">
+                  <span>
+                    Customer
+                  </span>
 
-              <div>
+                  <strong>
+                    ${escapeHtml(
+                      order.customer_name
+                    )}
+                  </strong>
 
-                <span>Customer</span>
+                </div>
 
-                <strong>
-                  ${escapeHtml(
-                    order.customer_name
-                  )}
-                </strong>
+
+                <div>
+
+                  <span>
+                    Email
+                  </span>
+
+                  <strong>
+                    ${escapeHtml(
+                      order.customer_email
+                    )}
+                  </strong>
+
+                </div>
+
+
+                <div>
+
+                  <span>
+                    Telegram
+                  </span>
+
+                  <strong>
+                    ${escapeHtml(
+                      order.telegram_username ||
+                      'Not provided'
+                    )}
+                  </strong>
+
+                </div>
+
+
+                <div>
+
+                  <span>
+                    WhatsApp
+                  </span>
+
+                  <strong>
+                    ${escapeHtml(
+                      order.whatsapp ||
+                      'Not provided'
+                    )}
+                  </strong>
+
+                </div>
+
+
+                <div>
+
+                  <span>
+                    Price
+                  </span>
+
+                  <strong>
+                    $${price.toFixed(2)}
+                  </strong>
+
+                </div>
+
+
+                <div>
+
+                  <span>
+                    Created
+                  </span>
+
+                  <strong>
+                    ${escapeHtml(
+                      createdDate
+                    )}
+                  </strong>
+
+                </div>
 
               </div>
 
-              <div>
 
-                <span>Email</span>
+              <div
+                class="order-details"
+              >
 
-                <strong>
-                  ${escapeHtml(
-                    order.customer_email
-                  )}
-                </strong>
+                <span>
+                  Customer Request
+                </span>
 
-              </div>
-
-              <div>
-
-                <span>Price</span>
-
-                <strong>
-                  $${Number(
-                    order.price || 0
-                  ).toFixed(2)}
-                </strong>
+                <p>
+                  ${message}
+                </p>
 
               </div>
 
-            </div>
 
-          </article>
+              <div
+                class="admin-controls"
+              >
 
-        `
+                <label>
+
+                  Order Status
+
+                  <select
+                    class="order-status-select"
+                    data-order="${escapeHtml(
+                      order.order_number
+                    )}"
+                  >
+
+                    ${createStatusOptions(
+                      order.status
+                    )}
+
+                  </select>
+
+                </label>
+
+
+                <label>
+
+                  Admin Note
+
+                  <textarea
+                    class="admin-note"
+                    data-order="${escapeHtml(
+                      order.order_number
+                    )}"
+                    rows="4"
+                    maxlength="5000"
+                    placeholder="Private note about this order..."
+                  >${escapeHtml(
+                    order.admin_note || ''
+                  )}</textarea>
+
+                </label>
+
+
+                <button
+                  class="button primary save-order-button"
+                  type="button"
+                  data-order="${escapeHtml(
+                    order.order_number
+                  )}"
+                >
+                  Save Changes
+                </button>
+
+              </div>
+
+            </article>
+
+          `;
+
+        }
       )
       .join('');
 
 }
+
+
+/*
+|--------------------------------------------------------------------------
+| STATUS OPTIONS
+|--------------------------------------------------------------------------
+*/
+
+function createStatusOptions(
+  currentStatus
+) {
+
+  const statuses = [
+
+    'pending',
+
+    'paid',
+
+    'in_progress',
+
+    'waiting_customer',
+
+    'completed',
+
+    'cancelled',
+
+    'declined'
+
+  ];
+
+
+  return statuses
+    .map(
+      status => `
+
+        <option
+          value="${status}"
+          ${
+            status === currentStatus
+              ? 'selected'
+              : ''
+          }
+        >
+          ${formatStatus(
+            status
+          )}
+        </option>
+
+      `
+    )
+    .join('');
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| SAVE ORDER
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener(
+  'click',
+  async event => {
+
+    const button =
+      event.target.closest(
+        '.save-order-button'
+      );
+
+
+    if (!button) {
+
+      return;
+
+    }
+
+
+    const orderNumber =
+      button.dataset.order;
+
+
+    const statusSelect =
+      document.querySelector(
+        `.order-status-select[data-order="${orderNumber}"]`
+      );
+
+
+    const noteInput =
+      document.querySelector(
+        `.admin-note[data-order="${orderNumber}"]`
+      );
+
+
+    if (
+      !statusSelect ||
+      !noteInput
+    ) {
+
+      return;
+
+    }
+
+
+    const originalText =
+      button.textContent;
+
+
+    button.disabled =
+      true;
+
+
+    button.textContent =
+      'Saving...';
+
+
+    try {
+
+      const data =
+        await adminFetch(
+          `/api/admin/orders/${encodeURIComponent(
+            orderNumber
+          )}`,
+          {
+
+            method:
+              'PATCH',
+
+            body:
+              JSON.stringify({
+
+                status:
+                  statusSelect.value,
+
+                admin_note:
+                  noteInput.value
+                    .trim()
+
+              })
+
+          }
+        );
+
+
+      if (ordersMessage) {
+
+        ordersMessage.textContent =
+          `${orderNumber} changed to ${formatStatus(
+            data.order.status
+          )}.`;
+
+      }
+
+
+      await loadOrders();
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        'Order update error:',
+        error
+      );
+
+
+      if (
+        handleSessionError(
+          error
+        )
+      ) {
+
+        return;
+
+      }
+
+
+      button.disabled =
+        false;
+
+
+      button.textContent =
+        originalText;
+
+
+      if (ordersMessage) {
+
+        ordersMessage.textContent =
+          error.message ||
+          'Unable to update order.';
+
+      }
+
+    }
+
+  }
+);
 
 
 /*
@@ -763,9 +1372,15 @@ function renderOrders(
 
 async function loadServices() {
 
-  console.log(
-    'LOADING ADMIN SERVICES...'
-  );
+  if (!servicesAdminContainer) {
+
+    console.error(
+      'servicesAdminContainer was not found.'
+    );
+
+    return [];
+
+  }
 
 
   servicesAdminContainer.innerHTML =
@@ -776,16 +1391,34 @@ async function loadServices() {
     `;
 
 
+  if (serviceMessage) {
+
+    serviceMessage.textContent =
+      '';
+
+  }
+
+
   try {
 
+    /*
+    |--------------------------------------------------------------------------
+    | IMPORTANT
+    |
+    | Existing services use the already working public endpoint:
+    |
+    | /api/services
+    |--------------------------------------------------------------------------
+    */
+
     const data =
-      await adminFetch(
-        '/api/admin/services'
+      await publicFetch(
+        '/api/services'
       );
 
 
     console.log(
-      'ADMIN SERVICES RESPONSE:',
+      'SERVICES API RESPONSE:',
       data
     );
 
@@ -803,15 +1436,14 @@ async function loadServices() {
     );
 
 
-    serviceMessage.textContent =
-      `${services.length} service(s) loaded.`;
+    return services;
 
   } catch (
     error
   ) {
 
     console.error(
-      'SERVICE LOADING ERROR:',
+      'Service loading error:',
       error
     );
 
@@ -819,19 +1451,25 @@ async function loadServices() {
     servicesAdminContainer.innerHTML =
       `
         <div class="orders-loading">
-          Unable to load services.
-
-          <br>
-
+          Unable to load services:
           ${escapeHtml(
-            error.message
+            error.message ||
+            'Unknown error'
           )}
         </div>
       `;
 
 
-    serviceMessage.textContent =
-      error.message;
+    if (serviceMessage) {
+
+      serviceMessage.textContent =
+        error.message ||
+        'Unable to load services.';
+
+    }
+
+
+    return [];
 
   }
 
@@ -848,6 +1486,31 @@ function renderServices(
   services
 ) {
 
+  if (!servicesAdminContainer) {
+
+    return;
+
+  }
+
+
+  if (
+    !Array.isArray(
+      services
+    )
+  ) {
+
+    servicesAdminContainer.innerHTML =
+      `
+        <div class="orders-loading">
+          Invalid services response received.
+        </div>
+      `;
+
+    return;
+
+  }
+
+
   if (
     services.length === 0
   ) {
@@ -855,7 +1518,7 @@ function renderServices(
     servicesAdminContainer.innerHTML =
       `
         <div class="orders-loading">
-          No services found.
+          No services found in the database.
         </div>
       `;
 
@@ -867,90 +1530,210 @@ function renderServices(
   servicesAdminContainer.innerHTML =
     services
       .map(
-        service => `
+        service => {
 
-          <article
-            class="admin-service-card"
-            data-service-id="${service.id}"
-          >
+          const price =
+            service.price === null ||
+            service.price === undefined ||
+            service.price === ''
+              ? ''
+              : Number(
+                  service.price
+                );
 
-            <div class="admin-service-card-header">
 
-              <div>
+          const isActive =
+            service.is_active === undefined
+              ? true
+              : Boolean(
+                  service.is_active
+                );
 
-                <h3>
-                  ${escapeHtml(
-                    service.name
-                  )}
-                </h3>
 
-                <span>
-                  ${
-                    service.is_active
-                      ? 'Active'
-                      : 'Inactive'
-                  }
-                </span>
+          return `
+
+            <article
+              class="admin-service-card"
+              data-service-id="${escapeHtml(
+                service.id
+              )}"
+            >
+
+              <div
+                class="admin-service-card-header"
+              >
+
+                <div>
+
+                  <span
+                    class="service-id-label"
+                  >
+                    Service #${escapeHtml(
+                      service.id
+                    )}
+                  </span>
+
+                  <h3>
+                    ${escapeHtml(
+                      service.name
+                    )}
+                  </h3>
+
+                  <span
+                    class="service-active-status ${
+                      isActive
+                        ? 'service-active'
+                        : 'service-inactive'
+                    }"
+                  >
+                    ${
+                      isActive
+                        ? 'Active'
+                        : 'Inactive'
+                    }
+                  </span>
+
+                </div>
 
               </div>
 
-              <button
-                class="button ghost delete-service-button"
-                data-service-id="${service.id}"
-                type="button"
+
+              <div
+                class="service-form-grid"
               >
-                Delete
-              </button>
 
-            </div>
+                <label>
+
+                  Service Name
+
+                  <input
+                    class="edit-service-name"
+                    type="text"
+                    maxlength="150"
+                    value="${escapeHtml(
+                      service.name
+                    )}"
+                  >
+
+                </label>
 
 
-            <div class="service-form-grid">
+                <label>
+
+                  Price
+
+                  <input
+                    class="edit-service-price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value="${
+                      price === '' ||
+                      Number.isNaN(
+                        price
+                      )
+                        ? ''
+                        : escapeHtml(
+                            price
+                          )
+                    }"
+                  >
+
+                </label>
+
+
+                <label>
+
+                  Price Type
+
+                  <select
+                    class="edit-service-price-type"
+                  >
+
+                    ${createPriceTypeOptions(
+                      service.price_type
+                    )}
+
+                  </select>
+
+                </label>
+
+
+                <label>
+
+                  Turnaround Time
+
+                  <input
+                    class="edit-service-turnaround"
+                    type="text"
+                    maxlength="150"
+                    value="${escapeHtml(
+                      service.turnaround_text || ''
+                    )}"
+                  >
+
+                </label>
+
+              </div>
+
 
               <label>
 
-                Service Name
+                Service Description
+
+                <textarea
+                  class="edit-service-description"
+                  rows="5"
+                  maxlength="3000"
+                >${escapeHtml(
+                  service.description || ''
+                )}</textarea>
+
+              </label>
+
+
+              <label
+                class="service-active-label"
+              >
 
                 <input
-                  class="edit-service-name"
-                  value="${escapeHtml(
-                    service.name
+                  class="edit-service-active"
+                  type="checkbox"
+                  ${
+                    isActive
+                      ? 'checked'
+                      : ''
+                  }
+                >
+
+                <span>
+                  This service is active and visible to customers
+                </span>
+
+              </label>
+
+
+              <div
+                class="service-card-actions"
+              >
+
+                <button
+                  class="button primary save-service-button"
+                  type="button"
+                  data-service-id="${escapeHtml(
+                    service.id
                   )}"
                 >
+                  Save Service
+                </button>
 
-              </label>
+              </div>
 
+            </article>
 
-              <label>
+          `;
 
-                Price
-
-                <input
-                  class="edit-service-price"
-                  type="number"
-                  step="0.01"
-                  value="${
-                    service.price ??
-                    ''
-                  }"
-                >
-
-              </label>
-
-            </div>
-
-
-            <button
-              class="button primary save-service-button"
-              data-service-id="${service.id}"
-              type="button"
-            >
-              Save Service
-            </button>
-
-          </article>
-
-        `
+        }
       )
       .join('');
 
@@ -959,81 +1742,91 @@ function renderServices(
 
 /*
 |--------------------------------------------------------------------------
-| CREATE SERVICE
+| PRICE TYPE OPTIONS
 |--------------------------------------------------------------------------
 */
 
-createServiceForm.addEventListener(
-  'submit',
-  async event => {
+function createPriceTypeOptions(
+  currentType
+) {
 
-    event.preventDefault();
+  const types = [
+
+    'fixed',
+
+    'starting_from',
+
+    'contact'
+
+  ];
 
 
-    try {
+  return types
+    .map(
+      type => `
 
-      await adminFetch(
-        '/api/admin/services',
-        {
+        <option
+          value="${type}"
+          ${
+            type === currentType
+              ? 'selected'
+              : ''
+          }
+        >
+          ${formatPriceType(
+            type
+          )}
+        </option>
 
-          method:
-            'POST',
+      `
+    )
+    .join('');
 
-          body:
-            JSON.stringify({
+}
 
-              name:
-                serviceNameInput.value.trim(),
 
-              description:
-                serviceDescription.value.trim(),
+/*
+|--------------------------------------------------------------------------
+| FILTER
+|--------------------------------------------------------------------------
+*/
 
-              price:
-                servicePrice.value === ''
-                  ? null
-                  : Number(
-                      servicePrice.value
-                    ),
+if (statusFilter) {
 
-              price_type:
-                servicePriceType.value,
+  statusFilter.addEventListener(
+    'change',
+    () => {
 
-              turnaround_text:
-                serviceTurnaround.value.trim(),
-
-              is_active:
-                serviceActive.checked
-
-            })
-
-        }
+      renderOrders(
+        currentOrders
       );
 
+    }
+  );
 
-      serviceMessage.textContent =
-        'Service created successfully.';
-
-
-      createServiceForm.reset();
+}
 
 
-      serviceActive.checked =
-        true;
+/*
+|--------------------------------------------------------------------------
+| REFRESH ORDERS
+|--------------------------------------------------------------------------
+*/
 
+if (refreshButton) {
+
+  refreshButton.addEventListener(
+    'click',
+    async () => {
+
+      await loadOrders();
 
       await loadServices();
 
-    } catch (
-      error
-    ) {
-
-      serviceMessage.textContent =
-        error.message;
-
     }
+  );
 
-  }
-);
+}
 
 
 /*
@@ -1046,50 +1839,14 @@ if (refreshServicesButton) {
 
   refreshServicesButton.addEventListener(
     'click',
-    loadServices
+    async () => {
+
+      await loadServices();
+
+    }
   );
 
 }
-
-
-if (refreshServicesButtonBottom) {
-
-  refreshServicesButtonBottom.addEventListener(
-    'click',
-    loadServices
-  );
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| REFRESH ORDERS
-|--------------------------------------------------------------------------
-*/
-
-refreshButton.addEventListener(
-  'click',
-  loadOrders
-);
-
-
-/*
-|--------------------------------------------------------------------------
-| FILTER
-|--------------------------------------------------------------------------
-*/
-
-statusFilter.addEventListener(
-  'change',
-  () => {
-
-    renderOrders(
-      currentOrders
-    );
-
-  }
-);
 
 
 /*
@@ -1098,19 +1855,22 @@ statusFilter.addEventListener(
 |--------------------------------------------------------------------------
 */
 
-logoutButton.addEventListener(
-  'click',
-  () => {
+if (logoutButton) {
 
-    clearAdminKey();
+  logoutButton.addEventListener(
+    'click',
+    () => {
 
+      clearAdminKey();
 
-    showLogin(
-      'You have been logged out.'
-    );
+      showLogin(
+        'You have been logged out.'
+      );
 
-  }
-);
+    }
+  );
+
+}
 
 
 /*
@@ -1144,17 +1904,19 @@ document.addEventListener(
       showDashboard();
 
 
-      await loadOrders();
-
-
-      await loadServices();
+      await Promise.all(
+        [
+          loadOrders(),
+          loadServices()
+        ]
+      );
 
     } catch (
       error
     ) {
 
       console.error(
-        'STARTUP ERROR:',
+        'Admin startup error:',
         error
       );
 
@@ -1163,7 +1925,9 @@ document.addEventListener(
 
 
       showLogin(
-        'Please login again.'
+        error.status === 401
+          ? 'Your session has expired. Please login again.'
+          : 'Unable to connect to the admin system.'
       );
 
     }
