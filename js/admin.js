@@ -118,7 +118,7 @@ const createServiceForm =
   );
 
 
-const serviceName =
+const serviceNameInput =
   document.getElementById(
     'serviceName'
   );
@@ -176,6 +176,10 @@ const refreshServicesButton =
   document.getElementById(
     'refreshServicesButton'
   );
+
+
+let currentOrders =
+  [];
 
 
 /*
@@ -257,7 +261,7 @@ function escapeHtml(
 
 /*
 |--------------------------------------------------------------------------
-| FORMAT STATUS
+| FORMATTERS
 |--------------------------------------------------------------------------
 */
 
@@ -281,12 +285,6 @@ function formatStatus(
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| FORMAT PRICE TYPE
-|--------------------------------------------------------------------------
-*/
-
 function formatPriceType(
   type
 ) {
@@ -309,99 +307,6 @@ function formatPriceType(
     types[type] ||
     'Fixed Price'
   );
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| ADMIN REQUEST
-|--------------------------------------------------------------------------
-*/
-
-async function adminFetch(
-  path,
-  options = {}
-) {
-
-  const adminKey =
-    getAdminKey();
-
-
-  if (!adminKey) {
-
-    const error =
-      new Error(
-        'Admin access key is missing.'
-      );
-
-    error.status =
-      401;
-
-    throw error;
-
-  }
-
-
-  const response =
-    await fetch(
-      apiUrl(path),
-      {
-
-        ...options,
-
-        headers: {
-
-          Accept:
-            'application/json',
-
-          Authorization:
-            `Bearer ${adminKey}`,
-
-          ...(options.body
-            ? {
-                'Content-Type':
-                  'application/json'
-              }
-            : {}),
-
-          ...(
-            options.headers || {}
-          )
-
-        }
-
-      }
-    );
-
-
-  const data =
-    await response
-      .json()
-      .catch(
-        () => ({})
-      );
-
-
-  if (!response.ok) {
-
-    const error =
-      new Error(
-        data.message ||
-        'Request failed.'
-      );
-
-
-    error.status =
-      response.status;
-
-
-    throw error;
-
-  }
-
-
-  return data;
 
 }
 
@@ -438,7 +343,9 @@ function showDashboard() {
 |--------------------------------------------------------------------------
 */
 
-function showLogin() {
+function showLogin(
+  message = ''
+) {
 
   if (dashboard) {
 
@@ -462,6 +369,164 @@ function showLogin() {
       '';
 
   }
+
+
+  if (loginMessage) {
+
+    loginMessage.textContent =
+      message;
+
+  }
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| HANDLE SESSION ERROR
+|--------------------------------------------------------------------------
+*/
+
+function handleSessionError(
+  error
+) {
+
+  if (
+    error &&
+    error.status === 401
+  ) {
+
+    clearAdminKey();
+
+    showLogin(
+      'Your session has expired. Please login again.'
+    );
+
+    return true;
+
+  }
+
+
+  return false;
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| ADMIN REQUEST
+|--------------------------------------------------------------------------
+*/
+
+async function adminFetch(
+  path,
+  options = {}
+) {
+
+  const adminKey =
+    getAdminKey();
+
+
+  if (!adminKey) {
+
+    const error =
+      new Error(
+        'Admin access key is missing.'
+      );
+
+    error.status =
+      401;
+
+    throw error;
+
+  }
+
+
+  const headers = {
+
+    Accept:
+      'application/json',
+
+    Authorization:
+      `Bearer ${adminKey}`,
+
+    ...(
+      options.headers || {}
+    )
+
+  };
+
+
+  if (options.body) {
+
+    headers[
+      'Content-Type'
+    ] =
+      'application/json';
+
+  }
+
+
+  let response;
+
+
+  try {
+
+    response =
+      await fetch(
+        apiUrl(path),
+        {
+
+          ...options,
+
+          headers
+
+        }
+      );
+
+  } catch (networkError) {
+
+    const error =
+      new Error(
+        'Unable to connect to the server.'
+      );
+
+    error.status =
+      0;
+
+    throw error;
+
+  }
+
+
+  const data =
+    await response
+      .json()
+      .catch(
+        () => ({})
+      );
+
+
+  if (!response.ok) {
+
+    const error =
+      new Error(
+        data.message ||
+        data.error ||
+        'Request failed.'
+      );
+
+
+    error.status =
+      response.status;
+
+
+    throw error;
+
+  }
+
+
+  return data;
 
 }
 
@@ -525,17 +590,37 @@ if (loginForm) {
         await checkAdminAccess();
 
 
-        loginMessage.textContent =
-          'Access granted. Loading dashboard...';
-
-
-        await Promise.all([
-          loadOrders(),
-          loadServices()
-        ]);
-
-
         showDashboard();
+
+
+        loginMessage.textContent =
+          '';
+
+
+        loadOrders()
+          .catch(
+            error => {
+
+              console.error(
+                'Order loading error:',
+                error
+              );
+
+            }
+          );
+
+
+        loadServices()
+          .catch(
+            error => {
+
+              console.error(
+                'Service loading error:',
+                error
+              );
+
+            }
+          );
 
       } catch (error) {
 
@@ -571,7 +656,9 @@ if (loginForm) {
 async function loadOrders() {
 
   if (!ordersContainer) {
+
     return [];
+
   }
 
 
@@ -607,6 +694,10 @@ async function loadOrders() {
         : [];
 
 
+    currentOrders =
+      orders;
+
+
     updateSummary(
       orders
     );
@@ -640,20 +731,12 @@ async function loadOrders() {
 
 
     if (
-      error.status === 401
+      handleSessionError(
+        error
+      )
     ) {
 
-      clearAdminKey();
-
-      showLogin();
-
-
-      if (loginMessage) {
-
-        loginMessage.textContent =
-          'Your session has expired. Please login again.';
-
-      }
+      return [];
 
     }
 
@@ -675,7 +758,7 @@ async function loadOrders() {
     }
 
 
-    throw error;
+    return [];
 
   }
 
@@ -746,7 +829,9 @@ function renderOrders(
 ) {
 
   if (!ordersContainer) {
+
     return;
+
   }
 
 
@@ -953,7 +1038,7 @@ function renderOrders(
               >
 
                 <span>
-                  Customer request
+                  Customer Request
                 </span>
 
                 <p>
@@ -1099,7 +1184,9 @@ document.addEventListener(
 
 
     if (!button) {
+
       return;
+
     }
 
 
@@ -1133,10 +1220,6 @@ document.addEventListener(
       button.textContent;
 
 
-    const newStatus =
-      statusSelect.value;
-
-
     button.disabled =
       true;
 
@@ -1161,7 +1244,7 @@ document.addEventListener(
               JSON.stringify({
 
                 status:
-                  newStatus,
+                  statusSelect.value,
 
                 admin_note:
                   noteInput.value
@@ -1171,29 +1254,6 @@ document.addEventListener(
 
           }
         );
-
-
-      if (
-        !data.order
-      ) {
-
-        throw new Error(
-          'The server did not return the updated order.'
-        );
-
-      }
-
-
-      if (
-        data.order.status !==
-        newStatus
-      ) {
-
-        throw new Error(
-          `Status update failed. Server returned "${data.order.status}".`
-        );
-
-      }
 
 
       button.textContent =
@@ -1210,25 +1270,7 @@ document.addEventListener(
       }
 
 
-      setTimeout(
-        async () => {
-
-          try {
-
-            await loadOrders();
-
-          } catch (error) {
-
-            console.error(
-              'Reload error:',
-              error
-            );
-
-          }
-
-        },
-        500
-      );
+      await loadOrders();
 
     } catch (error) {
 
@@ -1236,6 +1278,17 @@ document.addEventListener(
         'Order update error:',
         error
       );
+
+
+      if (
+        handleSessionError(
+          error
+        )
+      ) {
+
+        return;
+
+      }
 
 
       button.disabled =
@@ -1269,7 +1322,9 @@ document.addEventListener(
 async function loadServices() {
 
   if (!servicesAdminContainer) {
+
     return [];
+
   }
 
 
@@ -1312,6 +1367,17 @@ async function loadServices() {
     );
 
 
+    if (
+      handleSessionError(
+        error
+      )
+    ) {
+
+      return [];
+
+    }
+
+
     servicesAdminContainer.innerHTML =
       `
         <div class="orders-loading">
@@ -1329,7 +1395,7 @@ async function loadServices() {
     }
 
 
-    throw error;
+    return [];
 
   }
 
@@ -1347,7 +1413,9 @@ function renderServices(
 ) {
 
   if (!servicesAdminContainer) {
+
     return;
+
   }
 
 
@@ -1389,7 +1457,6 @@ function renderServices(
                 service.id
               )}"
             >
-
 
               <div class="admin-service-card-header">
 
@@ -1442,7 +1509,6 @@ function renderServices(
 
               <div class="service-form-grid">
 
-
                 <label>
 
                   Service Name
@@ -1457,7 +1523,6 @@ function renderServices(
                   >
 
                 </label>
-
 
 
                 <label>
@@ -1481,7 +1546,6 @@ function renderServices(
                 </label>
 
 
-
                 <label>
 
                   Price Type
@@ -1499,7 +1563,6 @@ function renderServices(
                 </label>
 
 
-
                 <label>
 
                   Turnaround Time
@@ -1515,9 +1578,7 @@ function renderServices(
 
                 </label>
 
-
               </div>
-
 
 
               <label>
@@ -1533,7 +1594,6 @@ function renderServices(
                 )}</textarea>
 
               </label>
-
 
 
               <label class="service-active-label">
@@ -1555,7 +1615,6 @@ function renderServices(
               </label>
 
 
-
               <div class="service-card-actions">
 
                 <button
@@ -1569,7 +1628,6 @@ function renderServices(
                 </button>
 
               </div>
-
 
             </article>
 
@@ -1643,7 +1701,7 @@ if (createServiceForm) {
 
 
       const name =
-        serviceName.value
+        serviceNameInput.value
           .trim();
 
 
@@ -1674,9 +1732,7 @@ if (createServiceForm) {
       }
 
 
-      if (
-        !name
-      ) {
+      if (!name) {
 
         serviceMessage.textContent =
           'Enter a service name.';
@@ -1783,22 +1839,12 @@ if (createServiceForm) {
         await loadServices();
 
 
+        createServiceButton.disabled =
+          false;
+
+
         createServiceButton.textContent =
-          'Created!';
-
-
-        setTimeout(
-          () => {
-
-            createServiceButton.disabled =
-              false;
-
-            createServiceButton.textContent =
-              originalText;
-
-          },
-          700
-        );
+          originalText;
 
       } catch (error) {
 
@@ -1806,6 +1852,17 @@ if (createServiceForm) {
           'Create service error:',
           error
         );
+
+
+        if (
+          handleSessionError(
+            error
+          )
+        ) {
+
+          return;
+
+        }
 
 
         createServiceButton.disabled =
@@ -1849,7 +1906,9 @@ document.addEventListener(
 
 
     if (!button) {
+
       return;
+
     }
 
 
@@ -1860,7 +1919,9 @@ document.addEventListener(
 
 
     if (!card) {
+
       return;
+
     }
 
 
@@ -2020,10 +2081,6 @@ document.addEventListener(
         );
 
 
-      button.textContent =
-        'Saved!';
-
-
       if (serviceMessage) {
 
         serviceMessage.textContent =
@@ -2034,26 +2091,23 @@ document.addEventListener(
 
       await loadServices();
 
-
-      setTimeout(
-        () => {
-
-          button.disabled =
-            false;
-
-          button.textContent =
-            originalText;
-
-        },
-        700
-      );
-
     } catch (error) {
 
       console.error(
         'Update service error:',
         error
       );
+
+
+      if (
+        handleSessionError(
+          error
+        )
+      ) {
+
+        return;
+
+      }
 
 
       button.disabled =
@@ -2095,7 +2149,9 @@ document.addEventListener(
 
 
     if (!button) {
+
       return;
+
     }
 
 
@@ -2115,7 +2171,9 @@ document.addEventListener(
 
 
     if (!confirmed) {
+
       return;
+
     }
 
 
@@ -2165,6 +2223,17 @@ document.addEventListener(
       );
 
 
+      if (
+        handleSessionError(
+          error
+        )
+      ) {
+
+        return;
+
+      }
+
+
       button.disabled =
         false;
 
@@ -2199,17 +2268,9 @@ if (statusFilter) {
     'change',
     () => {
 
-      loadOrders()
-        .catch(
-          error => {
-
-            console.error(
-              'Filter error:',
-              error
-            );
-
-          }
-        );
+      renderOrders(
+        currentOrders
+      );
 
     }
   );
@@ -2229,17 +2290,7 @@ if (refreshButton) {
     'click',
     () => {
 
-      loadOrders()
-        .catch(
-          error => {
-
-            console.error(
-              'Refresh error:',
-              error
-            );
-
-          }
-        );
+      loadOrders();
 
     }
   );
@@ -2259,17 +2310,7 @@ if (refreshServicesButton) {
     'click',
     () => {
 
-      loadServices()
-        .catch(
-          error => {
-
-            console.error(
-              'Refresh services error:',
-              error
-            );
-
-          }
-        );
+      loadServices();
 
     }
   );
@@ -2327,13 +2368,33 @@ document.addEventListener(
       await checkAdminAccess();
 
 
-      await Promise.all([
-        loadOrders(),
-        loadServices()
-      ]);
-
-
       showDashboard();
+
+
+      loadOrders()
+        .catch(
+          error => {
+
+            console.error(
+              'Startup order error:',
+              error
+            );
+
+          }
+        );
+
+
+      loadServices()
+        .catch(
+          error => {
+
+            console.error(
+              'Startup service error:',
+              error
+            );
+
+          }
+        );
 
     } catch (error) {
 
@@ -2345,7 +2406,12 @@ document.addEventListener(
 
       clearAdminKey();
 
-      showLogin();
+
+      showLogin(
+        error.status === 401
+          ? 'Your session has expired. Please login again.'
+          : 'Unable to connect to the admin system.'
+      );
 
     }
 
