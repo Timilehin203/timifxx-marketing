@@ -1,6 +1,7 @@
 const express =
   require('express');
 
+
 const {
   query
 } =
@@ -105,6 +106,83 @@ router.get(
         'Admin access granted.'
 
     });
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| GET ALL SERVICES
+|--------------------------------------------------------------------------
+|
+| Returns all services for the admin dashboard.
+|
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  '/services',
+
+  requireAdmin,
+
+  async (
+    req,
+    res,
+    next
+  ) => {
+
+    try {
+
+      const result =
+        await query(
+          `
+          SELECT
+            id,
+            name,
+            slug,
+            description,
+            price,
+            price_type,
+            turnaround_text,
+            is_active,
+            sort_order,
+            created_at,
+            updated_at
+
+          FROM services
+
+          ORDER BY
+            sort_order ASC,
+            id ASC
+          `
+        );
+
+
+      return res.json({
+
+        success: true,
+
+        services:
+          result.rows
+
+      });
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        'ADMIN SERVICES FETCH ERROR:',
+        error
+      );
+
+
+      next(
+        error
+      );
+
+    }
 
   }
 );
