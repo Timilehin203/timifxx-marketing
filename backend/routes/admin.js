@@ -91,11 +91,17 @@ function requireAdmin(
 const VALID_STATUSES = [
 
   'pending',
+
   'paid',
+
   'in_progress',
+
   'waiting_customer',
+
   'completed',
+
   'cancelled',
+
   'declined'
 
 ];
@@ -103,14 +109,16 @@ const VALID_STATUSES = [
 
 /*
 |--------------------------------------------------------------------------
-| VALID PRICE TYPES
+| VALID SERVICE PRICE TYPES
 |--------------------------------------------------------------------------
 */
 
 const VALID_PRICE_TYPES = [
 
   'fixed',
+
   'starting_from',
+
   'contact'
 
 ];
@@ -140,87 +148,6 @@ router.get(
         'Admin access granted.'
 
     });
-
-  }
-);
-
-
-/*
-|--------------------------------------------------------------------------
-| GET ALL SERVICES
-|--------------------------------------------------------------------------
-*/
-
-router.get(
-  '/services',
-
-  requireAdmin,
-
-  async (
-    req,
-    res,
-    next
-  ) => {
-
-    try {
-
-      console.log(
-        'ADMIN SERVICES REQUEST RECEIVED'
-      );
-
-
-      const result =
-        await query(
-          `
-          SELECT
-            id,
-            name,
-            slug,
-            description,
-            price,
-            price_type,
-            turnaround_text,
-            is_active,
-            sort_order,
-            created_at,
-            updated_at
-          FROM services
-          ORDER BY
-            sort_order ASC,
-            id ASC
-          `
-        );
-
-
-      console.log(
-        `ADMIN SERVICES FOUND: ${result.rows.length}`
-      );
-
-
-      return res.json({
-
-        success: true,
-
-        services:
-          result.rows
-
-      });
-
-    } catch (
-      error
-    ) {
-
-      console.error(
-        'ADMIN GET SERVICES ERROR:',
-        error
-      );
-
-
-      next(
-        error
-      );
-
-    }
 
   }
 );
@@ -479,8 +406,11 @@ router.patch(
           INSERT INTO order_status_history (
 
             order_id,
+
             old_status,
+
             new_status,
+
             note
 
           )
@@ -488,8 +418,11 @@ router.patch(
           VALUES (
 
             $1,
+
             $2,
+
             $3,
+
             $4
 
           )
@@ -528,6 +461,95 @@ router.patch(
 
       console.error(
         'ADMIN ORDER UPDATE ERROR:',
+        error
+      );
+
+
+      next(
+        error
+      );
+
+    }
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| GET ALL SERVICES
+|--------------------------------------------------------------------------
+|
+| IMPORTANT:
+| This route includes BOTH active and inactive services.
+| The public /api/services route only returns active services.
+|
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  '/services',
+
+  requireAdmin,
+
+  async (
+    req,
+    res,
+    next
+  ) => {
+
+    try {
+
+      console.log(
+        'ADMIN SERVICES REQUEST RECEIVED'
+      );
+
+
+      const result =
+        await query(
+          `
+          SELECT
+            id,
+            name,
+            slug,
+            description,
+            price,
+            price_type,
+            turnaround_text,
+            is_active,
+            sort_order,
+            created_at,
+            updated_at
+
+          FROM services
+
+          ORDER BY
+            sort_order ASC,
+            id ASC
+          `
+        );
+
+
+      console.log(
+        `ADMIN SERVICES FOUND: ${result.rows.length}`
+      );
+
+
+      return res.json({
+
+        success: true,
+
+        services:
+          result.rows
+
+      });
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        'ADMIN SERVICES LOAD ERROR:',
         error
       );
 
@@ -609,6 +631,23 @@ router.post(
         req.body.price;
 
 
+      if (
+        priceType === 'contact'
+      ) {
+
+        price =
+          null;
+
+      } else {
+
+        price =
+          Number(
+            price
+          );
+
+      }
+
+
       if (!name) {
 
         return res.status(400).json({
@@ -642,39 +681,38 @@ router.post(
 
 
       if (
-        priceType === 'contact'
-      ) {
-
-        price =
-          null;
-
-      } else {
-
-        price =
-          Number(
-            price
-          );
-
-
-        if (
+        priceType !== 'contact' &&
+        (
           !Number.isFinite(
             price
           ) ||
           price < 0
-        ) {
+        )
+      ) {
 
-          return res.status(400).json({
+        return res.status(400).json({
 
-            success: false,
+          success: false,
 
-            message:
-              'Enter a valid service price.'
+          message:
+            'A valid service price is required.'
 
-          });
-
-        }
+        });
 
       }
+
+
+      const slug =
+        `${name
+          .toLowerCase()
+          .replace(
+            /[^a-z0-9]+/g,
+            '-'
+          )
+          .replace(
+            /^-+|-+$/g,
+            ''
+          )}-${Date.now()}`;
 
 
       const result =
@@ -683,6 +721,7 @@ router.post(
           INSERT INTO services (
 
             name,
+            slug,
             description,
             price,
             price_type,
@@ -700,6 +739,7 @@ router.post(
             $4,
             $5,
             $6,
+            $7,
 
             COALESCE(
               (
@@ -728,10 +768,17 @@ router.post(
           [
 
             name,
+
+            slug,
+
             description || null,
+
             price,
+
             priceType,
+
             turnaroundText || null,
+
             isActive
 
           ]
@@ -777,7 +824,7 @@ router.post(
 */
 
 router.patch(
-  '/services/:serviceId',
+  '/services/:id',
 
   requireAdmin,
 
@@ -791,27 +838,8 @@ router.patch(
 
       const serviceId =
         Number(
-          req.params.serviceId
+          req.params.id
         );
-
-
-      if (
-        !Number.isInteger(
-          serviceId
-        ) ||
-        serviceId < 1
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            'Invalid service ID.'
-
-        });
-
-      }
 
 
       const name =
@@ -838,7 +866,7 @@ router.patch(
 
       const priceType =
         String(
-          req.body.price_type || 'fixed'
+          req.body.price_type || ''
         )
           .trim();
 
@@ -862,6 +890,25 @@ router.patch(
 
       let price =
         req.body.price;
+
+
+      if (
+        !Number.isInteger(
+          serviceId
+        ) ||
+        serviceId < 1
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid service ID.'
+
+        });
+
+      }
 
 
       if (!name) {
@@ -910,24 +957,27 @@ router.patch(
             price
           );
 
+      }
 
-        if (
+
+      if (
+        priceType !== 'contact' &&
+        (
           !Number.isFinite(
             price
           ) ||
           price < 0
-        ) {
+        )
+      ) {
 
-          return res.status(400).json({
+        return res.status(400).json({
 
-            success: false,
+          success: false,
 
-            message:
-              'Enter a valid service price.'
+          message:
+            'A valid service price is required.'
 
-          });
-
-        }
+        });
 
       }
 
@@ -1044,7 +1094,7 @@ router.patch(
 */
 
 router.delete(
-  '/services/:serviceId',
+  '/services/:id',
 
   requireAdmin,
 
@@ -1058,7 +1108,7 @@ router.delete(
 
       const serviceId =
         Number(
-          req.params.serviceId
+          req.params.id
         );
 
 
