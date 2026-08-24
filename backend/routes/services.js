@@ -1,9 +1,13 @@
 const express =
   require('express');
 
+
 const {
   query
-} = require('../config/database');
+} =
+  require(
+    '../config/database'
+  );
 
 
 const router =
@@ -12,50 +16,65 @@ const router =
 
 /*
 |--------------------------------------------------------------------------
-| GET /api/services
-|--------------------------------------------------------------------------
-|
-| Returns all active services.
-|
+| GET ALL ACTIVE SERVICES
 |--------------------------------------------------------------------------
 */
 
 router.get(
   '/',
-  async (req, res, next) => {
+  async (
+    req,
+    res,
+    next
+  ) => {
 
     try {
 
       const result =
         await query(
           `
-          SELECT
-            id,
-            name,
-            slug,
-            description,
-            price,
-            price_type,
-            turnaround_text
-          FROM services
-          WHERE is_active = TRUE
-          ORDER BY sort_order ASC, id ASC
+            SELECT
+              id,
+              name,
+              slug,
+              description,
+              price,
+              price_type,
+              turnaround_text,
+              is_active,
+              sort_order
+            FROM services
+            WHERE is_active = TRUE
+            ORDER BY
+              sort_order ASC,
+              id ASC
           `
         );
 
 
       res.json({
 
-        success: true,
+        success:
+          true,
 
         services:
           result.rows
 
       });
 
-    } catch (error) {
+    } catch (
+      error
+    ) {
 
-      next(error);
+      console.error(
+        'PUBLIC SERVICES ERROR:',
+        error
+      );
+
+
+      next(
+        error
+      );
 
     }
 
