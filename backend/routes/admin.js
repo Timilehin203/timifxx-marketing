@@ -1,6 +1,7 @@
 const express =
   require('express');
 
+
 const {
   query
 } =
@@ -16,6 +17,7 @@ const router =
 | ADMIN AUTHENTICATION
 |--------------------------------------------------------------------------
 */
+
 
 function requireAdmin(
   req,
@@ -49,7 +51,8 @@ function requireAdmin(
 
     return res.status(500).json({
 
-      success: false,
+      success:
+        false,
 
       message:
         'Admin authentication is not configured.'
@@ -66,7 +69,8 @@ function requireAdmin(
 
     return res.status(401).json({
 
-      success: false,
+      success:
+        false,
 
       message:
         'Invalid admin access key.'
@@ -87,6 +91,7 @@ function requireAdmin(
 |--------------------------------------------------------------------------
 */
 
+
 router.get(
   '/check',
 
@@ -99,7 +104,8 @@ router.get(
 
     return res.json({
 
-      success: true,
+      success:
+        true,
 
       message:
         'Admin access granted.'
@@ -115,6 +121,7 @@ router.get(
 | VALID ORDER STATUSES
 |--------------------------------------------------------------------------
 */
+
 
 const VALID_STATUSES = [
 
@@ -141,6 +148,7 @@ const VALID_STATUSES = [
 |--------------------------------------------------------------------------
 */
 
+
 const VALID_PRICE_TYPES = [
 
   'fixed',
@@ -157,6 +165,7 @@ const VALID_PRICE_TYPES = [
 | GET ALL ORDERS
 |--------------------------------------------------------------------------
 */
+
 
 router.get(
   '/orders',
@@ -175,25 +184,38 @@ router.get(
         await query(
           `
           SELECT
+
             o.id,
+
             o.order_number,
+
             o.customer_name,
+
             o.customer_email,
+
             o.telegram_username,
+
             o.whatsapp,
+
             o.message,
+
             o.price,
+
             o.status,
+
             o.admin_note,
+
             o.completed_at,
+
             o.created_at,
+
             o.updated_at,
 
             s.name AS service_name
 
           FROM orders AS o
 
-          INNER JOIN services AS s
+          LEFT JOIN services AS s
             ON s.id = o.service_id
 
           ORDER BY
@@ -204,7 +226,8 @@ router.get(
 
       return res.json({
 
-        success: true,
+        success:
+          true,
 
         orders:
           result.rows
@@ -230,6 +253,7 @@ router.get(
 | UPDATE ORDER
 |--------------------------------------------------------------------------
 */
+
 
 router.patch(
   '/orders/:orderNumber',
@@ -278,7 +302,8 @@ router.patch(
 
         return res.status(400).json({
 
-          success: false,
+          success:
+            false,
 
           message:
             'Invalid order number.'
@@ -296,7 +321,8 @@ router.patch(
 
         return res.status(400).json({
 
-          success: false,
+          success:
+            false,
 
           message:
             'Invalid order status.'
@@ -310,14 +336,22 @@ router.patch(
         await query(
           `
           SELECT
+
             id,
+
             status
+
           FROM orders
-          WHERE order_number = $1::text
+
+          WHERE
+            order_number = $1
+
           LIMIT 1
           `,
           [
+
             orderNumber
+
           ]
         );
 
@@ -328,7 +362,8 @@ router.patch(
 
         return res.status(404).json({
 
-          success: false,
+          success:
+            false,
 
           message:
             'Order not found.'
@@ -349,16 +384,14 @@ router.patch(
 
           SET
 
-            status =
-              $1::varchar,
+            status = $1,
 
-            admin_note =
-              $2::text,
+            admin_note = $2,
 
             completed_at =
               CASE
 
-                WHEN $1::text = 'completed'
+                WHEN $1 = 'completed'
 
                 THEN NOW()
 
@@ -366,12 +399,10 @@ router.patch(
 
               END,
 
-            updated_at =
-              NOW()
+            updated_at = NOW()
 
           WHERE
-            order_number =
-              $3::text
+            order_number = $3
 
           RETURNING
 
@@ -399,6 +430,23 @@ router.patch(
 
           ]
         );
+
+
+      if (
+        updateResult.rows.length === 0
+      ) {
+
+        return res.status(404).json({
+
+          success:
+            false,
+
+          message:
+            'Unable to update order.'
+
+        });
+
+      }
 
 
       const updatedOrder =
@@ -433,11 +481,11 @@ router.patch(
 
             $1,
 
-            $2::varchar,
+            $2,
 
-            $3::varchar,
+            $3,
 
-            $4::text
+            $4
 
           )
           `,
@@ -445,9 +493,7 @@ router.patch(
 
             currentOrder.id,
 
-            String(
-              currentOrder.status
-            ),
+            currentOrder.status,
 
             status,
 
@@ -461,7 +507,8 @@ router.patch(
 
       return res.json({
 
-        success: true,
+        success:
+          true,
 
         message:
           'Order updated successfully.',
@@ -493,9 +540,10 @@ router.patch(
 
 /*
 |--------------------------------------------------------------------------
-| GET ALL SERVICES FOR ADMIN
+| GET ALL SERVICES
 |--------------------------------------------------------------------------
 */
+
 
 router.get(
   '/services',
@@ -514,22 +562,35 @@ router.get(
         await query(
           `
           SELECT
+
             id,
+
             name,
+
             slug,
+
             description,
+
             price,
+
             price_type,
+
             turnaround_text,
+
             is_active,
+
             sort_order,
+
             created_at,
+
             updated_at
 
           FROM services
 
           ORDER BY
+
             sort_order ASC,
+
             id ASC
           `
         );
@@ -537,7 +598,8 @@ router.get(
 
       return res.json({
 
-        success: true,
+        success:
+          true,
 
         services:
           result.rows
@@ -547,12 +609,6 @@ router.get(
     } catch (
       error
     ) {
-
-      console.error(
-        'ADMIN LOAD SERVICES ERROR:',
-        error
-      );
-
 
       next(
         error
@@ -569,6 +625,7 @@ router.get(
 | CREATE SERVICE
 |--------------------------------------------------------------------------
 */
+
 
 router.post(
   '/services',
@@ -624,7 +681,9 @@ router.post(
 
 
       const isActive =
-        req.body.is_active !== false;
+        req.body.is_active === false
+          ? false
+          : true;
 
 
       let price =
@@ -635,7 +694,8 @@ router.post(
 
         return res.status(400).json({
 
-          success: false,
+          success:
+            false,
 
           message:
             'Service name is required.'
@@ -653,7 +713,8 @@ router.post(
 
         return res.status(400).json({
 
-          success: false,
+          success:
+            false,
 
           message:
             'Invalid price type.'
@@ -687,7 +748,8 @@ router.post(
 
           return res.status(400).json({
 
-            success: false,
+            success:
+              false,
 
             message:
               'A valid service price is required.'
@@ -714,7 +776,8 @@ router.post(
 
       const slug =
         `${
-          slugBase || 'service'
+          slugBase ||
+          'service'
         }-${
           Date.now()
         }`;
@@ -726,12 +789,19 @@ router.post(
           INSERT INTO services (
 
             name,
+
             slug,
+
             description,
+
             price,
+
             price_type,
+
             turnaround_text,
+
             is_active,
+
             sort_order
 
           )
@@ -739,11 +809,17 @@ router.post(
           VALUES (
 
             $1,
+
             $2,
+
             $3,
+
             $4,
+
             $5,
+
             $6,
+
             $7,
 
             (
@@ -752,14 +828,34 @@ router.post(
                   MAX(sort_order),
                   0
                 ) + 1
-
               FROM services
             )
 
           )
 
           RETURNING
-            *
+
+            id,
+
+            name,
+
+            slug,
+
+            description,
+
+            price,
+
+            price_type,
+
+            turnaround_text,
+
+            is_active,
+
+            sort_order,
+
+            created_at,
+
+            updated_at
           `,
           [
 
@@ -783,7 +879,8 @@ router.post(
 
       return res.status(201).json({
 
-        success: true,
+        success:
+          true,
 
         message:
           'Service created successfully.',
@@ -796,12 +893,6 @@ router.post(
     } catch (
       error
     ) {
-
-      console.error(
-        'ADMIN CREATE SERVICE ERROR:',
-        error
-      );
-
 
       next(
         error
@@ -819,8 +910,9 @@ router.post(
 |--------------------------------------------------------------------------
 */
 
+
 router.patch(
-  '/services/:id',
+  '/services/:serviceId',
 
   requireAdmin,
 
@@ -834,7 +926,7 @@ router.patch(
 
       const serviceId =
         Number(
-          req.params.id
+          req.params.serviceId
         );
 
 
@@ -897,7 +989,8 @@ router.patch(
 
         return res.status(400).json({
 
-          success: false,
+          success:
+            false,
 
           message:
             'Invalid service ID.'
@@ -911,7 +1004,8 @@ router.patch(
 
         return res.status(400).json({
 
-          success: false,
+          success:
+            false,
 
           message:
             'Service name is required.'
@@ -929,7 +1023,8 @@ router.patch(
 
         return res.status(400).json({
 
-          success: false,
+          success:
+            false,
 
           message:
             'Invalid price type.'
@@ -963,7 +1058,8 @@ router.patch(
 
           return res.status(400).json({
 
-            success: false,
+            success:
+              false,
 
             message:
               'A valid service price is required.'
@@ -982,33 +1078,46 @@ router.patch(
 
           SET
 
-            name =
-              $1,
+            name = $1,
 
-            description =
-              $2,
+            description = $2,
 
-            price =
-              $3,
+            price = $3,
 
-            price_type =
-              $4,
+            price_type = $4,
 
-            turnaround_text =
-              $5,
+            turnaround_text = $5,
 
-            is_active =
-              $6,
+            is_active = $6,
 
-            updated_at =
-              NOW()
+            updated_at = NOW()
 
           WHERE
-            id =
-              $7
+            id = $7
 
           RETURNING
-            *
+
+            id,
+
+            name,
+
+            slug,
+
+            description,
+
+            price,
+
+            price_type,
+
+            turnaround_text,
+
+            is_active,
+
+            sort_order,
+
+            created_at,
+
+            updated_at
           `,
           [
 
@@ -1036,7 +1145,8 @@ router.patch(
 
         return res.status(404).json({
 
-          success: false,
+          success:
+            false,
 
           message:
             'Service not found.'
@@ -1048,7 +1158,8 @@ router.patch(
 
       return res.json({
 
-        success: true,
+        success:
+          true,
 
         message:
           'Service updated successfully.',
@@ -1061,12 +1172,6 @@ router.patch(
     } catch (
       error
     ) {
-
-      console.error(
-        'ADMIN UPDATE SERVICE ERROR:',
-        error
-      );
-
 
       next(
         error
@@ -1084,8 +1189,9 @@ router.patch(
 |--------------------------------------------------------------------------
 */
 
+
 router.delete(
-  '/services/:id',
+  '/services/:serviceId',
 
   requireAdmin,
 
@@ -1099,7 +1205,7 @@ router.delete(
 
       const serviceId =
         Number(
-          req.params.id
+          req.params.serviceId
         );
 
 
@@ -1112,7 +1218,8 @@ router.delete(
 
         return res.status(400).json({
 
-          success: false,
+          success:
+            false,
 
           message:
             'Invalid service ID.'
@@ -1128,15 +1235,18 @@ router.delete(
           DELETE FROM services
 
           WHERE
-            id =
-              $1
+            id = $1
 
           RETURNING
+
             id,
+
             name
           `,
           [
+
             serviceId
+
           ]
         );
 
@@ -1147,7 +1257,8 @@ router.delete(
 
         return res.status(404).json({
 
-          success: false,
+          success:
+            false,
 
           message:
             'Service not found.'
@@ -1159,7 +1270,8 @@ router.delete(
 
       return res.json({
 
-        success: true,
+        success:
+          true,
 
         message:
           'Service deleted successfully.',
@@ -1172,12 +1284,6 @@ router.delete(
     } catch (
       error
     ) {
-
-      console.error(
-        'ADMIN DELETE SERVICE ERROR:',
-        error
-      );
-
 
       next(
         error
