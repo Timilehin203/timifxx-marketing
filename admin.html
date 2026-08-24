@@ -55,7 +55,7 @@
       </h1>
 
       <p>
-        Enter your administrator access key to manage orders.
+        Enter your administrator access key to manage orders and services.
       </p>
 
 
@@ -123,7 +123,7 @@
           </p>
 
           <h1>
-            Order Dashboard
+            Admin Dashboard
           </h1>
 
         </div>
@@ -146,7 +146,16 @@
             class="button secondary"
             type="button"
           >
-            Refresh
+            Refresh Orders
+          </button>
+
+
+          <button
+            id="refreshServicesButton"
+            class="button secondary"
+            type="button"
+          >
+            Refresh Services
           </button>
 
 
@@ -168,6 +177,9 @@
     <section
       class="admin-main"
     >
+
+
+      <!-- SUMMARY -->
 
       <div
         class="admin-summary"
@@ -235,77 +247,298 @@
       </div>
 
 
-      <div
-        class="admin-toolbar"
-      >
+      <!-- SERVICES -->
 
-        <div>
-
-          <h2>
-            Incoming Orders
-          </h2>
-
-          <p
-            id="ordersMessage"
-            class="admin-message"
-          ></p>
-
-        </div>
-
-
-        <select
-          id="statusFilter"
-        >
-
-          <option value="">
-            All statuses
-          </option>
-
-          <option value="pending">
-            Pending
-          </option>
-
-          <option value="paid">
-            Paid
-          </option>
-
-          <option value="in_progress">
-            In Progress
-          </option>
-
-          <option value="waiting_customer">
-            Waiting for Customer
-          </option>
-
-          <option value="completed">
-            Completed
-          </option>
-
-          <option value="cancelled">
-            Cancelled
-          </option>
-
-          <option value="declined">
-            Declined
-          </option>
-
-        </select>
-
-      </div>
-
-
-      <div
-        id="ordersContainer"
-        class="orders-container"
+      <section
+        class="admin-services-section"
       >
 
         <div
-          class="orders-loading"
+          class="admin-section-heading"
         >
-          Loading orders...
+
+          <div>
+
+            <p class="eyebrow">
+              SERVICE MANAGEMENT
+            </p>
+
+            <h2>
+              Manage Services
+            </h2>
+
+            <p>
+              Create, edit, activate, deactivate, or delete your services.
+            </p>
+
+          </div>
+
         </div>
 
-      </div>
+
+        <div
+          class="create-service-panel"
+        >
+
+          <h3>
+            Create New Service
+          </h3>
+
+
+          <form
+            id="createServiceForm"
+          >
+
+            <div
+              class="service-form-grid"
+            >
+
+              <label>
+
+                Service Name
+
+                <input
+                  id="serviceName"
+                  type="text"
+                  maxlength="150"
+                  required
+                  placeholder="Enter service name"
+                >
+
+              </label>
+
+
+              <label>
+
+                Price
+
+                <input
+                  id="servicePrice"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Enter price"
+                >
+
+              </label>
+
+
+              <label>
+
+                Price Type
+
+                <select
+                  id="servicePriceType"
+                >
+
+                  <option value="fixed">
+                    Fixed Price
+                  </option>
+
+                  <option value="starting_from">
+                    Starting From
+                  </option>
+
+                  <option value="contact">
+                    Contact Us
+                  </option>
+
+                </select>
+
+              </label>
+
+
+              <label>
+
+                Turnaround Time
+
+                <input
+                  id="serviceTurnaround"
+                  type="text"
+                  maxlength="150"
+                  placeholder="Example: 3 - 5 days"
+                >
+
+              </label>
+
+            </div>
+
+
+            <label>
+
+              Service Description
+
+              <textarea
+                id="serviceDescription"
+                rows="5"
+                maxlength="3000"
+                placeholder="Describe the service..."
+              ></textarea>
+
+            </label>
+
+
+            <label
+              class="service-active-label"
+            >
+
+              <input
+                id="serviceActive"
+                type="checkbox"
+                checked
+              >
+
+              <span>
+                Make this service active and visible to customers
+              </span>
+
+            </label>
+
+
+            <div
+              class="service-card-actions"
+            >
+
+              <button
+                id="createServiceButton"
+                class="button primary"
+                type="submit"
+              >
+                Create Service
+              </button>
+
+            </div>
+
+
+            <p
+              id="serviceMessage"
+              class="admin-message"
+              aria-live="polite"
+            ></p>
+
+          </form>
+
+        </div>
+
+
+        <div
+          class="admin-section-heading service-list-heading"
+        >
+
+          <div>
+
+            <h3>
+              Existing Services
+            </h3>
+
+            <p>
+              Your current services from the database.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div
+          id="servicesAdminContainer"
+          class="services-admin-container"
+        >
+
+          <div
+            class="orders-loading"
+          >
+            Loading services...
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ORDERS -->
+
+      <section
+        class="admin-orders-section"
+      >
+
+        <div
+          class="admin-toolbar"
+        >
+
+          <div>
+
+            <p class="eyebrow">
+              ORDER MANAGEMENT
+            </p>
+
+            <h2>
+              Incoming Orders
+            </h2>
+
+            <p
+              id="ordersMessage"
+              class="admin-message"
+            ></p>
+
+          </div>
+
+
+          <select
+            id="statusFilter"
+          >
+
+            <option value="">
+              All statuses
+            </option>
+
+            <option value="pending">
+              Pending
+            </option>
+
+            <option value="paid">
+              Paid
+            </option>
+
+            <option value="in_progress">
+              In Progress
+            </option>
+
+            <option value="waiting_customer">
+              Waiting for Customer
+            </option>
+
+            <option value="completed">
+              Completed
+            </option>
+
+            <option value="cancelled">
+              Cancelled
+            </option>
+
+            <option value="declined">
+              Declined
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div
+          id="ordersContainer"
+          class="orders-container"
+        >
+
+          <div
+            class="orders-loading"
+          >
+            Loading orders...
+          </div>
+
+        </div>
+
+      </section>
 
     </section>
 
