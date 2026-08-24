@@ -113,83 +113,6 @@ router.get(
 
 /*
 |--------------------------------------------------------------------------
-| GET ALL SERVICES
-|--------------------------------------------------------------------------
-|
-| Returns all services for the admin dashboard.
-|
-|--------------------------------------------------------------------------
-*/
-
-router.get(
-  '/services',
-
-  requireAdmin,
-
-  async (
-    req,
-    res,
-    next
-  ) => {
-
-    try {
-
-      const result =
-        await query(
-          `
-          SELECT
-            id,
-            name,
-            slug,
-            description,
-            price,
-            price_type,
-            turnaround_text,
-            is_active,
-            sort_order,
-            created_at,
-            updated_at
-
-          FROM services
-
-          ORDER BY
-            sort_order ASC,
-            id ASC
-          `
-        );
-
-
-      return res.json({
-
-        success: true,
-
-        services:
-          result.rows
-
-      });
-
-    } catch (
-      error
-    ) {
-
-      console.error(
-        'ADMIN SERVICES FETCH ERROR:',
-        error
-      );
-
-
-      next(
-        error
-      );
-
-    }
-
-  }
-);
-
-
-/*
-|--------------------------------------------------------------------------
 | VALID ORDER STATUSES
 |--------------------------------------------------------------------------
 */
@@ -211,6 +134,50 @@ const VALID_STATUSES = [
   'declined'
 
 ];
+
+
+/*
+|--------------------------------------------------------------------------
+| VALID SERVICE PRICE TYPES
+|--------------------------------------------------------------------------
+*/
+
+const VALID_PRICE_TYPES = [
+
+  'fixed',
+
+  'starting_from',
+
+  'contact'
+
+];
+
+
+/*
+|--------------------------------------------------------------------------
+| CREATE SERVICE SLUG
+|--------------------------------------------------------------------------
+*/
+
+function createServiceSlug(
+  name
+) {
+
+  return String(
+    name || ''
+  )
+    .toLowerCase()
+    .trim()
+    .replace(
+      /[^a-z0-9]+/g,
+      '-'
+    )
+    .replace(
+      /^-+|-+$/g,
+      ''
+    );
+
+}
 
 
 /*
@@ -648,6 +615,960 @@ router.patch(
   }
 );
 
+
+/*
+|--------------------------------------------------------------------------
+| GET ALL SERVICES
+|--------------------------------------------------------------------------
+|
+| Returns all services, including inactive services.
+| This is used by the private admin dashboard.
+|
+|--------------------------------------------------------------------------
+*/
+
+router.get(
+  '/services',
+
+  requireAdmin,
+
+  async (
+    req,
+    res,
+    next
+  ) => {
+
+    try {
+
+      const result =
+        await query(
+          `
+          SELECT
+            id,
+            name,
+            slug,
+            description,
+            price,
+            price_type,
+            turnaround_text,
+            is_active
+          FROM services
+          ORDER BY
+            sort_order ASC,
+            id ASC
+          `
+        );
+
+
+      return res.json({
+
+        success: true,
+
+        services:
+          result.rows
+
+      });
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        'ADMIN GET SERVICES ERROR:',
+        error
+      );
+
+
+      next(
+        error
+      );
+
+    }
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| CREATE SERVICE
+|--------------------------------------------------------------------------
+*/
+
+router.post(
+  '/services',
+
+  requireAdmin,
+
+  async (
+    req,
+    res,
+    next
+  ) => {
+
+    try {
+
+      const name =
+        String(
+          req.body.name || ''
+        )
+          .trim()
+          .slice(
+            0,
+            150
+          );
+
+
+      const description =
+        String(
+          req.body.description || ''
+        )
+          .trim()
+          .slice(
+            0,
+            3000
+          );
+
+
+      const priceType =
+        String(
+          req.body.price_type || 'fixed'
+        )
+          .trim();
+
+
+      const turnaroundText =
+        String(
+          req.body.turnaround_text || ''
+        )
+          .trim()
+          .slice(
+            0,
+            150
+          );
+
+
+      const isActive =
+        req.body.is_active === true;
+
+
+      let price =
+        req.body.price;
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | VALIDATE NAME
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        !name
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Service name is required.'
+
+        });
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | VALIDATE PRICE TYPE
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        !VALID_PRICE_TYPES.includes(
+          priceType
+        )
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid price type.'
+
+        });
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | VALIDATE PRICE
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        priceType === 'contact'
+      ) {
+
+        price =
+          null;
+
+      } else {
+
+        price =
+          Number(
+            price
+          );
+
+
+        if (
+          !Number.isFinite(
+            price
+          ) ||
+          price < 0
+        ) {
+
+          return res.status(400).json({
+
+            success: false,
+
+            message:
+              'A valid service price is required.'
+
+          });
+
+        }
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | CREATE SLUG
+      |--------------------------------------------------------------------------
+      */
+
+      const slug =
+        createServiceSlug(
+          name
+        );
+
+
+      if (
+        !slug
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Unable to create a valid service slug.'
+
+        });
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | CHECK FOR DUPLICATE SLUG
+      |--------------------------------------------------------------------------
+      */
+
+      const existingService =
+        await query(
+          `
+          SELECT
+            id
+          FROM services
+          WHERE slug = $1
+          LIMIT 1
+          `,
+          [
+            slug
+          ]
+        );
+
+
+      if (
+        existingService.rows.length > 0
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'A service with this name already exists.'
+
+        });
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | CREATE SERVICE
+      |--------------------------------------------------------------------------
+      */
+
+      const result =
+        await query(
+          `
+          INSERT INTO services (
+
+            name,
+
+            slug,
+
+            description,
+
+            price,
+
+            price_type,
+
+            turnaround_text,
+
+            is_active
+
+          )
+
+          VALUES (
+
+            $1,
+
+            $2,
+
+            $3,
+
+            $4,
+
+            $5,
+
+            $6,
+
+            $7
+
+          )
+
+          RETURNING
+
+            id,
+
+            name,
+
+            slug,
+
+            description,
+
+            price,
+
+            price_type,
+
+            turnaround_text,
+
+            is_active
+          `,
+          [
+
+            name,
+
+            slug,
+
+            description || null,
+
+            price,
+
+            priceType,
+
+            turnaroundText || null,
+
+            isActive
+
+          ]
+        );
+
+
+      return res.status(201).json({
+
+        success: true,
+
+        message:
+          'Service created successfully.',
+
+        service:
+          result.rows[0]
+
+      });
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        'ADMIN CREATE SERVICE ERROR:',
+        error
+      );
+
+
+      next(
+        error
+      );
+
+    }
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| UPDATE SERVICE
+|--------------------------------------------------------------------------
+*/
+
+router.patch(
+  '/services/:serviceId',
+
+  requireAdmin,
+
+  async (
+    req,
+    res,
+    next
+  ) => {
+
+    try {
+
+      const serviceId =
+        Number(
+          req.params.serviceId
+        );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | VALIDATE SERVICE ID
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        !Number.isInteger(
+          serviceId
+        ) ||
+        serviceId <= 0
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid service ID.'
+
+        });
+
+      }
+
+
+      const name =
+        String(
+          req.body.name || ''
+        )
+          .trim()
+          .slice(
+            0,
+            150
+          );
+
+
+      const description =
+        String(
+          req.body.description || ''
+        )
+          .trim()
+          .slice(
+            0,
+            3000
+          );
+
+
+      const priceType =
+        String(
+          req.body.price_type || 'fixed'
+        )
+          .trim();
+
+
+      const turnaroundText =
+        String(
+          req.body.turnaround_text || ''
+        )
+          .trim()
+          .slice(
+            0,
+            150
+          );
+
+
+      const isActive =
+        req.body.is_active === true;
+
+
+      let price =
+        req.body.price;
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | VALIDATE NAME
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        !name
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Service name is required.'
+
+        });
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | VALIDATE PRICE TYPE
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        !VALID_PRICE_TYPES.includes(
+          priceType
+        )
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid price type.'
+
+        });
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | VALIDATE PRICE
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        priceType === 'contact'
+      ) {
+
+        price =
+          null;
+
+      } else {
+
+        price =
+          Number(
+            price
+          );
+
+
+        if (
+          !Number.isFinite(
+            price
+          ) ||
+          price < 0
+        ) {
+
+          return res.status(400).json({
+
+            success: false,
+
+            message:
+              'A valid service price is required.'
+
+          });
+
+        }
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | CREATE SLUG
+      |--------------------------------------------------------------------------
+      */
+
+      const slug =
+        createServiceSlug(
+          name
+        );
+
+
+      if (
+        !slug
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Unable to create a valid service slug.'
+
+        });
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | CHECK SERVICE EXISTS
+      |--------------------------------------------------------------------------
+      */
+
+      const currentService =
+        await query(
+          `
+          SELECT
+            id
+          FROM services
+          WHERE id = $1
+          LIMIT 1
+          `,
+          [
+            serviceId
+          ]
+        );
+
+
+      if (
+        currentService.rows.length === 0
+      ) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Service not found.'
+
+        });
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | CHECK FOR DUPLICATE SLUG
+      |--------------------------------------------------------------------------
+      */
+
+      const duplicateService =
+        await query(
+          `
+          SELECT
+            id
+          FROM services
+          WHERE
+            slug = $1
+            AND id != $2
+          LIMIT 1
+          `,
+          [
+
+            slug,
+
+            serviceId
+
+          ]
+        );
+
+
+      if (
+        duplicateService.rows.length > 0
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Another service with this name already exists.'
+
+        });
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | UPDATE SERVICE
+      |--------------------------------------------------------------------------
+      */
+
+      const result =
+        await query(
+          `
+          UPDATE services
+
+          SET
+
+            name =
+              $1,
+
+            slug =
+              $2,
+
+            description =
+              $3,
+
+            price =
+              $4,
+
+            price_type =
+              $5,
+
+            turnaround_text =
+              $6,
+
+            is_active =
+              $7
+
+          WHERE
+            id =
+              $8
+
+          RETURNING
+
+            id,
+
+            name,
+
+            slug,
+
+            description,
+
+            price,
+
+            price_type,
+
+            turnaround_text,
+
+            is_active
+          `,
+          [
+
+            name,
+
+            slug,
+
+            description || null,
+
+            price,
+
+            priceType,
+
+            turnaroundText || null,
+
+            isActive,
+
+            serviceId
+
+          ]
+        );
+
+
+      return res.json({
+
+        success: true,
+
+        message:
+          'Service updated successfully.',
+
+        service:
+          result.rows[0]
+
+      });
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        'ADMIN UPDATE SERVICE ERROR:',
+        error
+      );
+
+
+      next(
+        error
+      );
+
+    }
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| DELETE SERVICE
+|--------------------------------------------------------------------------
+*/
+
+router.delete(
+  '/services/:serviceId',
+
+  requireAdmin,
+
+  async (
+    req,
+    res,
+    next
+  ) => {
+
+    try {
+
+      const serviceId =
+        Number(
+          req.params.serviceId
+        );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | VALIDATE SERVICE ID
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        !Number.isInteger(
+          serviceId
+        ) ||
+        serviceId <= 0
+      ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid service ID.'
+
+        });
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | DELETE SERVICE
+      |--------------------------------------------------------------------------
+      */
+
+      const result =
+        await query(
+          `
+          DELETE FROM services
+
+          WHERE
+            id = $1
+
+          RETURNING
+
+            id,
+
+            name,
+
+            slug,
+
+            description,
+
+            price,
+
+            price_type,
+
+            turnaround_text,
+
+            is_active
+          `,
+          [
+            serviceId
+          ]
+        );
+
+
+      if (
+        result.rows.length === 0
+      ) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Service not found.'
+
+        });
+
+      }
+
+
+      return res.json({
+
+        success: true,
+
+        message:
+          'Service deleted successfully.',
+
+        service:
+          result.rows[0]
+
+      });
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        'ADMIN DELETE SERVICE ERROR:',
+        error
+      );
+
+
+      next(
+        error
+      );
+
+    }
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| EXPORT ROUTER
+|--------------------------------------------------------------------------
+*/
 
 module.exports =
   router;
