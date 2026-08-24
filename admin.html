@@ -19,12 +19,10 @@
     Admin Dashboard | TimiFxx Marketing
   </title>
 
-
   <link
     rel="stylesheet"
     href="css/style.css"
   >
-
 
   <link
     rel="stylesheet"
@@ -41,22 +39,20 @@
 
   <main
     id="loginScreen"
-    class="admin-login"
+    class="admin-page-section"
   >
 
     <section
-      class="admin-login-card"
+      class="admin-login-panel"
     >
 
       <p class="eyebrow">
         PRIVATE AREA
       </p>
 
-
       <h1>
         Admin Dashboard
       </h1>
-
 
       <p>
         Enter your administrator access key to manage orders and services.
@@ -68,12 +64,9 @@
         class="admin-login-form"
       >
 
-        <label
-          for="adminKey"
-        >
+        <label for="adminKey">
 
-          Admin access key
-
+          Admin Access Key
 
           <input
             id="adminKey"
@@ -111,19 +104,19 @@
 
   <main
     id="dashboard"
-    class="admin-dashboard"
+    class="admin-page-section"
     hidden
   >
 
-
-    <!-- HEADER -->
-
-    <header
-      class="admin-header"
+    <section
+      class="container"
     >
 
-      <div
-        class="admin-header-inner"
+
+      <!-- HEADER -->
+
+      <header
+        class="admin-dashboard-header"
       >
 
         <div>
@@ -132,10 +125,13 @@
             TIMIFXX MARKETING
           </p>
 
-
-          <h1>
+          <h2>
             Admin Dashboard
-          </h1>
+          </h2>
+
+          <p>
+            Manage your orders and view your existing services.
+          </p>
 
         </div>
 
@@ -157,7 +153,7 @@
             class="button secondary"
             type="button"
           >
-            Refresh Orders
+            Refresh
           </button>
 
 
@@ -171,30 +167,22 @@
 
         </div>
 
-      </div>
-
-    </header>
-
-
-    <!-- MAIN -->
-
-    <section
-      class="admin-main"
-    >
+      </header>
 
 
       <!-- SUMMARY -->
 
-      <div
-        class="admin-summary"
+      <section
+        class="admin-summary-grid"
       >
 
-        <article>
+        <article
+          class="admin-summary-card"
+        >
 
           <span>
             Total Orders
           </span>
-
 
           <strong
             id="totalOrders"
@@ -205,12 +193,13 @@
         </article>
 
 
-        <article>
+        <article
+          class="admin-summary-card"
+        >
 
           <span>
             Pending
           </span>
-
 
           <strong
             id="pendingOrders"
@@ -221,12 +210,13 @@
         </article>
 
 
-        <article>
+        <article
+          class="admin-summary-card"
+        >
 
           <span>
             In Progress
           </span>
-
 
           <strong
             id="progressOrders"
@@ -237,12 +227,13 @@
         </article>
 
 
-        <article>
+        <article
+          class="admin-summary-card"
+        >
 
           <span>
             Completed
           </span>
-
 
           <strong
             id="completedOrders"
@@ -252,109 +243,28 @@
 
         </article>
 
-      </div>
+      </section>
 
 
-      <!-- ORDERS -->
-
-      <div
-        class="admin-toolbar"
-      >
-
-        <div>
-
-          <h2>
-            Incoming Orders
-          </h2>
-
-
-          <p
-            id="ordersMessage"
-            class="admin-message"
-          ></p>
-
-        </div>
-
-
-        <select
-          id="statusFilter"
-        >
-
-          <option value="">
-            All statuses
-          </option>
-
-
-          <option value="pending">
-            Pending
-          </option>
-
-
-          <option value="paid">
-            Paid
-          </option>
-
-
-          <option value="in_progress">
-            In Progress
-          </option>
-
-
-          <option value="waiting_customer">
-            Waiting for Customer
-          </option>
-
-
-          <option value="completed">
-            Completed
-          </option>
-
-
-          <option value="cancelled">
-            Cancelled
-          </option>
-
-
-          <option value="declined">
-            Declined
-          </option>
-
-        </select>
-
-      </div>
-
-
-      <div
-        id="ordersContainer"
-        class="orders-container"
-      >
-
-        <div
-          class="orders-loading"
-        >
-          Loading orders...
-        </div>
-
-      </div>
-
-
-      <!-- SERVICES SECTION -->
+      <!-- SERVICES -->
 
       <section
         class="admin-services-section"
       >
 
-
         <div
-          class="admin-toolbar"
+          class="admin-orders-toolbar"
         >
 
           <div>
 
-            <h2>
-              Manage Services
-            </h2>
+            <p class="eyebrow">
+              YOUR SERVICES
+            </p>
 
+            <h2>
+              Existing Services
+            </h2>
 
             <p
               id="serviceMessage"
@@ -375,155 +285,9 @@
         </div>
 
 
-        <!-- CREATE SERVICE -->
-
-        <article
-          class="admin-create-service"
-        >
-
-          <h3>
-            Create New Service
-          </h3>
-
-
-          <form
-            id="createServiceForm"
-            class="service-form"
-          >
-
-
-            <div
-              class="service-form-grid"
-            >
-
-              <label>
-
-                Service Name
-
-
-                <input
-                  id="serviceName"
-                  type="text"
-                  maxlength="150"
-                  required
-                  placeholder="Enter service name"
-                >
-
-              </label>
-
-
-              <label>
-
-                Price
-
-
-                <input
-                  id="servicePrice"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                >
-
-              </label>
-
-
-              <label>
-
-                Price Type
-
-
-                <select
-                  id="servicePriceType"
-                >
-
-                  <option value="fixed">
-                    Fixed Price
-                  </option>
-
-
-                  <option value="starting_from">
-                    Starting From
-                  </option>
-
-
-                  <option value="contact">
-                    Contact Us
-                  </option>
-
-                </select>
-
-              </label>
-
-
-              <label>
-
-                Turnaround Time
-
-
-                <input
-                  id="serviceTurnaround"
-                  type="text"
-                  maxlength="150"
-                  placeholder="Example: 3-5 days"
-                >
-
-              </label>
-
-            </div>
-
-
-            <label>
-
-              Service Description
-
-
-              <textarea
-                id="serviceDescription"
-                rows="5"
-                maxlength="3000"
-                placeholder="Describe this service..."
-              ></textarea>
-
-            </label>
-
-
-            <label
-              class="service-active-label"
-            >
-
-              <input
-                id="serviceActive"
-                type="checkbox"
-                checked
-              >
-
-
-              <span>
-                This service is active and visible to customers
-              </span>
-
-            </label>
-
-
-            <button
-              id="createServiceButton"
-              class="button primary"
-              type="submit"
-            >
-              Create Service
-            </button>
-
-          </form>
-
-        </article>
-
-
-        <!-- EXISTING SERVICES -->
-
         <div
           id="servicesAdminContainer"
-          class="admin-services-container"
+          class="admin-orders-container"
         >
 
           <div
@@ -535,6 +299,98 @@
         </div>
 
       </section>
+
+
+      <!-- ORDERS -->
+
+      <section
+        class="admin-orders-section"
+      >
+
+        <div
+          class="admin-orders-toolbar"
+        >
+
+          <div>
+
+            <p class="eyebrow">
+              CUSTOMER ORDERS
+            </p>
+
+            <h2>
+              Incoming Orders
+            </h2>
+
+            <p
+              id="ordersMessage"
+              class="admin-message"
+            ></p>
+
+          </div>
+
+
+          <label>
+
+            Filter Orders
+
+            <select
+              id="statusFilter"
+            >
+
+              <option value="">
+                All Statuses
+              </option>
+
+              <option value="pending">
+                Pending
+              </option>
+
+              <option value="paid">
+                Paid
+              </option>
+
+              <option value="in_progress">
+                In Progress
+              </option>
+
+              <option value="waiting_customer">
+                Waiting for Customer
+              </option>
+
+              <option value="completed">
+                Completed
+              </option>
+
+              <option value="cancelled">
+                Cancelled
+              </option>
+
+              <option value="declined">
+                Declined
+              </option>
+
+            </select>
+
+          </label>
+
+        </div>
+
+
+        <div
+          id="ordersContainer"
+          class="admin-orders-container"
+        >
+
+          <div
+            class="orders-loading"
+          >
+            Loading orders...
+          </div>
+
+        </div>
+
+      </section>
+
 
     </section>
 
