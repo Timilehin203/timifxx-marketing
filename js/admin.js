@@ -12,12 +12,14 @@ function apiUrl(
   path
 ) {
 
-  return `${
+  const base =
     API_BASE_URL.replace(
       /\/$/,
       ''
-    )
-  }${path}`;
+    );
+
+
+  return `${base}${path}`;
 
 }
 
@@ -154,12 +156,6 @@ const serviceActive =
   );
 
 
-const createServiceButton =
-  document.getElementById(
-    'createServiceButton'
-  );
-
-
 const serviceMessage =
   document.getElementById(
     'serviceMessage'
@@ -190,7 +186,7 @@ let currentOrders =
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN KEY STORAGE
+| ADMIN SESSION
 |--------------------------------------------------------------------------
 */
 
@@ -291,35 +287,9 @@ function formatStatus(
 }
 
 
-function formatPriceType(
-  type
-) {
-
-  const types = {
-
-    fixed:
-      'Fixed Price',
-
-    starting_from:
-      'Starting From',
-
-    contact:
-      'Contact Us'
-
-  };
-
-
-  return (
-    types[type] ||
-    'Fixed Price'
-  );
-
-}
-
-
 /*
 |--------------------------------------------------------------------------
-| SHOW DASHBOARD
+| DASHBOARD DISPLAY
 |--------------------------------------------------------------------------
 */
 
@@ -342,12 +312,6 @@ function showDashboard() {
 
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| SHOW LOGIN
-|--------------------------------------------------------------------------
-*/
 
 function showLogin(
   message = ''
@@ -389,40 +353,7 @@ function showLogin(
 
 /*
 |--------------------------------------------------------------------------
-| SESSION ERROR
-|--------------------------------------------------------------------------
-*/
-
-function handleSessionError(
-  error
-) {
-
-  if (
-    error &&
-    error.status === 401
-  ) {
-
-    clearAdminKey();
-
-
-    showLogin(
-      'Your session has expired. Please login again.'
-    );
-
-
-    return true;
-
-  }
-
-
-  return false;
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| ADMIN REQUEST
+| ADMIN FETCH
 |--------------------------------------------------------------------------
 */
 
@@ -477,31 +408,73 @@ async function adminFetch(
   }
 
 
-  console.log(
-    'ADMIN REQUEST:',
-    apiUrl(path)
-  );
-
-
-  const response =
-    await fetch(
-      apiUrl(path),
-      {
-
-        ...options,
-
-        headers
-
-      }
+  const url =
+    apiUrl(
+      path
     );
 
 
-  const data =
-    await response
-      .json()
-      .catch(
-        () => ({})
+  console.log(
+    'TIMIFXX ADMIN FETCH:',
+    url
+  );
+
+
+  let response;
+
+
+  try {
+
+    response =
+      await fetch(
+        url,
+        {
+
+          ...options,
+
+          headers
+
+        }
       );
+
+  } catch (
+    networkError
+  ) {
+
+    throw new Error(
+      `Network error while connecting to ${url}`
+    );
+
+  }
+
+
+  const rawText =
+    await response.text();
+
+
+  let data =
+    {};
+
+
+  try {
+
+    data =
+      rawText
+        ? JSON.parse(
+            rawText
+          )
+        : {};
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      'INVALID API RESPONSE:',
+      rawText
+    );
+
+  }
 
 
   if (!response.ok) {
@@ -509,7 +482,7 @@ async function adminFetch(
     const error =
       new Error(
         data.message ||
-        'Request failed.'
+        `Request failed with status ${response.status}.`
       );
 
 
@@ -593,12 +566,16 @@ if (loginForm) {
           '';
 
 
-        await loadOrders();
+        await Promise.all(
+          [
+            loadOrders(),
+            loadServices()
+          ]
+        );
 
-
-        await loadServices();
-
-      } catch (error) {
+      } catch (
+        error
+      ) {
 
         console.error(
           'ADMIN LOGIN ERROR:',
@@ -685,7 +662,9 @@ async function loadOrders() {
 
     }
 
-  } catch (error) {
+  } catch (
+    error
+  ) {
 
     console.error(
       'ORDER LOADING ERROR:',
@@ -696,7 +675,10 @@ async function loadOrders() {
     ordersContainer.innerHTML =
       `
         <div class="orders-loading">
-          Unable to load orders.
+          Unable to load orders:
+          ${escapeHtml(
+            error.message
+          )}
         </div>
       `;
 
@@ -707,7 +689,7 @@ async function loadOrders() {
 
 /*
 |--------------------------------------------------------------------------
-| UPDATE SUMMARY
+| ORDER SUMMARY
 |--------------------------------------------------------------------------
 */
 
@@ -795,45 +777,42 @@ function renderOrders(
   ordersContainer.innerHTML =
     orders
       .map(
-        order => `
+        order =>
+          `
+            <article class="admin-order-card">
 
-          <article class="admin-order-card">
+              <div class="order-card-top">
 
-            <div class="order-card-top">
+                <div>
 
-              <div>
+                  <span class="order-number">
+                    ${escapeHtml(
+                      order.order_number
+                    )}
+                  </span>
 
-                <span class="order-number">
+                  <h3>
+                    ${escapeHtml(
+                      order.service_name
+                    )}
+                  </h3>
+
+                </div>
+
+                <span class="status-badge">
+
                   ${escapeHtml(
-                    order.order_number
+                    formatStatus(
+                      order.status
+                    )
                   )}
+
                 </span>
-
-                <h3>
-                  ${escapeHtml(
-                    order.service_name
-                  )}
-                </h3>
 
               </div>
 
-              <span class="status-badge status-${escapeHtml(
-                order.status
-              )}">
-
-                ${escapeHtml(
-                  formatStatus(
-                    order.status
-                  )
-                )}
-
-              </span>
-
-            </div>
-
-          </article>
-
-        `
+            </article>
+          `
       )
       .join('');
 
@@ -849,14 +828,25 @@ function renderOrders(
 async function loadServices() {
 
   console.log(
-    'LOAD SERVICES STARTED'
+    '========== LOAD SERVICES START =========='
+  );
+
+
+  console.log(
+    'JS VERSION: 20'
+  );
+
+
+  console.log(
+    'API BASE:',
+    API_BASE_URL
   );
 
 
   if (!servicesAdminContainer) {
 
     console.error(
-      'ERROR: servicesAdminContainer was not found.'
+      'servicesAdminContainer was not found.'
     );
 
     return [];
@@ -874,14 +864,21 @@ async function loadServices() {
 
   try {
 
+    const endpoint =
+      '/api/admin/services';
+
+
     console.log(
-      'REQUESTING ADMIN SERVICES'
+      'REQUESTING:',
+      apiUrl(
+        endpoint
+      )
     );
 
 
     const data =
       await adminFetch(
-        '/api/admin/services'
+        endpoint
       );
 
 
@@ -900,7 +897,8 @@ async function loadServices() {
 
 
     console.log(
-      `SERVICES LOADED: ${services.length}`
+      'SERVICES FOUND:',
+      services.length
     );
 
 
@@ -911,7 +909,9 @@ async function loadServices() {
 
     return services;
 
-  } catch (error) {
+  } catch (
+    error
+  ) {
 
     console.error(
       'ADMIN SERVICES ERROR:',
@@ -922,9 +922,26 @@ async function loadServices() {
     servicesAdminContainer.innerHTML =
       `
         <div class="orders-loading">
-          Unable to load services: ${escapeHtml(
+
+          <strong>
+            Unable to load services.
+          </strong>
+
+          <br>
+
+          ${escapeHtml(
             error.message
           )}
+
+          <br><br>
+
+          Endpoint:
+          ${escapeHtml(
+            apiUrl(
+              '/api/admin/services'
+            )
+          )}
+
         </div>
       `;
 
@@ -988,49 +1005,37 @@ function renderServices(
             service.price === null ||
             service.price === undefined
               ? ''
-              : Number(
-                  service.price
-                );
+              : service.price;
 
 
           return `
 
-            <article
-              class="admin-service-card"
-            >
+            <article class="admin-service-card">
 
-              <div
-                class="admin-service-card-header"
-              >
+              <div class="admin-service-card-header">
 
                 <div>
 
                   <span class="service-id-label">
-
                     Service #${escapeHtml(
                       service.id
                     )}
-
                   </span>
 
 
                   <h3>
-
                     ${escapeHtml(
                       service.name
                     )}
-
                   </h3>
 
 
                   <span>
-
                     ${
                       service.is_active
                         ? 'Active'
                         : 'Inactive'
                     }
-
                   </span>
 
                 </div>
@@ -1038,9 +1043,7 @@ function renderServices(
               </div>
 
 
-              <div
-                class="service-form-grid"
-              >
+              <div class="service-form-grid">
 
                 <label>
 
@@ -1064,13 +1067,9 @@ function renderServices(
                   <input
                     class="edit-service-price"
                     type="number"
-                    value="${
-                      price === ''
-                        ? ''
-                        : escapeHtml(
-                            price
-                          )
-                    }"
+                    value="${escapeHtml(
+                      price
+                    )}"
                   >
 
                 </label>
@@ -1080,9 +1079,7 @@ function renderServices(
 
                   Price Type
 
-                  <select
-                    class="edit-service-price-type"
-                  >
+                  <select class="edit-service-price-type">
 
                     <option
                       value="fixed"
@@ -1169,7 +1166,7 @@ function renderServices(
               </label>
 
 
-              <div>
+              <div class="service-card-actions">
 
                 <button
                   class="button primary save-service-button"
@@ -1183,7 +1180,7 @@ function renderServices(
 
 
                 <button
-                  class="button ghost delete-service-button"
+                  class="button danger delete-service-button"
                   type="button"
                   data-service-id="${escapeHtml(
                     service.id
@@ -1252,6 +1249,14 @@ if (createServiceForm) {
 
       try {
 
+        if (serviceMessage) {
+
+          serviceMessage.textContent =
+            'Creating service...';
+
+        }
+
+
         await adminFetch(
           '/api/admin/services',
           {
@@ -1303,7 +1308,9 @@ if (createServiceForm) {
 
         await loadServices();
 
-      } catch (error) {
+      } catch (
+        error
+      ) {
 
         console.error(
           'CREATE SERVICE ERROR:',
@@ -1314,7 +1321,8 @@ if (createServiceForm) {
         if (serviceMessage) {
 
           serviceMessage.textContent =
-            error.message;
+            error.message ||
+            'Unable to create service.';
 
         }
 
@@ -1432,12 +1440,23 @@ document.addEventListener(
 
       await loadServices();
 
-    } catch (error) {
+    } catch (
+      error
+    ) {
 
       console.error(
         'UPDATE SERVICE ERROR:',
         error
       );
+
+
+      if (serviceMessage) {
+
+        serviceMessage.textContent =
+          error.message ||
+          'Unable to update service.';
+
+      }
 
     }
 
@@ -1500,14 +1519,33 @@ document.addEventListener(
       );
 
 
+      if (serviceMessage) {
+
+        serviceMessage.textContent =
+          'Service deleted successfully.';
+
+      }
+
+
       await loadServices();
 
-    } catch (error) {
+    } catch (
+      error
+    ) {
 
       console.error(
         'DELETE SERVICE ERROR:',
         error
       );
+
+
+      if (serviceMessage) {
+
+        serviceMessage.textContent =
+          error.message ||
+          'Unable to delete service.';
+
+      }
 
     }
 
@@ -1517,7 +1555,7 @@ document.addEventListener(
 
 /*
 |--------------------------------------------------------------------------
-| REFRESH SERVICES
+| REFRESH BUTTONS
 |--------------------------------------------------------------------------
 */
 
@@ -1540,12 +1578,6 @@ if (refreshServicesButtonBottom) {
 
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| REFRESH ORDERS
-|--------------------------------------------------------------------------
-*/
 
 if (refreshButton) {
 
@@ -1571,6 +1603,7 @@ if (logoutButton) {
 
       clearAdminKey();
 
+
       showLogin(
         'You have been logged out.'
       );
@@ -1583,7 +1616,7 @@ if (logoutButton) {
 
 /*
 |--------------------------------------------------------------------------
-| START
+| START APPLICATION
 |--------------------------------------------------------------------------
 */
 
@@ -1592,7 +1625,23 @@ document.addEventListener(
   async () => {
 
     console.log(
-      'TIMIFXX ADMIN JS VERSION 10 LOADED'
+      '========================================'
+    );
+
+
+    console.log(
+      'TIMIFXX ADMIN JS VERSION 20 LOADED'
+    );
+
+
+    console.log(
+      'API BASE URL:',
+      API_BASE_URL
+    );
+
+
+    console.log(
+      '========================================'
     );
 
 
@@ -1617,12 +1666,16 @@ document.addEventListener(
       showDashboard();
 
 
-      await loadOrders();
+      await Promise.all(
+        [
+          loadOrders(),
+          loadServices()
+        ]
+      );
 
-
-      await loadServices();
-
-    } catch (error) {
+    } catch (
+      error
+    ) {
 
       console.error(
         'ADMIN STARTUP ERROR:',
