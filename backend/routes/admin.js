@@ -1,7 +1,6 @@
 const express =
   require('express');
 
-
 const {
   query
 } =
@@ -155,33 +154,6 @@ const VALID_PRICE_TYPES = [
 
 /*
 |--------------------------------------------------------------------------
-| CREATE SERVICE SLUG
-|--------------------------------------------------------------------------
-*/
-
-function createServiceSlug(
-  name
-) {
-
-  return String(
-    name || ''
-  )
-    .toLowerCase()
-    .trim()
-    .replace(
-      /[^a-z0-9]+/g,
-      '-'
-    )
-    .replace(
-      /^-+|-+$/g,
-      ''
-    );
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
 | GET ALL ORDERS
 |--------------------------------------------------------------------------
 */
@@ -298,26 +270,6 @@ router.patch(
           );
 
 
-      console.log(
-        'ADMIN UPDATE REQUEST:',
-        {
-
-          orderNumber,
-
-          status,
-
-          adminNote
-
-        }
-      );
-
-
-      /*
-      |--------------------------------------------------------------------------
-      | VALIDATE ORDER NUMBER
-      |--------------------------------------------------------------------------
-      */
-
       if (
         !/^TMF-\d{4}-\d{6}$/.test(
           orderNumber
@@ -336,12 +288,6 @@ router.patch(
       }
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | VALIDATE STATUS
-      |--------------------------------------------------------------------------
-      */
-
       if (
         !VALID_STATUSES.includes(
           status
@@ -359,12 +305,6 @@ router.patch(
 
       }
 
-
-      /*
-      |--------------------------------------------------------------------------
-      | GET CURRENT ORDER
-      |--------------------------------------------------------------------------
-      */
 
       const currentOrderResult =
         await query(
@@ -401,12 +341,6 @@ router.patch(
       const currentOrder =
         currentOrderResult.rows[0];
 
-
-      /*
-      |--------------------------------------------------------------------------
-      | UPDATE ORDER
-      |--------------------------------------------------------------------------
-      */
 
       const updateResult =
         await query(
@@ -467,45 +401,9 @@ router.patch(
         );
 
 
-      if (
-        updateResult.rows.length === 0
-      ) {
-
-        return res.status(404).json({
-
-          success: false,
-
-          message:
-            'Unable to update order.'
-
-        });
-
-      }
-
-
       const updatedOrder =
         updateResult.rows[0];
 
-
-      console.log(
-        'ORDER UPDATED SUCCESSFULLY:',
-        {
-
-          orderNumber:
-            updatedOrder.order_number,
-
-          status:
-            updatedOrder.status
-
-        }
-      );
-
-
-      /*
-      |--------------------------------------------------------------------------
-      | SAVE STATUS HISTORY
-      |--------------------------------------------------------------------------
-      */
 
       if (
         currentOrder.status !==
@@ -558,31 +456,8 @@ router.patch(
           ]
         );
 
-
-        console.log(
-          'ORDER STATUS HISTORY SAVED:',
-          {
-
-            orderId:
-              currentOrder.id,
-
-            oldStatus:
-              currentOrder.status,
-
-            newStatus:
-              status
-
-          }
-        );
-
       }
 
-
-      /*
-      |--------------------------------------------------------------------------
-      | SUCCESS RESPONSE
-      |--------------------------------------------------------------------------
-      */
 
       return res.json({
 
@@ -618,12 +493,7 @@ router.patch(
 
 /*
 |--------------------------------------------------------------------------
-| GET ALL SERVICES
-|--------------------------------------------------------------------------
-|
-| Returns all services, including inactive services.
-| This is used by the private admin dashboard.
-|
+| GET ALL SERVICES FOR ADMIN
 |--------------------------------------------------------------------------
 */
 
@@ -651,8 +521,13 @@ router.get(
             price,
             price_type,
             turnaround_text,
-            is_active
+            is_active,
+            sort_order,
+            created_at,
+            updated_at
+
           FROM services
+
           ORDER BY
             sort_order ASC,
             id ASC
@@ -674,7 +549,7 @@ router.get(
     ) {
 
       console.error(
-        'ADMIN GET SERVICES ERROR:',
+        'ADMIN LOAD SERVICES ERROR:',
         error
       );
 
@@ -749,22 +624,14 @@ router.post(
 
 
       const isActive =
-        req.body.is_active === true;
+        req.body.is_active !== false;
 
 
       let price =
         req.body.price;
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | VALIDATE NAME
-      |--------------------------------------------------------------------------
-      */
-
-      if (
-        !name
-      ) {
+      if (!name) {
 
         return res.status(400).json({
 
@@ -777,12 +644,6 @@ router.post(
 
       }
 
-
-      /*
-      |--------------------------------------------------------------------------
-      | VALIDATE PRICE TYPE
-      |--------------------------------------------------------------------------
-      */
 
       if (
         !VALID_PRICE_TYPES.includes(
@@ -801,12 +662,6 @@ router.post(
 
       }
 
-
-      /*
-      |--------------------------------------------------------------------------
-      | VALIDATE PRICE
-      |--------------------------------------------------------------------------
-      */
 
       if (
         priceType === 'contact'
@@ -844,76 +699,26 @@ router.post(
       }
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | CREATE SLUG
-      |--------------------------------------------------------------------------
-      */
+      const slugBase =
+        name
+          .toLowerCase()
+          .replace(
+            /[^a-z0-9]+/g,
+            '-'
+          )
+          .replace(
+            /^-+|-+$/g,
+            ''
+          );
+
 
       const slug =
-        createServiceSlug(
-          name
-        );
+        `${
+          slugBase || 'service'
+        }-${
+          Date.now()
+        }`;
 
-
-      if (
-        !slug
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            'Unable to create a valid service slug.'
-
-        });
-
-      }
-
-
-      /*
-      |--------------------------------------------------------------------------
-      | CHECK FOR DUPLICATE SLUG
-      |--------------------------------------------------------------------------
-      */
-
-      const existingService =
-        await query(
-          `
-          SELECT
-            id
-          FROM services
-          WHERE slug = $1
-          LIMIT 1
-          `,
-          [
-            slug
-          ]
-        );
-
-
-      if (
-        existingService.rows.length > 0
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            'A service with this name already exists.'
-
-        });
-
-      }
-
-
-      /*
-      |--------------------------------------------------------------------------
-      | CREATE SERVICE
-      |--------------------------------------------------------------------------
-      */
 
       const result =
         await query(
@@ -921,56 +726,40 @@ router.post(
           INSERT INTO services (
 
             name,
-
             slug,
-
             description,
-
             price,
-
             price_type,
-
             turnaround_text,
-
-            is_active
+            is_active,
+            sort_order
 
           )
 
           VALUES (
 
             $1,
-
             $2,
-
             $3,
-
             $4,
-
             $5,
-
             $6,
+            $7,
 
-            $7
+            (
+              SELECT
+                COALESCE(
+                  MAX(sort_order),
+                  0
+                ) + 1
+
+              FROM services
+            )
 
           )
 
           RETURNING
-
-            id,
-
-            name,
-
-            slug,
-
-            description,
-
-            price,
-
-            price_type,
-
-            turnaround_text,
-
-            is_active
+            *
           `,
           [
 
@@ -1031,7 +820,7 @@ router.post(
 */
 
 router.patch(
-  '/services/:serviceId',
+  '/services/:id',
 
   requireAdmin,
 
@@ -1045,33 +834,8 @@ router.patch(
 
       const serviceId =
         Number(
-          req.params.serviceId
+          req.params.id
         );
-
-
-      /*
-      |--------------------------------------------------------------------------
-      | VALIDATE SERVICE ID
-      |--------------------------------------------------------------------------
-      */
-
-      if (
-        !Number.isInteger(
-          serviceId
-        ) ||
-        serviceId <= 0
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            'Invalid service ID.'
-
-        });
-
-      }
 
 
       const name =
@@ -1098,7 +862,7 @@ router.patch(
 
       const priceType =
         String(
-          req.body.price_type || 'fixed'
+          req.body.price_type || ''
         )
           .trim();
 
@@ -1115,22 +879,35 @@ router.patch(
 
 
       const isActive =
-        req.body.is_active === true;
+        Boolean(
+          req.body.is_active
+        );
 
 
       let price =
         req.body.price;
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | VALIDATE NAME
-      |--------------------------------------------------------------------------
-      */
-
       if (
-        !name
+        !Number.isInteger(
+          serviceId
+        ) ||
+        serviceId <= 0
       ) {
+
+        return res.status(400).json({
+
+          success: false,
+
+          message:
+            'Invalid service ID.'
+
+        });
+
+      }
+
+
+      if (!name) {
 
         return res.status(400).json({
 
@@ -1143,12 +920,6 @@ router.patch(
 
       }
 
-
-      /*
-      |--------------------------------------------------------------------------
-      | VALIDATE PRICE TYPE
-      |--------------------------------------------------------------------------
-      */
 
       if (
         !VALID_PRICE_TYPES.includes(
@@ -1167,12 +938,6 @@ router.patch(
 
       }
 
-
-      /*
-      |--------------------------------------------------------------------------
-      | VALIDATE PRICE
-      |--------------------------------------------------------------------------
-      */
 
       if (
         priceType === 'contact'
@@ -1210,120 +975,6 @@ router.patch(
       }
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | CREATE SLUG
-      |--------------------------------------------------------------------------
-      */
-
-      const slug =
-        createServiceSlug(
-          name
-        );
-
-
-      if (
-        !slug
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            'Unable to create a valid service slug.'
-
-        });
-
-      }
-
-
-      /*
-      |--------------------------------------------------------------------------
-      | CHECK SERVICE EXISTS
-      |--------------------------------------------------------------------------
-      */
-
-      const currentService =
-        await query(
-          `
-          SELECT
-            id
-          FROM services
-          WHERE id = $1
-          LIMIT 1
-          `,
-          [
-            serviceId
-          ]
-        );
-
-
-      if (
-        currentService.rows.length === 0
-      ) {
-
-        return res.status(404).json({
-
-          success: false,
-
-          message:
-            'Service not found.'
-
-        });
-
-      }
-
-
-      /*
-      |--------------------------------------------------------------------------
-      | CHECK FOR DUPLICATE SLUG
-      |--------------------------------------------------------------------------
-      */
-
-      const duplicateService =
-        await query(
-          `
-          SELECT
-            id
-          FROM services
-          WHERE
-            slug = $1
-            AND id != $2
-          LIMIT 1
-          `,
-          [
-
-            slug,
-
-            serviceId
-
-          ]
-        );
-
-
-      if (
-        duplicateService.rows.length > 0
-      ) {
-
-        return res.status(400).json({
-
-          success: false,
-
-          message:
-            'Another service with this name already exists.'
-
-        });
-
-      }
-
-
-      /*
-      |--------------------------------------------------------------------------
-      | UPDATE SERVICE
-      |--------------------------------------------------------------------------
-      */
-
       const result =
         await query(
           `
@@ -1334,51 +985,34 @@ router.patch(
             name =
               $1,
 
-            slug =
+            description =
               $2,
 
-            description =
+            price =
               $3,
 
-            price =
+            price_type =
               $4,
 
-            price_type =
+            turnaround_text =
               $5,
 
-            turnaround_text =
+            is_active =
               $6,
 
-            is_active =
-              $7
+            updated_at =
+              NOW()
 
           WHERE
             id =
-              $8
+              $7
 
           RETURNING
-
-            id,
-
-            name,
-
-            slug,
-
-            description,
-
-            price,
-
-            price_type,
-
-            turnaround_text,
-
-            is_active
+            *
           `,
           [
 
             name,
-
-            slug,
 
             description || null,
 
@@ -1394,6 +1028,22 @@ router.patch(
 
           ]
         );
+
+
+      if (
+        result.rows.length === 0
+      ) {
+
+        return res.status(404).json({
+
+          success: false,
+
+          message:
+            'Service not found.'
+
+        });
+
+      }
 
 
       return res.json({
@@ -1435,7 +1085,7 @@ router.patch(
 */
 
 router.delete(
-  '/services/:serviceId',
+  '/services/:id',
 
   requireAdmin,
 
@@ -1449,15 +1099,9 @@ router.delete(
 
       const serviceId =
         Number(
-          req.params.serviceId
+          req.params.id
         );
 
-
-      /*
-      |--------------------------------------------------------------------------
-      | VALIDATE SERVICE ID
-      |--------------------------------------------------------------------------
-      */
 
       if (
         !Number.isInteger(
@@ -1478,37 +1122,18 @@ router.delete(
       }
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | DELETE SERVICE
-      |--------------------------------------------------------------------------
-      */
-
       const result =
         await query(
           `
           DELETE FROM services
 
           WHERE
-            id = $1
+            id =
+              $1
 
           RETURNING
-
             id,
-
-            name,
-
-            slug,
-
-            description,
-
-            price,
-
-            price_type,
-
-            turnaround_text,
-
-            is_active
+            name
           `,
           [
             serviceId
@@ -1563,12 +1188,6 @@ router.delete(
   }
 );
 
-
-/*
-|--------------------------------------------------------------------------
-| EXPORT ROUTER
-|--------------------------------------------------------------------------
-*/
 
 module.exports =
   router;
