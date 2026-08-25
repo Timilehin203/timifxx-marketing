@@ -22,13 +22,13 @@
 
   <link
     rel="stylesheet"
-    href="css/style.css?v=20"
+    href="css/style.css?v=21"
   >
 
 
   <link
     rel="stylesheet"
-    href="css/admin.css?v=20"
+    href="css/admin.css?v=21"
   >
 
 </head>
@@ -255,78 +255,89 @@
 
       <!-- ORDERS -->
 
-      <div
-        class="admin-toolbar"
-      >
-
-        <div>
-
-          <h2>
-            Incoming Orders
-          </h2>
-
-
-          <p
-            id="ordersMessage"
-            class="admin-message"
-          ></p>
-
-        </div>
-
-
-        <select
-          id="statusFilter"
-        >
-
-          <option value="">
-            All statuses
-          </option>
-
-          <option value="pending">
-            Pending
-          </option>
-
-          <option value="paid">
-            Paid
-          </option>
-
-          <option value="in_progress">
-            In Progress
-          </option>
-
-          <option value="waiting_customer">
-            Waiting for Customer
-          </option>
-
-          <option value="completed">
-            Completed
-          </option>
-
-          <option value="cancelled">
-            Cancelled
-          </option>
-
-          <option value="declined">
-            Declined
-          </option>
-
-        </select>
-
-      </div>
-
-
-      <div
-        id="ordersContainer"
-        class="orders-container"
+      <section
+        class="admin-orders-section"
       >
 
         <div
-          class="orders-loading"
+          class="admin-toolbar"
         >
-          Loading orders...
+
+          <div>
+
+            <p class="eyebrow">
+              ORDERS
+            </p>
+
+
+            <h2>
+              Incoming Orders
+            </h2>
+
+
+            <p
+              id="ordersMessage"
+              class="admin-message"
+            ></p>
+
+          </div>
+
+
+          <select
+            id="statusFilter"
+          >
+
+            <option value="">
+              All statuses
+            </option>
+
+            <option value="pending">
+              Pending
+            </option>
+
+            <option value="paid">
+              Paid
+            </option>
+
+            <option value="in_progress">
+              In Progress
+            </option>
+
+            <option value="waiting_customer">
+              Waiting for Customer
+            </option>
+
+            <option value="completed">
+              Completed
+            </option>
+
+            <option value="cancelled">
+              Cancelled
+            </option>
+
+            <option value="declined">
+              Declined
+            </option>
+
+          </select>
+
         </div>
 
-      </div>
+
+        <div
+          id="ordersContainer"
+          class="orders-container"
+        >
+
+          <div
+            class="orders-loading"
+          >
+            Loading orders...
+          </div>
+
+        </div>
+
+      </section>
 
 
       <!-- SERVICES -->
@@ -362,7 +373,7 @@
 
         <form
           id="createServiceForm"
-          class="create-service-form"
+          class="create-service-panel"
         >
 
           <div
@@ -538,7 +549,7 @@
 
 
   <script
-    src="js/admin.js?v=20"
+    src="js/admin.js?v=21"
   ></script>
 
 </body>
