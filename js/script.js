@@ -2,9 +2,9 @@
 // TIMI FXX MARKETING - MAIN JAVASCRIPT
 // ============================================================
 
-const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:5000'
-    : 'https://timifxx-backend-production.up.railway.app'; // Update this with your Railway URL
+// API_BASE_URL is set in config.js
+// If config.js is not loaded, fallback to this
+const API_BASE_URL = window.API_BASE_URL || 'https://timifxx-marketing-production.up.railway.app';
 
 // ============================================================
 // NAVIGATION
@@ -86,7 +86,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Send to Telegram or email (simplified - you can expand this)
             showToast('Thank you! We will get back to you soon.', 'success');
             this.reset();
         });
@@ -166,7 +165,8 @@ async function loadServices() {
             'fa-regular fa-chart-simple',
             'fa-regular fa-file-lines',
             'fa-regular fa-shield',
-            'fa-regular fa-magnifying-glass-chart'
+            'fa-regular fa-magnifying-glass-chart',
+            'fa-regular fa-shield-halved'
         ];
 
         container.innerHTML = services.map((service, index) => `
@@ -227,21 +227,20 @@ async function loadFooterServices() {
 // TOAST NOTIFICATIONS
 // ============================================================
 function showToast(message, type = 'info') {
-    const container = document.getElementById('toast-container');
+    let container = document.getElementById('toast-container');
     
     if (!container) {
-        const newContainer = document.createElement('div');
-        newContainer.id = 'toast-container';
-        newContainer.className = 'toast-container';
-        document.body.appendChild(newContainer);
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
     }
 
-    const toastContainer = document.getElementById('toast-container');
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.textContent = message;
 
-    toastContainer.appendChild(toast);
+    container.appendChild(toast);
 
     setTimeout(() => {
         toast.style.opacity = '0';
