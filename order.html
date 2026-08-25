@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Place Order - TimiFxx Marketing</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/order.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-container">
+                <a href="index.html" class="logo">
+                    <div class="logo-icon">
+                        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="40" height="40" rx="10" fill="#0088cc"/>
+                            <path d="M28 14L16 22L12 18L10 20L16 26L30 16L28 14Z" fill="white"/>
+                            <path d="M16 22L20 18L18 16L16 22Z" fill="#0088cc" opacity="0.5"/>
+                        </svg>
+                    </div>
+                    <span class="logo-text">TimiFxx</span>
+                    <span class="logo-text-light">Marketing</span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="index.html#services">Services</a></li>
+                    <li><a href="index.html#why-us">Why Us</a></li>
+                    <li><a href="order-status.html">Track Order</a></li>
+                    <li><a href="admin.html">Admin</a></li>
+                </ul>
+                <button class="hamburger" aria-label="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Order Section -->
+    <section class="order-section">
+        <div class="container">
+            <div class="order-wrapper">
+                <div class="order-header">
+                    <h1>Place Your <span class="gradient-text">Order</span></h1>
+                    <p>Fill in the details below to place your Telegram marketing service order</p>
+                </div>
+
+                <div class="order-grid">
+                    <!-- Order Form -->
+                    <div class="order-form-wrapper">
+                        <form id="order-form" class="order-form">
+                            <!-- Service Selection -->
+                            <div class="form-group">
+                                <label for="service-select">Select Service <span class="required">*</span></label>
+                                <select id="service-select" required>
+                                    <option value="">Choose a service...</option>
+                                </select>
+                                <div id="service-price-display" class="service-price-display">
+                                    <span>Price: <strong id="display-price">$0</strong></span>
+                                    <span id="display-price-type" class="price-type-badge">Fixed</span>
+                                </div>
+                            </div>
+
+                            <!-- Customer Name -->
+                            <div class="form-group">
+                                <label for="customer-name">Full Name <span class="required">*</span></label>
+                                <input type="text" id="customer-name" placeholder="Enter your full name" required>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="form-group">
+                                <label for="customer-email">Email Address <span class="required">*</span></label>
+                                <input type="email" id="customer-email" placeholder="Enter your email address" required>
+                            </div>
+
+                            <!-- Telegram Username -->
+                            <div class="form-group">
+                                <label for="telegram-username">Telegram Username <span class="required">*</span></label>
+                                <input type="text" id="telegram-username" placeholder="e.g., @yourusername" required>
+                                <span class="form-hint">We will contact you on Telegram</span>
+                            </div>
+
+                            <!-- WhatsApp Number -->
+                            <div class="form-group">
+                                <label for="whatsapp-number">WhatsApp Number</label>
+                                <input type="tel" id="whatsapp-number" placeholder="+1234567890">
+                                <span class="form-hint">Optional but recommended for faster communication</span>
+                            </div>
+
+                            <!-- Message/Details -->
+                            <div class="form-group">
+                                <label for="order-message">Additional Details</label>
+                                <textarea id="order-message" rows="4" placeholder="Any specific requirements or details about your order..."></textarea>
+                            </div>
+
+                            <!-- Submit -->
+                            <button type="submit" class="btn-primary btn-submit" id="submit-order">
+                                <i class="fas fa-paper-plane"></i> Submit Order
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Order Summary / Information -->
+                    <div class="order-info">
+                        <div class="order-info-card">
+                            <h3>Why Order With Us?</h3>
+                            <ul>
+                                <li><i class="fas fa-check-circle"></i> Professional service delivery</li>
+                                <li><i class="fas fa-check-circle"></i> Fast turnaround time</li>
+                                <li><i class="fas fa-check-circle"></i> 24/7 support available</li>
+                                <li><i class="fas fa-check-circle"></i> Track your order status</li>
+                                <li><i class="fas fa-check-circle"></i> Secure payment processing</li>
+                            </ul>
+                            <div class="order-info-contact">
+                                <p><i class="fab fa-telegram"></i> <a href="https://t.me/timifxx203" target="_blank">Contact us on Telegram</a></p>
+                            </div>
+                        </div>
+
+                        <!-- Payment Methods -->
+                        <div class="payment-methods">
+                            <h4>Payment Methods</h4>
+                            <div class="payment-icons">
+                                <span><i class="fab fa-cc-visa"></i> Visa</span>
+                                <span><i class="fab fa-cc-mastercard"></i> Mastercard</span>
+                                <span><i class="fab fa-cc-paypal"></i> PayPal</span>
+                                <span><i class="fab fa-bitcoin"></i> Crypto</span>
+                            </div>
+                            <p class="payment-note">Payment details will be sent after order confirmation</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Order Confirmation Modal -->
+    <div class="order-modal" id="order-modal">
+        <div class="order-modal-content">
+            <div class="order-modal-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2>Order Received!</h2>
+            <p>Your order has been submitted successfully.</p>
+            <div class="order-number-display">
+                <span class="order-number-label">Your Order Number</span>
+                <span class="order-number" id="order-number">TMF-2026-XXXXXX</span>
+            </div>
+            <p class="order-modal-instructions">
+                Please save this order number to track your order status.
+            </p>
+            <div class="order-modal-buttons">
+                <a href="order-status.html" class="btn-primary">Track My Order</a>
+                <a href="index.html#services" class="btn-secondary">Browse More Services</a>
+            </div>
+            <button class="order-modal-close" id="modal-close">&times;</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="index.html" class="logo">
+                        <div class="logo-icon">
+                            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="40" height="40" rx="10" fill="#0088cc"/>
+                                <path d="M28 14L16 22L12 18L10 20L16 26L30 16L28 14Z" fill="white"/>
+                                <path d="M16 22L20 18L18 16L16 22Z" fill="#0088cc" opacity="0.5"/>
+                            </svg>
+                        </div>
+                        <span class="logo-text">TimiFxx</span>
+                        <span class="logo-text-light">Marketing</span>
+                    </a>
+                    <p>Professional Telegram advertising and marketing solutions.</p>
+                    <div class="social-links">
+                        <a href="https://t.me/timifxx203" target="_blank"><i class="fab fa-telegram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html#services">Services</a></li>
+                        <li><a href="order.html">Order Now</a></li>
+                        <li><a href="order-status.html">Track Order</a></li>
+                        <li><a href="admin.html">Admin</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>Contact</h4>
+                    <ul>
+                        <li><a href="https://t.me/timifxx203" target="_blank"><i class="fab fa-telegram"></i> Telegram</a></li>
+                        <li><a href="mailto:support@timifxx.com"><i class="fas fa-envelope"></i> Email</a></li>
+                    </ul>
+                </div>
+                <div class="footer-newsletter">
+                    <h4>Stay Updated</h4>
+                    <p>Get the latest updates on our services</p>
+                    <form class="newsletter-form">
+                        <input type="email" placeholder="Your Email">
+                        <button type="submit"><i class="fas fa-paper-plane"></i></button>
+                    </form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 TimiFxx Marketing. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="js/script.js"></script>
+    <script src="js/order.js"></script>
+</body>
+</html>
