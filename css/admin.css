@@ -95,7 +95,9 @@ body {
 .create-service-panel textarea:focus,
 .admin-service-card input:focus,
 .admin-service-card select:focus,
-.admin-service-card textarea:focus {
+.admin-service-card textarea:focus,
+.admin-controls select:focus,
+.admin-controls textarea:focus {
   border-color: #3b9eea;
   box-shadow:
     0 0 0 3px rgba(59, 158, 234, 0.15);
@@ -104,7 +106,10 @@ body {
 
 .admin-login-form input::placeholder,
 .create-service-panel input::placeholder,
-.create-service-panel textarea::placeholder {
+.create-service-panel textarea::placeholder,
+.admin-service-card input::placeholder,
+.admin-service-card textarea::placeholder,
+.admin-controls textarea::placeholder {
   color: #718096;
 }
 
@@ -165,18 +170,29 @@ body {
 }
 
 
-.admin-section-heading {
+.admin-services-header,
+.existing-services-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+
+.admin-services-header {
+  margin-top: 70px;
   margin-bottom: 24px;
 }
 
 
-.admin-section-heading h2,
-.admin-section-heading h3 {
+.admin-services-header h2,
+.existing-services-header h2 {
   margin: 8px 0;
 }
 
 
-.admin-section-heading p:not(.eyebrow) {
+.admin-services-header p:not(.eyebrow),
+.existing-services-header p {
   margin: 0;
   color: #9baec4;
 }
@@ -221,140 +237,12 @@ body {
 
 /*
 |--------------------------------------------------------------------------
-| SERVICE MANAGEMENT
-|--------------------------------------------------------------------------
-*/
-
-.admin-services-section {
-  margin-bottom: 70px;
-}
-
-
-.create-service-panel {
-  padding: 28px;
-  margin-bottom: 35px;
-  border: 1px solid #2a3b52;
-  border-radius: 18px;
-  background: #162235;
-}
-
-
-.create-service-panel h3 {
-  margin-top: 0;
-}
-
-
-.service-form-grid {
-  display: grid;
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
-  gap: 18px;
-  margin-bottom: 18px;
-}
-
-
-.create-service-panel textarea,
-.admin-service-card textarea {
-  resize: vertical;
-  min-height: 120px;
-  line-height: 1.6;
-}
-
-
-.service-active-label {
-  flex-direction: row !important;
-  align-items: center;
-  margin: 18px 0;
-}
-
-
-.service-active-label input {
-  width: auto !important;
-}
-
-
-.service-card-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-
-.service-list-heading {
-  margin-top: 35px;
-}
-
-
-.services-admin-container {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-}
-
-
-.admin-service-card {
-  padding: 28px;
-  border: 1px solid #2a3b52;
-  border-radius: 18px;
-  background: #162235;
-}
-
-
-.admin-service-card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-  padding-bottom: 22px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid #2a3b52;
-}
-
-
-.admin-service-card h3 {
-  margin: 5px 0 12px;
-}
-
-
-.service-id-label {
-  display: block;
-  color: #6fb8f5;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-
-.service-active-status {
-  display: inline-flex;
-  padding: 6px 11px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-
-.service-active {
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  background: rgba(34, 197, 94, 0.16);
-  color: #86efac;
-}
-
-
-.service-inactive {
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  background: rgba(148, 163, 184, 0.16);
-  color: #cbd5e1;
-}
-
-
-/*
-|--------------------------------------------------------------------------
 | ORDERS
 |--------------------------------------------------------------------------
 */
 
 .admin-orders-section {
-  margin-top: 60px;
+  margin-bottom: 70px;
 }
 
 
@@ -380,6 +268,7 @@ body {
   background: #162235;
   color: #ffffff;
   outline: none;
+  font: inherit;
 }
 
 
@@ -531,13 +420,16 @@ body {
   margin: 0;
   line-height: 1.7;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 
 .admin-controls {
   display: grid;
   grid-template-columns:
-    1fr 1fr auto;
+    minmax(180px, 0.7fr)
+    minmax(280px, 1.3fr)
+    auto;
   align-items: end;
   gap: 18px;
 }
@@ -549,6 +441,7 @@ body {
   gap: 9px;
   font-size: 13px;
   font-weight: 800;
+  color: #dbe7f3;
 }
 
 
@@ -562,12 +455,143 @@ body {
   background: #0b1524;
   color: #ffffff;
   font: inherit;
+  outline: none;
 }
 
 
 .admin-controls textarea {
   min-height: 110px;
   resize: vertical;
+}
+
+
+.save-order-button {
+  min-height: 48px;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| SERVICE MANAGEMENT
+|--------------------------------------------------------------------------
+*/
+
+.admin-services-section {
+  margin-bottom: 70px;
+}
+
+
+.create-service-panel {
+  padding: 28px;
+  margin-bottom: 50px;
+  border: 1px solid #2a3b52;
+  border-radius: 18px;
+  background: #162235;
+}
+
+
+.service-form-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+
+.create-service-panel textarea,
+.admin-service-card textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.6;
+}
+
+
+.service-active-label {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 10px !important;
+  margin: 18px 0;
+}
+
+
+.service-active-label input {
+  width: auto !important;
+}
+
+
+.existing-services-header {
+  margin-bottom: 24px;
+}
+
+
+.service-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+
+.services-admin-container {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+
+.admin-service-card {
+  padding: 28px;
+  border: 1px solid #2a3b52;
+  border-radius: 18px;
+  background: #162235;
+}
+
+
+.admin-service-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 22px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #2a3b52;
+}
+
+
+.admin-service-card h3 {
+  margin: 5px 0 12px;
+}
+
+
+.service-id-label {
+  display: block;
+  color: #6fb8f5;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+
+.service-active-status {
+  display: inline-flex;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+
+.service-active {
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.16);
+  color: #86efac;
+}
+
+
+.service-inactive {
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(148, 163, 184, 0.16);
+  color: #cbd5e1;
 }
 
 
@@ -598,6 +622,11 @@ body {
       1fr;
   }
 
+
+  .save-order-button {
+    width: 100%;
+  }
+
 }
 
 
@@ -607,7 +636,9 @@ body {
 
   .admin-header-inner,
   .admin-toolbar,
-  .admin-service-card-header {
+  .admin-service-card-header,
+  .admin-services-header,
+  .existing-services-header {
     flex-direction: column;
     align-items: stretch;
   }
