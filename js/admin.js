@@ -114,12 +114,6 @@ const completedOrders =
   );
 
 
-/*
-|--------------------------------------------------------------------------
-| SERVICE ELEMENTS
-|--------------------------------------------------------------------------
-*/
-
 const createServiceForm =
   document.getElementById(
     'createServiceForm'
@@ -185,12 +179,6 @@ const refreshServicesButtonBottom =
     'refreshServicesButtonBottom'
   );
 
-
-/*
-|--------------------------------------------------------------------------
-| APPLICATION STATE
-|--------------------------------------------------------------------------
-*/
 
 let currentOrders =
   [];
@@ -309,12 +297,12 @@ function formatPrice(
     price === ''
   ) {
 
-    return 'Contact Us';
+    return 'Contact us';
 
   }
 
 
-  const numericPrice =
+  const number =
     Number(
       price
     );
@@ -322,7 +310,7 @@ function formatPrice(
 
   if (
     !Number.isFinite(
-      numericPrice
+      number
     )
   ) {
 
@@ -333,7 +321,7 @@ function formatPrice(
   }
 
 
-  return `$${numericPrice.toFixed(2)}`;
+  return `$${number.toFixed(2)}`;
 
 }
 
@@ -494,44 +482,19 @@ async function adminFetch(
   }
 
 
-  const url =
-    apiUrl(
-      path
+  const response =
+    await fetch(
+      apiUrl(
+        path
+      ),
+      {
+
+        ...options,
+
+        headers
+
+      }
     );
-
-
-  console.log(
-    'TIMIFXX ADMIN FETCH:',
-    url
-  );
-
-
-  let response;
-
-
-  try {
-
-    response =
-      await fetch(
-        url,
-        {
-
-          ...options,
-
-          headers
-
-        }
-      );
-
-  } catch (
-    networkError
-  ) {
-
-    throw new Error(
-      `Network error while connecting to ${url}`
-    );
-
-  }
 
 
   const rawText =
@@ -563,15 +526,6 @@ async function adminFetch(
   }
 
 
-  if (
-    response.status === 401
-  ) {
-
-    clearAdminKey();
-
-  }
-
-
   if (!response.ok) {
 
     const error =
@@ -597,7 +551,7 @@ async function adminFetch(
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN ACCESS CHECK
+| ADMIN CHECK
 |--------------------------------------------------------------------------
 */
 
@@ -626,32 +580,22 @@ if (loginForm) {
 
 
       const key =
-        adminKeyInput
-          ? adminKeyInput.value.trim()
-          : '';
+        adminKeyInput.value
+          .trim();
 
 
       if (!key) {
 
-        if (loginMessage) {
-
-          loginMessage.textContent =
-            'Enter your admin access key.';
-
-        }
-
+        loginMessage.textContent =
+          'Enter your admin access key.';
 
         return;
 
       }
 
 
-      if (loginMessage) {
-
-        loginMessage.textContent =
-          'Checking access...';
-
-      }
+      loginMessage.textContent =
+        'Checking access...';
 
 
       setAdminKey(
@@ -667,12 +611,8 @@ if (loginForm) {
         showDashboard();
 
 
-        if (loginMessage) {
-
-          loginMessage.textContent =
-            '';
-
-        }
+        loginMessage.textContent =
+          '';
 
 
         await Promise.all(
@@ -695,13 +635,9 @@ if (loginForm) {
         clearAdminKey();
 
 
-        if (loginMessage) {
-
-          loginMessage.textContent =
-            error.message ||
-            'Unable to connect to the admin system.';
-
-        }
+        loginMessage.textContent =
+          error.message ||
+          'Unable to connect to the admin system.';
 
       }
 
@@ -793,17 +729,6 @@ async function loadOrders() {
         </div>
       `;
 
-
-    if (
-      error.status === 401
-    ) {
-
-      showLogin(
-        'Your session has expired. Please login again.'
-      );
-
-    }
-
   }
 
 }
@@ -864,7 +789,7 @@ function updateSummary(
 
 /*
 |--------------------------------------------------------------------------
-| ORDER FILTER
+| FILTER ORDERS
 |--------------------------------------------------------------------------
 */
 
@@ -873,18 +798,17 @@ function applyOrderFilter() {
   const selectedStatus =
     statusFilter
       ? statusFilter.value
-      : 'all';
+      : '';
 
 
   const filteredOrders =
-    selectedStatus === 'all' ||
-    !selectedStatus
-      ? currentOrders
-      : currentOrders.filter(
+    selectedStatus
+      ? currentOrders.filter(
           order =>
             order.status ===
             selectedStatus
-        );
+        )
+      : currentOrders;
 
 
   renderOrders(
@@ -954,336 +878,296 @@ function renderOrders(
     orders
       .map(
         order =>
-          {
+          `
+            <article
+              class="admin-order-card"
+            >
 
-            return `
-
-              <article
-                class="admin-order-card"
+              <div
+                class="order-card-top"
               >
 
-                <div
-                  class="order-card-top"
-                >
-
-                  <div>
-
-                    <span
-                      class="order-number"
-                    >
-                      ${escapeHtml(
-                        order.order_number
-                      )}
-                    </span>
-
-
-                    <h3>
-                      ${escapeHtml(
-                        order.service_name ||
-                        'Unknown Service'
-                      )}
-                    </h3>
-
-                  </div>
-
+                <div>
 
                   <span
-                    class="status-badge status-${escapeHtml(
-                      order.status
-                    )}"
+                    class="order-number"
                   >
                     ${escapeHtml(
-                      formatStatus(
-                        order.status
-                      )
+                      order.order_number
                     )}
                   </span>
 
-                </div>
 
-
-                <div
-                  class="order-details-grid"
-                >
-
-                  <div>
-
-                    <strong>
-                      Customer
-                    </strong>
-
-                    <span>
-                      ${escapeHtml(
-                        order.customer_name ||
-                        'Not provided'
-                      )}
-                    </span>
-
-                  </div>
-
-
-                  <div>
-
-                    <strong>
-                      Email
-                    </strong>
-
-                    <span>
-                      ${escapeHtml(
-                        order.customer_email ||
-                        'Not provided'
-                      )}
-                    </span>
-
-                  </div>
-
-
-                  <div>
-
-                    <strong>
-                      Telegram
-                    </strong>
-
-                    <span>
-                      ${escapeHtml(
-                        order.telegram_username ||
-                        'Not provided'
-                      )}
-                    </span>
-
-                  </div>
-
-
-                  <div>
-
-                    <strong>
-                      WhatsApp
-                    </strong>
-
-                    <span>
-                      ${escapeHtml(
-                        order.whatsapp ||
-                        'Not provided'
-                      )}
-                    </span>
-
-                  </div>
-
-
-                  <div>
-
-                    <strong>
-                      Price
-                    </strong>
-
-                    <span>
-                      ${formatPrice(
-                        order.price
-                      )}
-                    </span>
-
-                  </div>
-
-
-                  <div>
-
-                    <strong>
-                      Created
-                    </strong>
-
-                    <span>
-                      ${escapeHtml(
-                        formatDate(
-                          order.created_at
-                        )
-                      )}
-                    </span>
-
-                  </div>
+                  <h3>
+                    ${escapeHtml(
+                      order.service_name
+                    )}
+                  </h3>
 
                 </div>
 
 
-                <div
-                  class="order-request-section"
+                <span
+                  class="status-badge status-${escapeHtml(
+                    order.status
+                  )}"
                 >
+
+                  ${escapeHtml(
+                    formatStatus(
+                      order.status
+                    )
+                  )}
+
+                </span>
+
+              </div>
+
+
+              <div
+                class="order-info-grid"
+              >
+
+                <div>
+
+                  <span>
+                    Customer
+                  </span>
 
                   <strong>
-                    Customer Request
+                    ${escapeHtml(
+                      order.customer_name ||
+                      '—'
+                    )}
                   </strong>
 
+                </div>
 
-                  <div
-                    class="order-message"
-                  >
+
+                <div>
+
+                  <span>
+                    Email
+                  </span>
+
+                  <strong>
                     ${escapeHtml(
-                      order.message ||
-                      'No additional message provided.'
+                      order.customer_email ||
+                      '—'
                     )}
-                  </div>
+                  </strong>
 
                 </div>
 
 
-                <div
-                  class="order-edit-grid"
-                >
+                <div>
 
-                  <label>
+                  <span>
+                    Price
+                  </span>
 
-                    Order Status
-
-                    <select
-                      class="edit-order-status"
-                    >
-
-                      <option
-                        value="pending"
-                        ${
-                          order.status === 'pending'
-                            ? 'selected'
-                            : ''
-                        }
-                      >
-                        Pending
-                      </option>
-
-
-                      <option
-                        value="paid"
-                        ${
-                          order.status === 'paid'
-                            ? 'selected'
-                            : ''
-                        }
-                      >
-                        Paid
-                      </option>
-
-
-                      <option
-                        value="in_progress"
-                        ${
-                          order.status === 'in_progress'
-                            ? 'selected'
-                            : ''
-                        }
-                      >
-                        In Progress
-                      </option>
-
-
-                      <option
-                        value="waiting_customer"
-                        ${
-                          order.status ===
-                          'waiting_customer'
-                            ? 'selected'
-                            : ''
-                        }
-                      >
-                        Waiting Customer
-                      </option>
-
-
-                      <option
-                        value="completed"
-                        ${
-                          order.status === 'completed'
-                            ? 'selected'
-                            : ''
-                        }
-                      >
-                        Completed
-                      </option>
-
-
-                      <option
-                        value="cancelled"
-                        ${
-                          order.status === 'cancelled'
-                            ? 'selected'
-                            : ''
-                        }
-                      >
-                        Cancelled
-                      </option>
-
-
-                      <option
-                        value="declined"
-                        ${
-                          order.status === 'declined'
-                            ? 'selected'
-                            : ''
-                        }
-                      >
-                        Declined
-                      </option>
-
-                    </select>
-
-                  </label>
-
-
-                  <label>
-
-                    Admin Note
-
-                    <textarea
-                      class="edit-order-note"
-                      maxlength="5000"
-                      placeholder="Add a private admin note..."
-                    >${escapeHtml(
-                      order.admin_note || ''
-                    )}</textarea>
-
-                  </label>
+                  <strong>
+                    ${formatPrice(
+                      order.price
+                    )}
+                  </strong>
 
                 </div>
 
 
-                <div
-                  class="order-card-actions"
-                >
+                <div>
 
-                  <button
-                    class="button primary save-order-button"
-                    type="button"
-                    data-order-number="${escapeHtml(
-                      order.order_number
-                    )}"
+                  <span>
+                    Telegram
+                  </span>
+
+                  <strong>
+                    ${escapeHtml(
+                      order.telegram_username ||
+                      '—'
+                    )}
+                  </strong>
+
+                </div>
+
+
+                <div>
+
+                  <span>
+                    WhatsApp
+                  </span>
+
+                  <strong>
+                    ${escapeHtml(
+                      order.whatsapp ||
+                      '—'
+                    )}
+                  </strong>
+
+                </div>
+
+
+                <div>
+
+                  <span>
+                    Created
+                  </span>
+
+                  <strong>
+                    ${escapeHtml(
+                      formatDate(
+                        order.created_at
+                      )
+                    )}
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <div
+                class="order-details"
+              >
+
+                <span>
+                  Customer Message
+                </span>
+
+                <p>
+                  ${escapeHtml(
+                    order.message ||
+                    'No message provided.'
+                  )}
+                </p>
+
+              </div>
+
+
+              <div
+                class="admin-controls"
+              >
+
+                <label>
+
+                  Order Status
+
+                  <select
+                    class="edit-order-status"
                   >
-                    Save Changes
-                  </button>
 
-                </div>
+                    <option
+                      value="pending"
+                      ${
+                        order.status === 'pending'
+                          ? 'selected'
+                          : ''
+                      }
+                    >
+                      Pending
+                    </option>
+
+                    <option
+                      value="paid"
+                      ${
+                        order.status === 'paid'
+                          ? 'selected'
+                          : ''
+                      }
+                    >
+                      Paid
+                    </option>
+
+                    <option
+                      value="in_progress"
+                      ${
+                        order.status === 'in_progress'
+                          ? 'selected'
+                          : ''
+                      }
+                    >
+                      In Progress
+                    </option>
+
+                    <option
+                      value="waiting_customer"
+                      ${
+                        order.status ===
+                        'waiting_customer'
+                          ? 'selected'
+                          : ''
+                      }
+                    >
+                      Waiting for Customer
+                    </option>
+
+                    <option
+                      value="completed"
+                      ${
+                        order.status === 'completed'
+                          ? 'selected'
+                          : ''
+                      }
+                    >
+                      Completed
+                    </option>
+
+                    <option
+                      value="cancelled"
+                      ${
+                        order.status === 'cancelled'
+                          ? 'selected'
+                          : ''
+                      }
+                    >
+                      Cancelled
+                    </option>
+
+                    <option
+                      value="declined"
+                      ${
+                        order.status === 'declined'
+                          ? 'selected'
+                          : ''
+                      }
+                    >
+                      Declined
+                    </option>
+
+                  </select>
+
+                </label>
 
 
-                ${
-                  order.completed_at
-                    ? `
-                      <div
-                        class="order-completed-info"
-                      >
+                <label>
 
-                        Completed:
-                        ${escapeHtml(
-                          formatDate(
-                            order.completed_at
-                          )
-                        )}
+                  Admin Note
 
-                      </div>
-                    `
-                    : ''
-                }
+                  <textarea
+                    class="edit-order-note"
+                    placeholder="Add a private note about this order..."
+                  >${escapeHtml(
+                    order.admin_note ||
+                    ''
+                  )}</textarea>
 
-              </article>
+                </label>
 
-            `;
 
-          }
+                <button
+                  class="button primary save-order-button"
+                  type="button"
+                  data-order-number="${escapeHtml(
+                    order.order_number
+                  )}"
+                >
+                  Save Order
+                </button>
+
+              </div>
+
+            </article>
+          `
       )
       .join('');
 
@@ -1319,38 +1203,25 @@ document.addEventListener(
       );
 
 
-    if (!card) {
-
-      return;
-
-    }
-
-
     const orderNumber =
       button.dataset.orderNumber;
 
 
-    const statusInput =
-      card.querySelector(
-        '.edit-order-status'
-      );
+    const status =
+      card
+        .querySelector(
+          '.edit-order-status'
+        )
+        .value;
 
 
-    const noteInput =
-      card.querySelector(
-        '.edit-order-note'
-      );
-
-
-    if (
-      !orderNumber ||
-      !statusInput ||
-      !noteInput
-    ) {
-
-      return;
-
-    }
+    const adminNote =
+      card
+        .querySelector(
+          '.edit-order-note'
+        )
+        .value
+        .trim();
 
 
     const originalText =
@@ -1368,9 +1239,7 @@ document.addEventListener(
     try {
 
       await adminFetch(
-        `/api/admin/orders/${encodeURIComponent(
-          orderNumber
-        )}`,
+        `/api/admin/orders/${orderNumber}`,
         {
 
           method:
@@ -1379,12 +1248,10 @@ document.addEventListener(
           body:
             JSON.stringify({
 
-              status:
-                statusInput.value,
+              status,
 
               admin_note:
-                noteInput.value
-                  .trim()
+                adminNote
 
             })
 
@@ -1392,34 +1259,25 @@ document.addEventListener(
       );
 
 
-      if (ordersMessage) {
-
-        ordersMessage.textContent =
-          `Order ${orderNumber} updated successfully.`;
-
-      }
-
-
       await loadOrders();
+
 
     } catch (
       error
     ) {
 
       console.error(
-        'ORDER UPDATE ERROR:',
+        'UPDATE ORDER ERROR:',
         error
       );
 
 
-      if (ordersMessage) {
+      alert(
+        error.message ||
+        'Unable to update order.'
+      );
 
-        ordersMessage.textContent =
-          error.message ||
-          'Unable to update order.';
-
-      }
-
+    } finally {
 
       button.disabled =
         false;
@@ -1599,7 +1457,11 @@ function renderServices(
 
 
                   <span
-                    class="service-status-label"
+                    class="service-active-status ${
+                      service.is_active
+                        ? 'service-active'
+                        : 'service-inactive'
+                    }"
                   >
                     ${
                       service.is_active
@@ -1661,14 +1523,14 @@ function renderServices(
                     <option
                       value="fixed"
                       ${
-                        service.price_type === 'fixed'
+                        service.price_type ===
+                        'fixed'
                           ? 'selected'
                           : ''
                       }
                     >
                       Fixed Price
                     </option>
-
 
                     <option
                       value="starting_from"
@@ -1681,7 +1543,6 @@ function renderServices(
                     >
                       Starting From
                     </option>
-
 
                     <option
                       value="contact"
@@ -1735,7 +1596,7 @@ function renderServices(
 
 
               <label
-                class="service-active-toggle"
+                class="service-active-label"
               >
 
                 <input
@@ -1748,7 +1609,9 @@ function renderServices(
                   }
                 >
 
-                Active
+                <span>
+                  Active
+                </span>
 
               </label>
 
@@ -1810,24 +1673,20 @@ if (createServiceForm) {
 
 
       const name =
-        serviceNameInput
-          ? serviceNameInput.value.trim()
-          : '';
+        serviceNameInput.value
+          .trim();
 
 
       const priceType =
-        servicePriceType
-          ? servicePriceType.value
-          : 'fixed';
+        servicePriceType.value;
 
 
       let price =
-        servicePrice &&
-        servicePrice.value !== ''
-          ? Number(
+        servicePrice.value === ''
+          ? null
+          : Number(
               servicePrice.value
-            )
-          : null;
+            );
 
 
       if (
@@ -1863,9 +1722,8 @@ if (createServiceForm) {
                 name,
 
                 description:
-                  serviceDescription
-                    ? serviceDescription.value.trim()
-                    : '',
+                  serviceDescription.value
+                    .trim(),
 
                 price,
 
@@ -1873,14 +1731,11 @@ if (createServiceForm) {
                   priceType,
 
                 turnaround_text:
-                  serviceTurnaround
-                    ? serviceTurnaround.value.trim()
-                    : '',
+                  serviceTurnaround.value
+                    .trim(),
 
                 is_active:
-                  serviceActive
-                    ? serviceActive.checked
-                    : true
+                  serviceActive.checked
 
               })
 
@@ -1891,12 +1746,8 @@ if (createServiceForm) {
         createServiceForm.reset();
 
 
-        if (serviceActive) {
-
-          serviceActive.checked =
-            true;
-
-        }
+        serviceActive.checked =
+          true;
 
 
         if (serviceMessage) {
@@ -1964,53 +1815,8 @@ document.addEventListener(
       );
 
 
-    if (!card) {
-
-      return;
-
-    }
-
-
     const serviceId =
       button.dataset.serviceId;
-
-
-    const priceType =
-      card
-        .querySelector(
-          '.edit-service-price-type'
-        )
-        .value;
-
-
-    let price =
-      card
-        .querySelector(
-          '.edit-service-price'
-        )
-        .value;
-
-
-    if (
-      priceType === 'contact'
-    ) {
-
-      price =
-        null;
-
-    }
-
-
-    const originalText =
-      button.textContent;
-
-
-    button.disabled =
-      true;
-
-
-    button.textContent =
-      'Saving...';
 
 
     try {
@@ -2033,10 +1839,19 @@ document.addEventListener(
                   .value
                   .trim(),
 
-              price,
+              price:
+                card
+                  .querySelector(
+                    '.edit-service-price'
+                  )
+                  .value,
 
               price_type:
-                priceType,
+                card
+                  .querySelector(
+                    '.edit-service-price-type'
+                  )
+                  .value,
 
               description:
                 card
@@ -2095,14 +1910,6 @@ document.addEventListener(
 
       }
 
-
-      button.disabled =
-        false;
-
-
-      button.textContent =
-        originalText;
-
     }
 
   }
@@ -2151,18 +1958,6 @@ document.addEventListener(
     }
 
 
-    const originalText =
-      button.textContent;
-
-
-    button.disabled =
-      true;
-
-
-    button.textContent =
-      'Deleting...';
-
-
     try {
 
       await adminFetch(
@@ -2204,138 +1999,7 @@ document.addEventListener(
 
       }
 
-
-      button.disabled =
-        false;
-
-
-      button.textContent =
-        originalText;
-
     }
-
-  }
-);
-
-
-/*
-|--------------------------------------------------------------------------
-| SERVICE PRICE TYPE HANDLING
-|--------------------------------------------------------------------------
-*/
-
-function updatePriceField(
-  priceTypeElement,
-  priceInputElement
-) {
-
-  if (
-    !priceTypeElement ||
-    !priceInputElement
-  ) {
-
-    return;
-
-  }
-
-
-  const isContact =
-    priceTypeElement.value ===
-    'contact';
-
-
-  priceInputElement.disabled =
-    isContact;
-
-
-  if (isContact) {
-
-    priceInputElement.value =
-      '';
-
-  }
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| CREATE SERVICE PRICE TYPE
-|--------------------------------------------------------------------------
-*/
-
-if (
-  servicePriceType &&
-  servicePrice
-) {
-
-  servicePriceType.addEventListener(
-    'change',
-    () => {
-
-      updatePriceField(
-        servicePriceType,
-        servicePrice
-      );
-
-    }
-  );
-
-
-  updatePriceField(
-    servicePriceType,
-    servicePrice
-  );
-
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| EDIT SERVICE PRICE TYPE
-|--------------------------------------------------------------------------
-*/
-
-document.addEventListener(
-  'change',
-  event => {
-
-    const select =
-      event.target.closest(
-        '.edit-service-price-type'
-      );
-
-
-    if (!select) {
-
-      return;
-
-    }
-
-
-    const card =
-      select.closest(
-        '.admin-service-card'
-      );
-
-
-    if (!card) {
-
-      return;
-
-    }
-
-
-    const priceInput =
-      card.querySelector(
-        '.edit-service-price'
-      );
-
-
-    updatePriceField(
-      select,
-      priceInput
-    );
 
   }
 );
@@ -2346,16 +2010,6 @@ document.addEventListener(
 | REFRESH BUTTONS
 |--------------------------------------------------------------------------
 */
-
-if (refreshButton) {
-
-  refreshButton.addEventListener(
-    'click',
-    loadOrders
-  );
-
-}
-
 
 if (refreshServicesButton) {
 
@@ -2377,6 +2031,16 @@ if (refreshServicesButtonBottom) {
 }
 
 
+if (refreshButton) {
+
+  refreshButton.addEventListener(
+    'click',
+    loadOrders
+  );
+
+}
+
+
 /*
 |--------------------------------------------------------------------------
 | LOGOUT
@@ -2390,10 +2054,6 @@ if (logoutButton) {
     () => {
 
       clearAdminKey();
-
-
-      currentOrders =
-        [];
 
 
       showLogin(
@@ -2415,27 +2075,6 @@ if (logoutButton) {
 document.addEventListener(
   'DOMContentLoaded',
   async () => {
-
-    console.log(
-      '========================================'
-    );
-
-
-    console.log(
-      'TIMIFXX ADMIN DASHBOARD LOADED'
-    );
-
-
-    console.log(
-      'API BASE URL:',
-      API_BASE_URL
-    );
-
-
-    console.log(
-      '========================================'
-    );
-
 
     const adminKey =
       getAdminKey();
