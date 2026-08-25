@@ -2,6 +2,9 @@
 // TIMI FXX MARKETING - ORDER STATUS JAVASCRIPT
 // ============================================================
 
+// API_BASE_URL is set in config.js
+const API_BASE_URL = window.API_BASE_URL || 'https://timifxx-marketing-production.up.railway.app';
+
 document.addEventListener('DOMContentLoaded', function() {
     const orderInput = document.getElementById('order-number-input');
     const trackBtn = document.getElementById('track-order-btn');
@@ -206,11 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 trackOrder(this.value);
             }
         });
-
-        // Auto-uppercase
-        orderInput.addEventListener('input', function() {
-            // Don't force uppercase, let user type freely
-        });
     }
 
     // ============================================================
@@ -221,5 +219,40 @@ document.addEventListener('DOMContentLoaded', function() {
     if (orderParam) {
         orderInput.value = orderParam.toUpperCase();
         trackOrder(orderParam);
+    }
+
+    // ============================================================
+    // HELPER FUNCTIONS
+    // ============================================================
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function showToast(message, type = 'info') {
+        let container = document.getElementById('toast-container');
+        
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }, 4000);
     }
 });
