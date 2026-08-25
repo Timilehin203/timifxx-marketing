@@ -114,6 +114,12 @@ const completedOrders =
   );
 
 
+/*
+|--------------------------------------------------------------------------
+| SERVICE ELEMENTS
+|--------------------------------------------------------------------------
+*/
+
 const createServiceForm =
   document.getElementById(
     'createServiceForm'
@@ -179,6 +185,12 @@ const refreshServicesButtonBottom =
     'refreshServicesButtonBottom'
   );
 
+
+/*
+|--------------------------------------------------------------------------
+| APPLICATION STATE
+|--------------------------------------------------------------------------
+*/
 
 let currentOrders =
   [];
@@ -283,6 +295,80 @@ function formatStatus(
       character =>
         character.toUpperCase()
     );
+
+}
+
+
+function formatPrice(
+  price
+) {
+
+  if (
+    price === null ||
+    price === undefined ||
+    price === ''
+  ) {
+
+    return 'Contact Us';
+
+  }
+
+
+  const numericPrice =
+    Number(
+      price
+    );
+
+
+  if (
+    !Number.isFinite(
+      numericPrice
+    )
+  ) {
+
+    return escapeHtml(
+      price
+    );
+
+  }
+
+
+  return `$${numericPrice.toFixed(2)}`;
+
+}
+
+
+function formatDate(
+  value
+) {
+
+  if (!value) {
+
+    return '—';
+
+  }
+
+
+  const date =
+    new Date(
+      value
+    );
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return escapeHtml(
+      value
+    );
+
+  }
+
+
+  return date.toLocaleString();
 
 }
 
@@ -477,6 +563,15 @@ async function adminFetch(
   }
 
 
+  if (
+    response.status === 401
+  ) {
+
+    clearAdminKey();
+
+  }
+
+
   if (!response.ok) {
 
     const error =
@@ -502,7 +597,7 @@ async function adminFetch(
 
 /*
 |--------------------------------------------------------------------------
-| ADMIN CHECK
+| ADMIN ACCESS CHECK
 |--------------------------------------------------------------------------
 */
 
@@ -531,22 +626,32 @@ if (loginForm) {
 
 
       const key =
-        adminKeyInput.value
-          .trim();
+        adminKeyInput
+          ? adminKeyInput.value.trim()
+          : '';
 
 
       if (!key) {
 
-        loginMessage.textContent =
-          'Enter your admin access key.';
+        if (loginMessage) {
+
+          loginMessage.textContent =
+            'Enter your admin access key.';
+
+        }
+
 
         return;
 
       }
 
 
-      loginMessage.textContent =
-        'Checking access...';
+      if (loginMessage) {
+
+        loginMessage.textContent =
+          'Checking access...';
+
+      }
 
 
       setAdminKey(
@@ -562,8 +667,12 @@ if (loginForm) {
         showDashboard();
 
 
-        loginMessage.textContent =
-          '';
+        if (loginMessage) {
+
+          loginMessage.textContent =
+            '';
+
+        }
 
 
         await Promise.all(
@@ -586,9 +695,13 @@ if (loginForm) {
         clearAdminKey();
 
 
-        loginMessage.textContent =
-          error.message ||
-          'Unable to connect to the admin system.';
+        if (loginMessage) {
+
+          loginMessage.textContent =
+            error.message ||
+            'Unable to connect to the admin system.';
+
+        }
 
       }
 
@@ -646,9 +759,7 @@ async function loadOrders() {
     );
 
 
-    renderOrders(
-      orders
-    );
+    applyOrderFilter();
 
 
     if (ordersMessage) {
@@ -681,6 +792,17 @@ async function loadOrders() {
           )}
         </div>
       `;
+
+
+    if (
+      error.status === 401
+    ) {
+
+      showLogin(
+        'Your session has expired. Please login again.'
+      );
+
+    }
 
   }
 
@@ -742,6 +864,60 @@ function updateSummary(
 
 /*
 |--------------------------------------------------------------------------
+| ORDER FILTER
+|--------------------------------------------------------------------------
+*/
+
+function applyOrderFilter() {
+
+  const selectedStatus =
+    statusFilter
+      ? statusFilter.value
+      : 'all';
+
+
+  const filteredOrders =
+    selectedStatus === 'all' ||
+    !selectedStatus
+      ? currentOrders
+      : currentOrders.filter(
+          order =>
+            order.status ===
+            selectedStatus
+        );
+
+
+  renderOrders(
+    filteredOrders
+  );
+
+
+  if (ordersMessage) {
+
+    ordersMessage.textContent =
+      `${filteredOrders.length} order${
+        filteredOrders.length === 1
+          ? ''
+          : 's'
+      } shown.`;
+
+  }
+
+}
+
+
+if (statusFilter) {
+
+  statusFilter.addEventListener(
+    'change',
+    applyOrderFilter
+  );
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
 | RENDER ORDERS
 |--------------------------------------------------------------------------
 */
@@ -778,45 +954,484 @@ function renderOrders(
     orders
       .map(
         order =>
-          `
-            <article class="admin-order-card">
+          {
 
-              <div class="order-card-top">
+            return `
 
-                <div>
+              <article
+                class="admin-order-card"
+              >
 
-                  <span class="order-number">
+                <div
+                  class="order-card-top"
+                >
+
+                  <div>
+
+                    <span
+                      class="order-number"
+                    >
+                      ${escapeHtml(
+                        order.order_number
+                      )}
+                    </span>
+
+
+                    <h3>
+                      ${escapeHtml(
+                        order.service_name ||
+                        'Unknown Service'
+                      )}
+                    </h3>
+
+                  </div>
+
+
+                  <span
+                    class="status-badge status-${escapeHtml(
+                      order.status
+                    )}"
+                  >
                     ${escapeHtml(
-                      order.order_number
+                      formatStatus(
+                        order.status
+                      )
                     )}
                   </span>
 
-                  <h3>
-                    ${escapeHtml(
-                      order.service_name
-                    )}
-                  </h3>
+                </div>
+
+
+                <div
+                  class="order-details-grid"
+                >
+
+                  <div>
+
+                    <strong>
+                      Customer
+                    </strong>
+
+                    <span>
+                      ${escapeHtml(
+                        order.customer_name ||
+                        'Not provided'
+                      )}
+                    </span>
+
+                  </div>
+
+
+                  <div>
+
+                    <strong>
+                      Email
+                    </strong>
+
+                    <span>
+                      ${escapeHtml(
+                        order.customer_email ||
+                        'Not provided'
+                      )}
+                    </span>
+
+                  </div>
+
+
+                  <div>
+
+                    <strong>
+                      Telegram
+                    </strong>
+
+                    <span>
+                      ${escapeHtml(
+                        order.telegram_username ||
+                        'Not provided'
+                      )}
+                    </span>
+
+                  </div>
+
+
+                  <div>
+
+                    <strong>
+                      WhatsApp
+                    </strong>
+
+                    <span>
+                      ${escapeHtml(
+                        order.whatsapp ||
+                        'Not provided'
+                      )}
+                    </span>
+
+                  </div>
+
+
+                  <div>
+
+                    <strong>
+                      Price
+                    </strong>
+
+                    <span>
+                      ${formatPrice(
+                        order.price
+                      )}
+                    </span>
+
+                  </div>
+
+
+                  <div>
+
+                    <strong>
+                      Created
+                    </strong>
+
+                    <span>
+                      ${escapeHtml(
+                        formatDate(
+                          order.created_at
+                        )
+                      )}
+                    </span>
+
+                  </div>
 
                 </div>
 
-                <span class="status-badge">
 
-                  ${escapeHtml(
-                    formatStatus(
-                      order.status
-                    )
-                  )}
+                <div
+                  class="order-request-section"
+                >
 
-                </span>
+                  <strong>
+                    Customer Request
+                  </strong>
 
-              </div>
 
-            </article>
-          `
+                  <div
+                    class="order-message"
+                  >
+                    ${escapeHtml(
+                      order.message ||
+                      'No additional message provided.'
+                    )}
+                  </div>
+
+                </div>
+
+
+                <div
+                  class="order-edit-grid"
+                >
+
+                  <label>
+
+                    Order Status
+
+                    <select
+                      class="edit-order-status"
+                    >
+
+                      <option
+                        value="pending"
+                        ${
+                          order.status === 'pending'
+                            ? 'selected'
+                            : ''
+                        }
+                      >
+                        Pending
+                      </option>
+
+
+                      <option
+                        value="paid"
+                        ${
+                          order.status === 'paid'
+                            ? 'selected'
+                            : ''
+                        }
+                      >
+                        Paid
+                      </option>
+
+
+                      <option
+                        value="in_progress"
+                        ${
+                          order.status === 'in_progress'
+                            ? 'selected'
+                            : ''
+                        }
+                      >
+                        In Progress
+                      </option>
+
+
+                      <option
+                        value="waiting_customer"
+                        ${
+                          order.status ===
+                          'waiting_customer'
+                            ? 'selected'
+                            : ''
+                        }
+                      >
+                        Waiting Customer
+                      </option>
+
+
+                      <option
+                        value="completed"
+                        ${
+                          order.status === 'completed'
+                            ? 'selected'
+                            : ''
+                        }
+                      >
+                        Completed
+                      </option>
+
+
+                      <option
+                        value="cancelled"
+                        ${
+                          order.status === 'cancelled'
+                            ? 'selected'
+                            : ''
+                        }
+                      >
+                        Cancelled
+                      </option>
+
+
+                      <option
+                        value="declined"
+                        ${
+                          order.status === 'declined'
+                            ? 'selected'
+                            : ''
+                        }
+                      >
+                        Declined
+                      </option>
+
+                    </select>
+
+                  </label>
+
+
+                  <label>
+
+                    Admin Note
+
+                    <textarea
+                      class="edit-order-note"
+                      maxlength="5000"
+                      placeholder="Add a private admin note..."
+                    >${escapeHtml(
+                      order.admin_note || ''
+                    )}</textarea>
+
+                  </label>
+
+                </div>
+
+
+                <div
+                  class="order-card-actions"
+                >
+
+                  <button
+                    class="button primary save-order-button"
+                    type="button"
+                    data-order-number="${escapeHtml(
+                      order.order_number
+                    )}"
+                  >
+                    Save Changes
+                  </button>
+
+                </div>
+
+
+                ${
+                  order.completed_at
+                    ? `
+                      <div
+                        class="order-completed-info"
+                      >
+
+                        Completed:
+                        ${escapeHtml(
+                          formatDate(
+                            order.completed_at
+                          )
+                        )}
+
+                      </div>
+                    `
+                    : ''
+                }
+
+              </article>
+
+            `;
+
+          }
       )
       .join('');
 
 }
+
+
+/*
+|--------------------------------------------------------------------------
+| SAVE ORDER
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener(
+  'click',
+  async event => {
+
+    const button =
+      event.target.closest(
+        '.save-order-button'
+      );
+
+
+    if (!button) {
+
+      return;
+
+    }
+
+
+    const card =
+      button.closest(
+        '.admin-order-card'
+      );
+
+
+    if (!card) {
+
+      return;
+
+    }
+
+
+    const orderNumber =
+      button.dataset.orderNumber;
+
+
+    const statusInput =
+      card.querySelector(
+        '.edit-order-status'
+      );
+
+
+    const noteInput =
+      card.querySelector(
+        '.edit-order-note'
+      );
+
+
+    if (
+      !orderNumber ||
+      !statusInput ||
+      !noteInput
+    ) {
+
+      return;
+
+    }
+
+
+    const originalText =
+      button.textContent;
+
+
+    button.disabled =
+      true;
+
+
+    button.textContent =
+      'Saving...';
+
+
+    try {
+
+      await adminFetch(
+        `/api/admin/orders/${encodeURIComponent(
+          orderNumber
+        )}`,
+        {
+
+          method:
+            'PATCH',
+
+          body:
+            JSON.stringify({
+
+              status:
+                statusInput.value,
+
+              admin_note:
+                noteInput.value
+                  .trim()
+
+            })
+
+        }
+      );
+
+
+      if (ordersMessage) {
+
+        ordersMessage.textContent =
+          `Order ${orderNumber} updated successfully.`;
+
+      }
+
+
+      await loadOrders();
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        'ORDER UPDATE ERROR:',
+        error
+      );
+
+
+      if (ordersMessage) {
+
+        ordersMessage.textContent =
+          error.message ||
+          'Unable to update order.';
+
+      }
+
+
+      button.disabled =
+        false;
+
+
+      button.textContent =
+        originalText;
+
+    }
+
+  }
+);
 
 
 /*
@@ -827,27 +1442,7 @@ function renderOrders(
 
 async function loadServices() {
 
-  console.log(
-    '========== LOAD SERVICES START =========='
-  );
-
-
-  console.log(
-    'JS VERSION: 20'
-  );
-
-
-  console.log(
-    'API BASE:',
-    API_BASE_URL
-  );
-
-
   if (!servicesAdminContainer) {
-
-    console.error(
-      'servicesAdminContainer was not found.'
-    );
 
     return [];
 
@@ -864,28 +1459,10 @@ async function loadServices() {
 
   try {
 
-    const endpoint =
-      '/api/admin/services';
-
-
-    console.log(
-      'REQUESTING:',
-      apiUrl(
-        endpoint
-      )
-    );
-
-
     const data =
       await adminFetch(
-        endpoint
+        '/api/admin/services'
       );
-
-
-    console.log(
-      'ADMIN SERVICES RESPONSE:',
-      data
-    );
 
 
     const services =
@@ -894,12 +1471,6 @@ async function loadServices() {
       )
         ? data.services
         : [];
-
-
-    console.log(
-      'SERVICES FOUND:',
-      services.length
-    );
 
 
     renderServices(
@@ -927,19 +1498,10 @@ async function loadServices() {
             Unable to load services.
           </strong>
 
-          <br>
+          <br><br>
 
           ${escapeHtml(
             error.message
-          )}
-
-          <br><br>
-
-          Endpoint:
-          ${escapeHtml(
-            apiUrl(
-              '/api/admin/services'
-            )
           )}
 
         </div>
@@ -1010,13 +1572,19 @@ function renderServices(
 
           return `
 
-            <article class="admin-service-card">
+            <article
+              class="admin-service-card"
+            >
 
-              <div class="admin-service-card-header">
+              <div
+                class="admin-service-card-header"
+              >
 
                 <div>
 
-                  <span class="service-id-label">
+                  <span
+                    class="service-id-label"
+                  >
                     Service #${escapeHtml(
                       service.id
                     )}
@@ -1030,7 +1598,9 @@ function renderServices(
                   </h3>
 
 
-                  <span>
+                  <span
+                    class="service-status-label"
+                  >
                     ${
                       service.is_active
                         ? 'Active'
@@ -1043,7 +1613,9 @@ function renderServices(
               </div>
 
 
-              <div class="service-form-grid">
+              <div
+                class="service-form-grid"
+              >
 
                 <label>
 
@@ -1052,6 +1624,7 @@ function renderServices(
                   <input
                     class="edit-service-name"
                     type="text"
+                    maxlength="150"
                     value="${escapeHtml(
                       service.name
                     )}"
@@ -1067,6 +1640,8 @@ function renderServices(
                   <input
                     class="edit-service-price"
                     type="number"
+                    min="0"
+                    step="0.01"
                     value="${escapeHtml(
                       price
                     )}"
@@ -1079,7 +1654,9 @@ function renderServices(
 
                   Price Type
 
-                  <select class="edit-service-price-type">
+                  <select
+                    class="edit-service-price-type"
+                  >
 
                     <option
                       value="fixed"
@@ -1092,10 +1669,12 @@ function renderServices(
                       Fixed Price
                     </option>
 
+
                     <option
                       value="starting_from"
                       ${
-                        service.price_type === 'starting_from'
+                        service.price_type ===
+                        'starting_from'
                           ? 'selected'
                           : ''
                       }
@@ -1103,10 +1682,12 @@ function renderServices(
                       Starting From
                     </option>
 
+
                     <option
                       value="contact"
                       ${
-                        service.price_type === 'contact'
+                        service.price_type ===
+                        'contact'
                           ? 'selected'
                           : ''
                       }
@@ -1126,8 +1707,10 @@ function renderServices(
                   <input
                     class="edit-service-turnaround"
                     type="text"
+                    maxlength="150"
                     value="${escapeHtml(
-                      service.turnaround_text || ''
+                      service.turnaround_text ||
+                      ''
                     )}"
                   >
 
@@ -1142,14 +1725,18 @@ function renderServices(
 
                 <textarea
                   class="edit-service-description"
+                  maxlength="3000"
                 >${escapeHtml(
-                  service.description || ''
+                  service.description ||
+                  ''
                 )}</textarea>
 
               </label>
 
 
-              <label>
+              <label
+                class="service-active-toggle"
+              >
 
                 <input
                   class="edit-service-active"
@@ -1166,7 +1753,9 @@ function renderServices(
               </label>
 
 
-              <div class="service-card-actions">
+              <div
+                class="service-card-actions"
+              >
 
                 <button
                   class="button primary save-service-button"
@@ -1221,20 +1810,24 @@ if (createServiceForm) {
 
 
       const name =
-        serviceNameInput.value
-          .trim();
+        serviceNameInput
+          ? serviceNameInput.value.trim()
+          : '';
 
 
       const priceType =
-        servicePriceType.value;
+        servicePriceType
+          ? servicePriceType.value
+          : 'fixed';
 
 
       let price =
-        servicePrice.value === ''
-          ? null
-          : Number(
+        servicePrice &&
+        servicePrice.value !== ''
+          ? Number(
               servicePrice.value
-            );
+            )
+          : null;
 
 
       if (
@@ -1270,8 +1863,9 @@ if (createServiceForm) {
                 name,
 
                 description:
-                  serviceDescription.value
-                    .trim(),
+                  serviceDescription
+                    ? serviceDescription.value.trim()
+                    : '',
 
                 price,
 
@@ -1279,11 +1873,14 @@ if (createServiceForm) {
                   priceType,
 
                 turnaround_text:
-                  serviceTurnaround.value
-                    .trim(),
+                  serviceTurnaround
+                    ? serviceTurnaround.value.trim()
+                    : '',
 
                 is_active:
-                  serviceActive.checked
+                  serviceActive
+                    ? serviceActive.checked
+                    : true
 
               })
 
@@ -1294,8 +1891,12 @@ if (createServiceForm) {
         createServiceForm.reset();
 
 
-        serviceActive.checked =
-          true;
+        if (serviceActive) {
+
+          serviceActive.checked =
+            true;
+
+        }
 
 
         if (serviceMessage) {
@@ -1363,8 +1964,53 @@ document.addEventListener(
       );
 
 
+    if (!card) {
+
+      return;
+
+    }
+
+
     const serviceId =
       button.dataset.serviceId;
+
+
+    const priceType =
+      card
+        .querySelector(
+          '.edit-service-price-type'
+        )
+        .value;
+
+
+    let price =
+      card
+        .querySelector(
+          '.edit-service-price'
+        )
+        .value;
+
+
+    if (
+      priceType === 'contact'
+    ) {
+
+      price =
+        null;
+
+    }
+
+
+    const originalText =
+      button.textContent;
+
+
+    button.disabled =
+      true;
+
+
+    button.textContent =
+      'Saving...';
 
 
     try {
@@ -1387,19 +2033,10 @@ document.addEventListener(
                   .value
                   .trim(),
 
-              price:
-                card
-                  .querySelector(
-                    '.edit-service-price'
-                  )
-                  .value,
+              price,
 
               price_type:
-                card
-                  .querySelector(
-                    '.edit-service-price-type'
-                  )
-                  .value,
+                priceType,
 
               description:
                 card
@@ -1458,6 +2095,14 @@ document.addEventListener(
 
       }
 
+
+      button.disabled =
+        false;
+
+
+      button.textContent =
+        originalText;
+
     }
 
   }
@@ -1506,6 +2151,18 @@ document.addEventListener(
     }
 
 
+    const originalText =
+      button.textContent;
+
+
+    button.disabled =
+      true;
+
+
+    button.textContent =
+      'Deleting...';
+
+
     try {
 
       await adminFetch(
@@ -1547,7 +2204,138 @@ document.addEventListener(
 
       }
 
+
+      button.disabled =
+        false;
+
+
+      button.textContent =
+        originalText;
+
     }
+
+  }
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| SERVICE PRICE TYPE HANDLING
+|--------------------------------------------------------------------------
+*/
+
+function updatePriceField(
+  priceTypeElement,
+  priceInputElement
+) {
+
+  if (
+    !priceTypeElement ||
+    !priceInputElement
+  ) {
+
+    return;
+
+  }
+
+
+  const isContact =
+    priceTypeElement.value ===
+    'contact';
+
+
+  priceInputElement.disabled =
+    isContact;
+
+
+  if (isContact) {
+
+    priceInputElement.value =
+      '';
+
+  }
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CREATE SERVICE PRICE TYPE
+|--------------------------------------------------------------------------
+*/
+
+if (
+  servicePriceType &&
+  servicePrice
+) {
+
+  servicePriceType.addEventListener(
+    'change',
+    () => {
+
+      updatePriceField(
+        servicePriceType,
+        servicePrice
+      );
+
+    }
+  );
+
+
+  updatePriceField(
+    servicePriceType,
+    servicePrice
+  );
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| EDIT SERVICE PRICE TYPE
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener(
+  'change',
+  event => {
+
+    const select =
+      event.target.closest(
+        '.edit-service-price-type'
+      );
+
+
+    if (!select) {
+
+      return;
+
+    }
+
+
+    const card =
+      select.closest(
+        '.admin-service-card'
+      );
+
+
+    if (!card) {
+
+      return;
+
+    }
+
+
+    const priceInput =
+      card.querySelector(
+        '.edit-service-price'
+      );
+
+
+    updatePriceField(
+      select,
+      priceInput
+    );
 
   }
 );
@@ -1558,6 +2346,16 @@ document.addEventListener(
 | REFRESH BUTTONS
 |--------------------------------------------------------------------------
 */
+
+if (refreshButton) {
+
+  refreshButton.addEventListener(
+    'click',
+    loadOrders
+  );
+
+}
+
 
 if (refreshServicesButton) {
 
@@ -1579,16 +2377,6 @@ if (refreshServicesButtonBottom) {
 }
 
 
-if (refreshButton) {
-
-  refreshButton.addEventListener(
-    'click',
-    loadOrders
-  );
-
-}
-
-
 /*
 |--------------------------------------------------------------------------
 | LOGOUT
@@ -1602,6 +2390,10 @@ if (logoutButton) {
     () => {
 
       clearAdminKey();
+
+
+      currentOrders =
+        [];
 
 
       showLogin(
@@ -1630,7 +2422,7 @@ document.addEventListener(
 
 
     console.log(
-      'TIMIFXX ADMIN JS VERSION 20 LOADED'
+      'TIMIFXX ADMIN DASHBOARD LOADED'
     );
 
 
