@@ -2,6 +2,9 @@
 // TIMI FXX MARKETING - ORDER JAVASCRIPT
 // ============================================================
 
+// API_BASE_URL is set in config.js
+const API_BASE_URL = window.API_BASE_URL || 'https://timifxx-marketing-production.up.railway.app';
+
 document.addEventListener('DOMContentLoaded', function() {
     const serviceSelect = document.getElementById('service-select');
     const displayPrice = document.getElementById('display-price');
@@ -192,6 +195,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // ============================================================
     function isValidEmail(email) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     // ============================================================
