@@ -8,6 +8,358 @@
     <link rel="stylesheet" href="css/admin.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* Quick Admin Styles */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-dark, #0a0e1a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5000;
+            padding: 20px;
+        }
+        .login-overlay.hidden { display: none; }
+        .login-box {
+            background: var(--bg-card, #111827);
+            border: 1px solid var(--border-color, #1e2d45);
+            border-radius: 16px;
+            padding: 48px 40px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .login-brand { text-align: center; margin-bottom: 32px; }
+        .login-brand .logo-icon { display: inline-flex; margin-bottom: 12px; }
+        .login-brand h2 { font-size: 24px; font-weight: 700; color: white; }
+        .login-brand p { color: #a0b4c8; font-size: 14px; margin-top: 4px; }
+        .login-box .form-group { margin-bottom: 16px; }
+        .login-box .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #a0b4c8;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .login-box .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #1e2d45;
+            border-radius: 8px;
+            color: white;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+        .login-box .form-group input:focus {
+            outline: none;
+            border-color: #0088cc;
+            box-shadow: 0 0 0 3px rgba(0,136,204,0.15);
+        }
+        .login-error { color: #ff4444; font-size: 14px; margin-top: 12px; text-align: center; min-height: 24px; }
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #0088cc, #00aaff);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover { transform: translateY(-2px); opacity: 0.9; }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        
+        .admin-dashboard { display: none; }
+        .admin-sidebar {
+            width: 240px;
+            min-height: 100vh;
+            background: #111827;
+            border-right: 1px solid #1e2d45;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 16px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+        .sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 24px; border-bottom: 1px solid #1e2d45; margin-bottom: 20px; }
+        .sidebar-brand span { font-size: 18px; font-weight: 700; color: white; }
+        .sidebar-nav { display: flex; flex-direction: column; flex: 1; gap: 4px; }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: #a0b4c8;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .sidebar-link:hover { background: rgba(255,255,255,0.05); color: white; }
+        .sidebar-link.active { background: rgba(0,136,204,0.15); color: #33aadd; }
+        .sidebar-link i { width: 20px; text-align: center; }
+        
+        .admin-main { flex: 1; padding: 24px 32px; overflow-y: auto; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid #1e2d45; margin-bottom: 24px; }
+        .admin-header h1 { font-size: 28px; font-weight: 700; color: white; }
+        .admin-section { display: none; }
+        .admin-section.active { display: block; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .stat-card {
+            background: #111827;
+            border: 1px solid #1e2d45;
+            border-radius: 16px;
+            padding: 20px 24px;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover { border-color: #0088cc; }
+        .stat-card .stat-number { font-size: 32px; font-weight: 800; display: block; color: white; }
+        .stat-card .stat-label { color: #a0b4c8; font-size: 14px; margin-top: 4px; }
+        .stat-card .stat-icon { float: right; font-size: 24px; color: #6b7f96; }
+        .stat-card.pending .stat-number { color: #ffc107; }
+        .stat-card.processing .stat-number { color: #33aadd; }
+        .stat-card.completed .stat-number { color: #00ff88; }
+        .stat-card.cancelled .stat-number { color: #ff4444; }
+        .stat-card.total .stat-number { color: white; }
+        
+        .admin-card {
+            background: #111827;
+            border: 1px solid #1e2d45;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .admin-card h3 { font-size: 18px; font-weight: 700; color: white; margin-bottom: 16px; }
+        .table-container { overflow-x: auto; }
+        .table-container table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .table-container th { text-align: left; padding: 12px 16px; color: #a0b4c8; font-weight: 600; border-bottom: 1px solid #1e2d45; }
+        .table-container td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: white; }
+        .table-container tr:hover td { background: rgba(255,255,255,0.02); }
+        .status-badge-small {
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-badge-small.pending { background: rgba(255,193,7,0.15); color: #ffc107; }
+        .status-badge-small.processing { background: rgba(0,136,204,0.15); color: #33aadd; }
+        .status-badge-small.completed { background: rgba(0,255,136,0.15); color: #00ff88; }
+        .status-badge-small.cancelled { background: rgba(255,68,68,0.15); color: #ff4444; }
+        .table-actions { display: flex; gap: 6px; }
+        .table-actions button {
+            padding: 4px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.05);
+            color: #a0b4c8;
+        }
+        .table-actions button:hover { background: #0088cc; color: white; }
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+        .loading-spinner::after {
+            content: '';
+            width: 40px;
+            height: 40px;
+            border: 3px solid #1e2d45;
+            border-top-color: #0088cc;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+        .toast {
+            padding: 16px 20px;
+            background: #111827;
+            border: 1px solid #1e2d45;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            animation: slideInRight 0.3s ease;
+        }
+        .toast.success { border-left: 4px solid #00ff88; }
+        .toast.error { border-left: 4px solid #ff4444; }
+        .toast.info { border-left: 4px solid #33aadd; }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .admin-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(12px);
+            z-index: 6000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .admin-modal.active { display: flex; }
+        .admin-modal-content {
+            background: #111827;
+            border: 1px solid #1e2d45;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .admin-modal-content h2, .admin-modal-content h3 { color: white; margin-bottom: 16px; }
+        .admin-modal-close {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #a0b4c8;
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .admin-modal-close:hover { color: white; }
+        .order-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: white;
+        }
+        .order-detail-row .label { color: #a0b4c8; }
+        .order-detail-row .value { font-weight: 500; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-weight: 600; font-size: 14px; color: #a0b4c8; margin-bottom: 4px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #1e2d45;
+            border-radius: 8px;
+            color: white;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #0088cc;
+            box-shadow: 0 0 0 3px rgba(0,136,204,0.15);
+        }
+        .order-detail-notes { margin-top: 16px; padding: 16px; background: rgba(255,255,255,0.03); border-radius: 8px; }
+        .service-active { color: #00ff88; }
+        .service-inactive { color: #ff4444; }
+        .btn-small { padding: 8px 16px; font-size: 13px; }
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover { border-color: #0088cc; background: rgba(0,136,204,0.1); transform: translateY(-2px); }
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            background: transparent;
+            color: #a0b4c8;
+            border: 1px solid #1e2d45;
+            border-radius: 50px;
+            font-weight: 500;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-outline:hover { border-color: #0088cc; color: white; transform: translateY(-2px); }
+        .card-header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .card-header-actions h3 { margin-bottom: 0; }
+        .order-filters { display: flex; gap: 10px; flex-wrap: wrap; }
+        .filter-input, .filter-select {
+            padding: 8px 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #1e2d45;
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            min-width: 140px;
+        }
+        .filter-input:focus, .filter-select:focus { outline: none; border-color: #0088cc; }
+        .filter-select option { background: #111827; color: white; }
+        @media (max-width: 768px) {
+            .admin-sidebar { width: 100%; min-height: auto; height: auto; flex-direction: row; flex-wrap: wrap; padding: 12px 16px; border-right: none; border-bottom: 1px solid #1e2d45; }
+            .sidebar-brand { border-bottom: none; padding: 0 16px 0 0; margin-bottom: 0; margin-right: 16px; }
+            .sidebar-nav { flex-direction: row; flex-wrap: wrap; gap: 4px; flex: 1; }
+            .sidebar-link { padding: 8px 14px; font-size: 13px; }
+            .admin-main { padding: 16px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .admin-header h1 { font-size: 22px; }
+            .login-box { padding: 32px 24px; }
+        }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .admin-modal-content { padding: 24px 16px; }
+        }
+    </style>
 </head>
 <body>
     <!-- Login Overlay -->
@@ -21,13 +373,13 @@
                         <path d="M16 22L20 18L18 16L16 22Z" fill="#0088cc" opacity="0.5"/>
                     </svg>
                 </div>
-                <h2>TimiFxx <span style="font-weight:300;color:var(--text-secondary);">Marketing</span></h2>
+                <h2 style="color:white;">TimiFxx <span style="font-weight:300;color:#a0b4c8;">Marketing</span></h2>
                 <p>Administrator Login</p>
             </div>
             <form id="admin-login-form">
                 <div class="form-group">
                     <label>Email Address</label>
-                    <input type="email" id="login-email" placeholder="admin@timifxx.com" required>
+                    <input type="email" id="login-email" placeholder="timinii156@gmail.com" required value="timinii156@gmail.com">
                 </div>
                 <div class="form-group">
                     <label>Password</label>
@@ -37,13 +389,18 @@
                     <i class="fas fa-lock"></i> Login
                 </button>
                 <div id="login-error" class="login-error"></div>
+                <div style="margin-top:16px;padding:12px;background:rgba(0,136,204,0.08);border-radius:8px;text-align:center;">
+                    <p style="color:#a0b4c8;font-size:12px;margin:0;">
+                        <i class="fas fa-info-circle" style="color:#33aadd;"></i>
+                        Default: timinii156@gmail.com / Admin2034462
+                    </p>
+                </div>
             </form>
         </div>
     </div>
 
     <!-- Admin Dashboard -->
     <div id="admin-dashboard" class="admin-dashboard" style="display:none;">
-        <!-- Sidebar -->
         <aside class="admin-sidebar">
             <div class="sidebar-brand">
                 <div class="logo-icon" style="width:32px;height:32px;">
@@ -53,7 +410,7 @@
                         <path d="M16 22L20 18L18 16L16 22Z" fill="#0088cc" opacity="0.5"/>
                     </svg>
                 </div>
-                <span>TimiFxx</span>
+                <span style="color:white;">TimiFxx</span>
             </div>
             <nav class="sidebar-nav">
                 <a href="#" class="sidebar-link active" data-section="dashboard">
@@ -68,35 +425,36 @@
                 <a href="#" class="sidebar-link" data-section="settings">
                     <i class="fas fa-cog"></i> Settings
                 </a>
-                <a href="#" id="admin-logout" class="sidebar-link" style="margin-top:auto;border-top:1px solid var(--border-color);padding-top:16px;">
+                <a href="#" id="admin-logout" class="sidebar-link" style="margin-top:auto;border-top:1px solid #1e2d45;padding-top:16px;">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
             </nav>
         </aside>
 
-        <!-- Main Content -->
         <main class="admin-main">
             <header class="admin-header">
                 <h1 id="admin-section-title">Dashboard</h1>
                 <div class="admin-header-right">
-                    <span id="admin-user-email" style="color:var(--text-secondary);font-size:14px;"></span>
+                    <span id="admin-user-email" style="color:#a0b4c8;font-size:14px;"></span>
                 </div>
             </header>
 
-            <!-- Dashboard Section -->
             <section id="section-dashboard" class="admin-section active">
                 <div class="stats-grid" id="stats-grid">
-                    <!-- Stats loaded dynamically -->
+                    <div class="stat-card total">
+                        <span class="stat-icon"><i class="fas fa-spinner fa-spin"></i></span>
+                        <span class="stat-number">...</span>
+                        <span class="stat-label">Loading...</span>
+                    </div>
                 </div>
                 <div class="admin-card">
                     <h3>Recent Orders</h3>
                     <div id="recent-orders-table" class="table-container">
-                        <!-- Loaded dynamically -->
+                        <div class="loading-spinner"></div>
                     </div>
                 </div>
             </section>
 
-            <!-- Orders Section -->
             <section id="section-orders" class="admin-section">
                 <div class="admin-card">
                     <div class="card-header-actions">
@@ -114,12 +472,11 @@
                         </div>
                     </div>
                     <div id="orders-table" class="table-container">
-                        <!-- Loaded dynamically -->
+                        <div class="loading-spinner"></div>
                     </div>
                 </div>
             </section>
 
-            <!-- Services Section -->
             <section id="section-services" class="admin-section">
                 <div class="admin-card">
                     <div class="card-header-actions">
@@ -127,19 +484,18 @@
                         <button id="refresh-services" class="btn-small btn-outline"><i class="fas fa-sync"></i></button>
                     </div>
                     <div id="services-table" class="table-container">
-                        <!-- Loaded dynamically -->
+                        <div class="loading-spinner"></div>
                     </div>
                 </div>
             </section>
 
-            <!-- Settings Section -->
             <section id="section-settings" class="admin-section">
                 <div class="admin-card">
                     <h3>Settings</h3>
-                    <p style="color:var(--text-secondary);margin-bottom:20px;">Manage your account settings and preferences.</p>
-                    <div style="padding:20px;background:rgba(255,255,255,0.02);border-radius:var(--radius-sm);">
-                        <p style="color:var(--text-secondary);font-size:14px;">
-                            <i class="fas fa-info-circle" style="color:var(--primary-light);"></i>
+                    <p style="color:#a0b4c8;margin-bottom:20px;">Manage your account settings and preferences.</p>
+                    <div style="padding:20px;background:rgba(255,255,255,0.02);border-radius:8px;">
+                        <p style="color:#a0b4c8;font-size:14px;">
+                            <i class="fas fa-info-circle" style="color:#33aadd;"></i>
                             For security reasons, settings are managed through environment variables.
                         </p>
                         <div style="margin-top:16px;">
@@ -157,12 +513,12 @@
             <button class="admin-modal-close" id="order-detail-close">&times;</button>
             <h2>Order Details</h2>
             <div id="order-detail-content">
-                <!-- Loaded dynamically -->
+                <div class="loading-spinner"></div>
             </div>
         </div>
     </div>
 
-    <!-- Change Status Modal -->
+    <!-- Status Modal -->
     <div id="status-modal" class="admin-modal">
         <div class="admin-modal-content" style="max-width:400px;">
             <button class="admin-modal-close" id="status-modal-close">&times;</button>
@@ -183,7 +539,7 @@
         </div>
     </div>
 
-    <!-- Change Price Modal -->
+    <!-- Price Modal -->
     <div id="price-modal" class="admin-modal">
         <div class="admin-modal-content" style="max-width:400px;">
             <button class="admin-modal-close" id="price-modal-close">&times;</button>
@@ -199,7 +555,7 @@
         </div>
     </div>
 
-    <!-- Change Password Modal -->
+    <!-- Password Modal -->
     <div id="password-modal" class="admin-modal">
         <div class="admin-modal-content" style="max-width:400px;">
             <button class="admin-modal-close" id="password-modal-close">&times;</button>
@@ -225,8 +581,586 @@
     <!-- Toast Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="js/config.js"></script>
-<script src="js/script.js"></script>
-<script src="js/admin.js"></script>
+    <script>
+        // ============================================================
+        // COMPLETE ADMIN JAVASCRIPT
+        // ============================================================
+        const API_BASE_URL = 'https://timifxx-marketing-production.up.railway.app';
+        let adminToken = localStorage.getItem('adminToken');
+        let currentSection = 'dashboard';
+
+        const loginOverlay = document.getElementById('login-overlay');
+        const adminDashboard = document.getElementById('admin-dashboard');
+        const loginForm = document.getElementById('admin-login-form');
+        const loginError = document.getElementById('login-error');
+
+        console.log('🔐 Admin JS loaded');
+        console.log('📝 Token exists:', !!adminToken);
+        console.log('🔑 Credentials: timinii156@gmail.com / Admin2034462');
+
+        async function checkAuth() {
+            if (!adminToken) {
+                showLogin();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/dashboard`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (response.ok) {
+                    showDashboard();
+                    loadDashboard();
+                } else {
+                    localStorage.removeItem('adminToken');
+                    adminToken = null;
+                    showLogin();
+                }
+            } catch (error) {
+                console.error('Auth error:', error);
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            loginOverlay.classList.remove('hidden');
+            adminDashboard.style.display = 'none';
+        }
+
+        function showDashboard() {
+            loginOverlay.classList.add('hidden');
+            adminDashboard.style.display = 'flex';
+        }
+
+        if (loginForm) {
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value.trim();
+                const password = document.getElementById('login-password').value.trim();
+
+                loginError.textContent = '';
+                const submitBtn = this.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/admin/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Login failed');
+                    }
+
+                    adminToken = data.token;
+                    localStorage.setItem('adminToken', adminToken);
+                    document.getElementById('admin-user-email').textContent = email;
+                    showDashboard();
+                    loadDashboard();
+
+                } catch (error) {
+                    loginError.textContent = error.message || 'Invalid email or password. Please try again.';
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-lock"></i> Login';
+                }
+            });
+        }
+
+        document.getElementById('admin-logout')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            localStorage.removeItem('adminToken');
+            adminToken = null;
+            showLogin();
+            document.getElementById('login-password').value = '';
+        });
+
+        document.querySelectorAll('.sidebar-link[data-section]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const section = this.dataset.section;
+                switchSection(section);
+            });
+        });
+
+        function switchSection(section) {
+            currentSection = section;
+            document.querySelectorAll('.sidebar-link[data-section]').forEach(l => l.classList.remove('active'));
+            document.querySelector(`.sidebar-link[data-section="${section}"]`)?.classList.add('active');
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(`section-${section}`)?.classList.add('active');
+            const titles = { dashboard: 'Dashboard', orders: 'Orders', services: 'Services', settings: 'Settings' };
+            document.getElementById('admin-section-title').textContent = titles[section] || section;
+            if (section === 'dashboard') loadDashboard();
+            if (section === 'orders') loadOrders();
+            if (section === 'services') loadAdminServices();
+        }
+
+        async function loadDashboard() {
+            const statsGrid = document.getElementById('stats-grid');
+            const recentOrdersTable = document.getElementById('recent-orders-table');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/dashboard`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load dashboard');
+
+                const data = await response.json();
+
+                statsGrid.innerHTML = `
+                    <div class="stat-card total">
+                        <span class="stat-icon"><i class="fas fa-shopping-cart"></i></span>
+                        <span class="stat-number">${data.totalOrders || 0}</span>
+                        <span class="stat-label">Total Orders</span>
+                    </div>
+                    <div class="stat-card pending">
+                        <span class="stat-icon"><i class="fas fa-clock"></i></span>
+                        <span class="stat-number">${data.pendingOrders || 0}</span>
+                        <span class="stat-label">Pending</span>
+                    </div>
+                    <div class="stat-card processing">
+                        <span class="stat-icon"><i class="fas fa-spinner"></i></span>
+                        <span class="stat-number">${data.processingOrders || 0}</span>
+                        <span class="stat-label">Processing</span>
+                    </div>
+                    <div class="stat-card completed">
+                        <span class="stat-icon"><i class="fas fa-check-circle"></i></span>
+                        <span class="stat-number">${data.completedOrders || 0}</span>
+                        <span class="stat-label">Completed</span>
+                    </div>
+                    <div class="stat-card cancelled">
+                        <span class="stat-icon"><i class="fas fa-times-circle"></i></span>
+                        <span class="stat-number">${data.cancelledOrders || 0}</span>
+                        <span class="stat-label">Cancelled</span>
+                    </div>
+                `;
+
+                if (data.recentOrders && data.recentOrders.length > 0) {
+                    recentOrdersTable.innerHTML = createOrdersTable(data.recentOrders);
+                } else {
+                    recentOrdersTable.innerHTML = `<p style="color:#a0b4c8;padding:20px 0;">No recent orders.</p>`;
+                }
+
+            } catch (error) {
+                console.error('Dashboard error:', error);
+                statsGrid.innerHTML = `<p style="color:#a0b4c8;">Failed to load dashboard data.</p>`;
+            }
+        }
+
+        async function loadOrders() {
+            const tableContainer = document.getElementById('orders-table');
+            tableContainer.innerHTML = '<div class="loading-spinner"></div>';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/orders`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load orders');
+
+                const orders = await response.json();
+
+                if (orders && orders.length > 0) {
+                    tableContainer.innerHTML = createOrdersTable(orders);
+                } else {
+                    tableContainer.innerHTML = `<p style="color:#a0b4c8;padding:20px 0;">No orders found.</p>`;
+                }
+
+                setupOrderFilters();
+
+            } catch (error) {
+                console.error('Orders error:', error);
+                tableContainer.innerHTML = `<p style="color:#a0b4c8;">Failed to load orders.</p>`;
+            }
+        }
+
+        function createOrdersTable(orders) {
+            if (!orders || orders.length === 0) {
+                return `<p style="color:#a0b4c8;padding:20px 0;">No orders found.</p>`;
+            }
+
+            return `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Customer</th>
+                            <th>Service</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${orders.map(order => `
+                            <tr data-order-id="${order.id}" data-status="${order.status}">
+                                <td><strong>${escapeHtml(order.order_number)}</strong></td>
+                                <td>${escapeHtml(order.customer_name)}</td>
+                                <td>${escapeHtml(order.service_name || 'N/A')}</td>
+                                <td>$${order.price}</td>
+                                <td><span class="status-badge-small ${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></td>
+                                <td>${new Date(order.created_at).toLocaleDateString()}</td>
+                                <td>
+                                    <div class="table-actions">
+                                        <button class="btn-view" onclick="viewOrder(${order.id})" title="View Details"><i class="fas fa-eye"></i></button>
+                                        <button class="btn-status" onclick="openStatusModal(${order.id}, '${order.status}')" title="Change Status"><i class="fas fa-exchange-alt"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function setupOrderFilters() {
+            const searchInput = document.getElementById('order-search');
+            const statusFilter = document.getElementById('order-status-filter');
+            const refreshBtn = document.getElementById('refresh-orders');
+
+            if (searchInput) searchInput.addEventListener('input', applyOrderFilters);
+            if (statusFilter) statusFilter.addEventListener('change', applyOrderFilters);
+            if (refreshBtn) refreshBtn.addEventListener('click', loadOrders);
+        }
+
+        function applyOrderFilters() {
+            const searchTerm = document.getElementById('order-search')?.value.toLowerCase() || '';
+            const statusFilter = document.getElementById('order-status-filter')?.value || '';
+            const rows = document.querySelectorAll('#orders-table table tbody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const status = row.dataset.status || '';
+                const matchSearch = text.includes(searchTerm);
+                const matchStatus = !statusFilter || status === statusFilter;
+                row.style.display = (matchSearch && matchStatus) ? '' : 'none';
+            });
+        }
+
+        async function viewOrder(orderId) {
+            const modal = document.getElementById('order-detail-modal');
+            const content = document.getElementById('order-detail-content');
+            modal.classList.add('active');
+            content.innerHTML = '<div class="loading-spinner"></div>';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/orders/${orderId}`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load order details');
+
+                const order = await response.json();
+
+                content.innerHTML = `
+                    <div class="order-detail-row"><span class="label">Order Number</span><span class="value"><strong>${escapeHtml(order.order_number)}</strong></span></div>
+                    <div class="order-detail-row"><span class="label">Service</span><span class="value">${escapeHtml(order.service_name || 'N/A')}</span></div>
+                    <div class="order-detail-row"><span class="label">Price</span><span class="value">$${order.price}</span></div>
+                    <div class="order-detail-row"><span class="label">Status</span><span class="value"><span class="status-badge-small ${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></span></div>
+                    <div class="order-detail-row"><span class="label">Customer</span><span class="value">${escapeHtml(order.customer_name)}</span></div>
+                    <div class="order-detail-row"><span class="label">Email</span><span class="value">${escapeHtml(order.customer_email)}</span></div>
+                    <div class="order-detail-row"><span class="label">Telegram</span><span class="value">${escapeHtml(order.telegram_username)}</span></div>
+                    ${order.whatsapp_number ? `<div class="order-detail-row"><span class="label">WhatsApp</span><span class="value">${escapeHtml(order.whatsapp_number)}</span></div>` : ''}
+                    <div class="order-detail-row"><span class="label">Order Date</span><span class="value">${new Date(order.created_at).toLocaleString()}</span></div>
+                    ${order.details ? `<div class="order-detail-row" style="flex-direction:column;align-items:stretch;gap:4px;"><span class="label">Details</span><span class="value" style="text-align:left;white-space:pre-wrap;">${escapeHtml(order.details)}</span></div>` : ''}
+                    <div class="order-detail-notes">
+                        <label style="font-weight:600;display:block;margin-bottom:8px;color:#a0b4c8;">Admin Notes</label>
+                        <textarea id="admin-notes-textarea" rows="3" style="width:100%;padding:12px;background:rgba(255,255,255,0.05);border:1px solid #1e2d45;border-radius:8px;color:white;font-family:'Inter',sans-serif;font-size:14px;resize:vertical;min-height:80px;">${escapeHtml(order.admin_notes || '')}</textarea>
+                        <button onclick="saveAdminNotes(${order.id})" class="btn-primary btn-small" style="margin-top:10px;"><i class="fas fa-save"></i> Save Notes</button>
+                    </div>
+                    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
+                        <button onclick="openStatusModal(${order.id}, '${order.status}')" class="btn-secondary btn-small"><i class="fas fa-exchange-alt"></i> Change Status</button>
+                        <button onclick="document.getElementById('order-detail-modal').classList.remove('active')" class="btn-outline btn-small">Close</button>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Order detail error:', error);
+                content.innerHTML = `<p style="color:#a0b4c8;">Failed to load order details.</p>`;
+            }
+        }
+
+        async function saveAdminNotes(orderId) {
+            const textarea = document.getElementById('admin-notes-textarea');
+            if (!textarea) return;
+            const notes = textarea.value.trim();
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/orders/${orderId}/notes`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ notes })
+                });
+
+                if (!response.ok) throw new Error('Failed to save notes');
+                showToast('Notes saved successfully!', 'success');
+
+            } catch (error) {
+                console.error('Save notes error:', error);
+                showToast('Failed to save notes.', 'error');
+            }
+        }
+
+        function openStatusModal(orderId, currentStatus) {
+            const modal = document.getElementById('status-modal');
+            document.getElementById('status-order-id').value = orderId;
+            document.getElementById('status-select').value = currentStatus;
+            modal.classList.add('active');
+        }
+
+        document.getElementById('status-modal-close')?.addEventListener('click', function() {
+            document.getElementById('status-modal').classList.remove('active');
+        });
+
+        document.getElementById('status-change-form')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const orderId = document.getElementById('status-order-id').value;
+            const newStatus = document.getElementById('status-select').value;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/orders/${orderId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (!response.ok) throw new Error('Failed to update status');
+
+                showToast('Order status updated successfully!', 'success');
+                document.getElementById('status-modal').classList.remove('active');
+                if (currentSection === 'dashboard') loadDashboard();
+                if (currentSection === 'orders') loadOrders();
+
+            } catch (error) {
+                console.error('Status update error:', error);
+                showToast('Failed to update order status.', 'error');
+            }
+        });
+
+        async function loadAdminServices() {
+            const tableContainer = document.getElementById('services-table');
+            tableContainer.innerHTML = '<div class="loading-spinner"></div>';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/services`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load services');
+
+                const services = await response.json();
+
+                if (services && services.length > 0) {
+                    tableContainer.innerHTML = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Service</th>
+                                    <th>Price</th>
+                                    <th>Price Type</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${services.map(service => `
+                                    <tr>
+                                        <td><strong>${escapeHtml(service.name)}</strong></td>
+                                        <td>$${service.price}</td>
+                                        <td>${service.price_type === 'starting_from' ? 'Starting from' : 'Fixed'}</td>
+                                        <td class="${service.is_active ? 'service-active' : 'service-inactive'}">${service.is_active ? 'Active' : 'Inactive'}</td>
+                                        <td>
+                                            <div class="table-actions">
+                                                <button class="btn-edit" onclick="openPriceModal(${service.id}, ${service.price})" title="Change Price"><i class="fas fa-dollar-sign"></i></button>
+                                                <button onclick="toggleServiceStatus(${service.id}, ${service.is_active})" class="${service.is_active ? 'btn-status' : 'btn-view'}" title="${service.is_active ? 'Deactivate' : 'Activate'}">${service.is_active ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>'}</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    tableContainer.innerHTML = `<p style="color:#a0b4c8;padding:20px 0;">No services found.</p>`;
+                }
+
+            } catch (error) {
+                console.error('Services error:', error);
+                tableContainer.innerHTML = `<p style="color:#a0b4c8;">Failed to load services.</p>`;
+            }
+        }
+
+        function openPriceModal(serviceId, currentPrice) {
+            const modal = document.getElementById('price-modal');
+            document.getElementById('price-service-id').value = serviceId;
+            document.getElementById('price-input').value = currentPrice;
+            modal.classList.add('active');
+        }
+
+        document.getElementById('price-modal-close')?.addEventListener('click', function() {
+            document.getElementById('price-modal').classList.remove('active');
+        });
+
+        document.getElementById('price-change-form')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const serviceId = document.getElementById('price-service-id').value;
+            const newPrice = parseFloat(document.getElementById('price-input').value);
+
+            if (isNaN(newPrice) || newPrice < 0) {
+                showToast('Please enter a valid price.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/services/${serviceId}/price`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ price: newPrice })
+                });
+
+                if (!response.ok) throw new Error('Failed to update price');
+
+                showToast('Service price updated successfully!', 'success');
+                document.getElementById('price-modal').classList.remove('active');
+                loadAdminServices();
+
+            } catch (error) {
+                console.error('Price update error:', error);
+                showToast('Failed to update service price.', 'error');
+            }
+        });
+
+        async function toggleServiceStatus(serviceId, currentStatus) {
+            const newStatus = !currentStatus;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/services/${serviceId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ is_active: newStatus })
+                });
+
+                if (!response.ok) throw new Error('Failed to update service status');
+
+                showToast(`Service ${newStatus ? 'activated' : 'deactivated'} successfully!`, 'success');
+                loadAdminServices();
+
+            } catch (error) {
+                console.error('Service status error:', error);
+                showToast('Failed to update service status.', 'error');
+            }
+        }
+
+        document.getElementById('change-password-btn')?.addEventListener('click', function() {
+            document.getElementById('password-modal').classList.add('active');
+        });
+
+        document.getElementById('password-modal-close')?.addEventListener('click', function() {
+            document.getElementById('password-modal').classList.remove('active');
+        });
+
+        document.getElementById('password-change-form')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            if (newPassword !== confirmPassword) {
+                showToast('New passwords do not match.', 'error');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showToast('Password must be at least 6 characters.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/change-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ currentPassword, newPassword })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to change password');
+                }
+
+                showToast('Password changed successfully!', 'success');
+                document.getElementById('password-modal').classList.remove('active');
+                this.reset();
+
+            } catch (error) {
+                console.error('Password change error:', error);
+                showToast(error.message || 'Failed to change password.', 'error');
+            }
+        });
+
+        document.querySelectorAll('.admin-modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) this.classList.remove('active');
+            });
+        });
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showToast(message, type = 'info') {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.className = 'toast-container';
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        window.viewOrder = viewOrder;
+        window.openStatusModal = openStatusModal;
+        window.openPriceModal = openPriceModal;
+        window.toggleServiceStatus = toggleServiceStatus;
+        window.saveAdminNotes = saveAdminNotes;
+        window.loadOrders = loadOrders;
+        window.loadAdminServices = loadAdminServices;
+        window.loadDashboard = loadDashboard;
+
+        checkAuth();
+    </script>
 </body>
 </html>
