@@ -58,6 +58,108 @@ app.use((req, res, next) => {
 });
 
 // ============================================================
+// ⭐ ONE-TIME ADMIN SETUP ROUTE - RUN THIS ONCE!
+// ============================================================
+app.get('/api/setup-admin', async (req, res) => {
+    try {
+        const { query } = require('./config/database');
+        
+        console.log('🔧 Running admin setup...');
+
+        // Delete existing admins
+        await query('DELETE FROM admins;');
+        console.log('✅ Old admins deleted');
+
+        // Insert new admin
+        // Email: timinii156@gmail.com
+        // Password: Admin2034462
+        await query(
+            `INSERT INTO admins (email, password_hash, is_active) 
+             VALUES ($1, $2, true)`,
+            [
+                'timinii156@gmail.com',
+                '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'
+            ]
+        );
+        console.log('✅ Admin created: timinii156@gmail.com');
+
+        // Verify
+        const result = await query('SELECT id, email, is_active FROM admins;');
+        console.log('📋 Admins in database:', result.rows);
+
+        res.json({
+            success: true,
+            message: 'Admin setup complete!',
+            admins: result.rows,
+            credentials: {
+                email: 'timinii156@gmail.com',
+                password: 'Admin2034462'
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Setup failed:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// ============================================================
+// ⭐ ONE-TIME TELEGRAM TEST ROUTE
+// ============================================================
+app.get('/api/test-telegram', async (req, res) => {
+    try {
+        const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+        const ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
+
+        if (!BOT_TOKEN || !ADMIN_CHAT_ID) {
+            return res.json({
+                success: false,
+                message: 'Telegram bot not configured. Please add TELEGRAM_BOT_TOKEN and TELEGRAM_ADMIN_CHAT_ID to environment variables.',
+                bot_token_set: !!BOT_TOKEN,
+                chat_id_set: !!ADMIN_CHAT_ID
+            });
+        }
+
+        const message = '✅ Test message from TimiFxx Marketing Bot! Your notifications are working! 🎉';
+        
+        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                chat_id: ADMIN_CHAT_ID,
+                text: message
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.ok) {
+            res.json({
+                success: true,
+                message: '✅ Telegram test message sent successfully! Check your Telegram!'
+            });
+        } else {
+            res.json({
+                success: false,
+                error: result.description,
+                full_response: result
+            });
+        }
+
+    } catch (error) {
+        res.json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// ============================================================
 // ROUTES
 // ============================================================
 const servicesRoutes = require('./routes/services');
