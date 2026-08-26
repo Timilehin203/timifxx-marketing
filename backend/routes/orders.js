@@ -1,11 +1,63 @@
 // ============================================================
-// ORDERS ROUTES
+// ORDERS ROUTES - WITH TELEGRAM NOTIFICATIONS
 // ============================================================
 
 const express = require('express');
 const router = express.Router();
 const { query } = require('../config/database');
 const { generateOrderNumber } = require('../utils/orderNumber');
+
+// ============================================================
+// TELEGRAM NOTIFICATION FUNCTION
+// ============================================================
+async function sendTelegramNotification(orderDetails) {
+    const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+    const ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID;
+
+    if (!BOT_TOKEN || !ADMIN_CHAT_ID) {
+        console.log('⚠️ Telegram bot not configured. Skipping notification.');
+        return;
+    }
+
+    try {
+        const message = `
+🆕 **NEW ORDER RECEIVED!**
+
+📋 **Order Number:** ${orderDetails.order_number}
+👤 **Customer:** ${orderDetails.customer_name}
+📧 **Email:** ${orderDetails.customer_email}
+📱 **Telegram:** ${orderDetails.telegram_username}
+📞 **WhatsApp:** ${orderDetails.whatsapp_number || 'N/A'}
+🛒 **Service:** ${orderDetails.service_name}
+💰 **Price:** $${orderDetails.price}
+📝 **Details:** ${orderDetails.details || 'N/A'}
+
+🔗 **Track Order:** https://timilehin203.github.io/timifxx-marketing/order-status.html?order=${orderDetails.order_number}
+        `;
+
+        const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                chat_id: ADMIN_CHAT_ID,
+                text: message,
+                parse_mode: 'Markdown'
+            })
+        });
+
+        const result = await response.json();
+        if (result.ok) {
+            console.log('✅ Telegram notification sent successfully!');
+        } else {
+            console.log('❌ Telegram notification failed:', result.description);
+        }
+    } catch (error) {
+        console.error('❌ Error sending Telegram notification:', error);
+    }
+}
 
 // ============================================================
 // VALIDATION HELPERS
@@ -32,6 +84,8 @@ router.post('/', async (req, res) => {
             details
         } = req.body;
 
+        console.log('📝 New order request:', req.body);
+
         // Validate required fields
         if (!service_id || !customer_name || !customer_email || !telegram_username) {
             return res.status(400).json({ error: 'Missing required fields' });
@@ -47,7 +101,7 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Invalid Telegram username' });
         }
 
-        // Get service from database (source of truth for price)
+        // Get service from database
         const serviceResult = await query(
             `SELECT id, name, price, price_type, is_active 
              FROM services 
@@ -87,6 +141,20 @@ router.post('/', async (req, res) => {
 
         const order = result.rows[0];
 
+        // Send Telegram notification to admin
+        await sendTelegramNotification({
+            order_number: order.order_number,
+            customer_name: customer_name,
+            customer_email: customer_email,
+            telegram_username: telegram_username,
+            whatsapp_number: whatsapp_number,
+            service_name: service.name,
+            price: price,
+            details: details
+        });
+
+        console.log('✅ Order created:', order.order_number);
+
         res.status(201).json({
             success: true,
             orderNumber: order.order_number,
@@ -96,7 +164,7 @@ router.post('/', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error creating order:', error);
+        console.error('❌ Error creating order:', error);
         res.status(500).json({ error: 'Order could not be submitted. Please try again.' });
     }
 });
@@ -128,14 +196,13 @@ router.get('/status/:orderNumber', async (req, res) => {
             return res.status(404).json({ error: 'Order not found' });
         }
 
-        // Don't expose admin notes to customers
         const order = result.rows[0];
         delete order.admin_notes;
 
         res.json(order);
 
     } catch (error) {
-        console.error('Error fetching order status:', error);
+        console.error('❌ Error fetching order status:', error);
         res.status(500).json({ error: 'Unable to retrieve order status' });
     }
 });
