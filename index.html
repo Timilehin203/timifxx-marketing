@@ -704,9 +704,6 @@
             border-color: #00ff88;
         }
 
-        /* ============================================================
-           FIXED CONTACT FORM - SENDS TO TELEGRAM
-           ============================================================ */
         .contact-form-wrapper {
             background: var(--bg-dark);
             border: 1px solid var(--border-color);
@@ -973,7 +970,9 @@
         </div>
     </section>
 
-    <!-- Ads Approval Section -->
+    <!-- ============================================================
+    ADS APPROVAL SECTION - SENDS TO MAIN TELEGRAM (@timifxx203)
+    ============================================================ -->
     <section class="ads-approval-section" id="ads-approval">
         <div class="container">
             <div class="ads-approval-content">
@@ -988,7 +987,8 @@
                         ⚠️ <span class="warning">Facing rejection?</span> I'll get your ads approved within <strong>24 hours</strong>.
                     </p>
                     <div class="ads-approval-cta">
-                        <a href="https://t.me/tiimex_203" target="_blank" class="btn-telegram">
+                        <!-- SENDS TO MAIN TELEGRAM: @timifxx203 -->
+                        <a href="https://t.me/timifxx203?text=Hello%20TimiFxx%2C%20I%20need%20help%20with%20my%20Telegram%20ads%20approval" target="_blank" class="btn-telegram">
                             <i class="fab fa-telegram"></i> Get Help on Telegram
                         </a>
                         <a href="order.html" class="btn-primary">Order Now</a>
@@ -1168,7 +1168,9 @@
         </div>
     </section>
 
-    <!-- CTA Section -->
+    <!-- ============================================================
+    CTA SECTION - SENDS TO MAIN TELEGRAM (@timifxx203)
+    ============================================================ -->
     <section class="cta-section">
         <div class="container">
             <div class="cta-box">
@@ -1177,7 +1179,8 @@
                     <p>Get started with our professional Telegram marketing services today and reach thousands of targeted users</p>
                     <div class="cta-buttons">
                         <a href="order.html" class="btn-primary">Order Now</a>
-                        <a href="https://t.me/tiimex_203" target="_blank" class="btn-telegram">
+                        <!-- SENDS TO MAIN TELEGRAM: @timifxx203 -->
+                        <a href="https://t.me/timifxx203?text=Hello%20TimiFxx%2C%20I'm%20interested%20in%20your%20services" target="_blank" class="btn-telegram">
                             <i class="fab fa-telegram"></i> Contact on Telegram
                         </a>
                     </div>
@@ -1187,7 +1190,7 @@
     </section>
 
     <!-- ============================================================
-    PROFESSIONAL CONTACT SECTION - ICONS ONLY WITH WORKING FORM
+    CONTACT SECTION - TELEGRAM SUPPORT SENDS TO @tiimex_203, ALL ELSE TO @timifxx203
     ============================================================ -->
     <section id="contact" class="contact">
         <div class="container">
@@ -1199,7 +1202,7 @@
             <div class="contact-grid">
                 <div class="contact-info">
                     <div class="contact-icons-grid">
-                        <!-- Telegram Support -->
+                        <!-- Telegram Support - SENDS TO @tiimex_203 (SUPPORT) -->
                         <a href="https://t.me/tiimex_203" target="_blank" class="contact-icon-card telegram-support" title="Telegram Support">
                             <div class="icon-wrapper">
                                 <i class="fab fa-telegram-plane"></i>
@@ -1207,7 +1210,7 @@
                             <span class="icon-label">Telegram Support</span>
                         </a>
                         
-                        <!-- Telegram Main -->
+                        <!-- Telegram Main - SENDS TO @timifxx203 (MAIN) -->
                         <a href="https://t.me/timifxx203" target="_blank" class="contact-icon-card telegram-main" title="Telegram Main">
                             <div class="icon-wrapper">
                                 <i class="fab fa-telegram"></i>
@@ -1249,7 +1252,9 @@
                     </div>
                 </div>
                 
-                <!-- FIXED CONTACT FORM - SENDS TO TELEGRAM -->
+                <!-- ============================================================
+                CONTACT FORM - SENDS TO MAIN TELEGRAM (@timifxx203)
+                ============================================================ -->
                 <div class="contact-form-wrapper">
                     <form id="contact-form" class="contact-form" onsubmit="sendToTelegram(event)">
                         <h3 style="color:white;font-size:20px;margin-bottom:4px;">Send a Message</h3>
@@ -1591,7 +1596,7 @@
         }
 
         // ============================================================
-        // CONTACT FORM - SENDS TO TELEGRAM (FIXED)
+        // CONTACT FORM - SENDS TO MAIN TELEGRAM (@timifxx203)
         // ============================================================
         function sendToTelegram(event) {
             event.preventDefault();
@@ -1616,8 +1621,8 @@
 📱 Telegram: ${telegram || 'Not provided'}
 💬 Message: ${message}`;
             
-            // Your Telegram Support Username - CHANGE THIS TO YOURS
-            const telegramUsername = 'tiimex_203';
+            // SENDS TO MAIN TELEGRAM: @timifxx203
+            const telegramUsername = 'timifxx203';
             
             // Create the Telegram deep link URL
             const telegramUrl = `https://t.me/${telegramUsername}?text=${encodeURIComponent(telegramMessage)}`;
