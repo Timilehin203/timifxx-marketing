@@ -95,11 +95,13 @@ INSERT INTO services (name, description, price, price_type) VALUES
 ('Telegram Fragment Verification', 'Secure fragment verification service for Telegram accounts', 30, 'fixed');
 
 -- ============================================================
--- SEED ADMIN (Default: admin@timifxx.com / password: Admin123!)
+-- SEED ADMIN - UPDATED WITH YOUR CREDENTIALS
+-- Email: timinii156@gmail.com
+-- Password: Admin2034462
 -- ============================================================
--- Password: Admin123! (hashed with bcrypt)
+-- Password: Admin2034462 (hashed with bcrypt)
 INSERT INTO admins (email, password_hash) VALUES (
-    'admin@timifxx.com',
+    'timinii156@gmail.com',
     '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'
 );
 
@@ -108,12 +110,10 @@ INSERT INTO admins (email, password_hash) VALUES (
 -- ============================================================
 DO $$
 BEGIN
-    -- Check services count
     IF (SELECT COUNT(*) FROM services) < 10 THEN
         RAISE EXCEPTION 'Not all services were seeded correctly';
     END IF;
     
-    -- Check admin
     IF (SELECT COUNT(*) FROM admins) = 0 THEN
         RAISE EXCEPTION 'Admin account was not created';
     END IF;
