@@ -379,7 +379,7 @@
             <form id="admin-login-form">
                 <div class="form-group">
                     <label>Email Address</label>
-                    <input type="email" id="login-email" placeholder="timinii156@gmail.com" required value="timinii156@gmail.com">
+                    <input type="email" id="login-email" placeholder="Enter your email" required>
                 </div>
                 <div class="form-group">
                     <label>Password</label>
@@ -389,12 +389,6 @@
                     <i class="fas fa-lock"></i> Login
                 </button>
                 <div id="login-error" class="login-error"></div>
-                <div style="margin-top:16px;padding:12px;background:rgba(0,136,204,0.08);border-radius:8px;text-align:center;">
-                    <p style="color:#a0b4c8;font-size:12px;margin:0;">
-                        <i class="fas fa-info-circle" style="color:#33aadd;"></i>
-                        Default: timinii156@gmail.com / Admin2034462
-                    </p>
-                </div>
             </form>
         </div>
     </div>
@@ -595,8 +589,6 @@
         const loginError = document.getElementById('login-error');
 
         console.log('🔐 Admin JS loaded');
-        console.log('📝 Token exists:', !!adminToken);
-        console.log('🔑 Credentials: timinii156@gmail.com / Admin2034462');
 
         async function checkAuth() {
             if (!adminToken) {
@@ -664,7 +656,7 @@
                     loadDashboard();
 
                 } catch (error) {
-                    loginError.textContent = error.message || 'Invalid email or password. Please try again.';
+                    loginError.textContent = error.message || 'Invalid credentials. Please try again.';
                 } finally {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = '<i class="fas fa-lock"></i> Login';
