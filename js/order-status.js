@@ -2,7 +2,6 @@
 // TIMI FXX MARKETING - ORDER STATUS JAVASCRIPT
 // ============================================================
 
-// API_BASE_URL is set in config.js
 const API_BASE_URL = window.API_BASE_URL || 'https://timifxx-marketing-production.up.railway.app';
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -10,9 +9,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const trackBtn = document.getElementById('track-order-btn');
     const statusResult = document.getElementById('status-result');
 
-    // ============================================================
-    // TRACK ORDER
-    // ============================================================
     async function trackOrder(orderNumber) {
         if (!orderNumber || orderNumber.trim() === '') {
             showToast('Please enter your order number', 'error');
@@ -21,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const trimmedOrder = orderNumber.trim().toUpperCase();
 
-        // Validate format
         if (!trimmedOrder.startsWith('TMF-')) {
             showToast('Invalid order number format. Example: TMF-2026-123456', 'error');
             return;
@@ -45,8 +40,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const order = await response.json();
-
-            // Display order status
             displayOrderStatus(order);
 
         } catch (error) {
@@ -63,9 +56,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ============================================================
-    // DISPLAY ORDER STATUS
-    // ============================================================
     function displayOrderStatus(order) {
         const statusMap = {
             'pending': { label: 'Pending', class: 'pending' },
@@ -75,8 +65,6 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         const statusInfo = statusMap[order.status.toLowerCase()] || { label: order.status, class: 'pending' };
-
-        // Determine timeline steps
         const steps = ['pending', 'processing', 'completed'];
         const currentStepIndex = steps.indexOf(order.status.toLowerCase());
         const isCancelled = order.status.toLowerCase() === 'cancelled';
@@ -167,23 +155,14 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    // ============================================================
-    // GET ESTIMATED COMPLETION
-    // ============================================================
     function getEstimatedCompletion(status) {
         const now = new Date();
         let days = 0;
         switch (status.toLowerCase()) {
-            case 'pending':
-                days = 1;
-                break;
-            case 'processing':
-                days = 2;
-                break;
-            case 'completed':
-                return 'Completed';
-            default:
-                return 'Contact support';
+            case 'pending': days = 1; break;
+            case 'processing': days = 2; break;
+            case 'completed': return 'Completed';
+            default: return 'Contact support';
         }
         const estimated = new Date(now);
         estimated.setDate(estimated.getDate() + days);
@@ -194,9 +173,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ============================================================
-    // EVENT LISTENERS
-    // ============================================================
     if (trackBtn) {
         trackBtn.addEventListener('click', function() {
             trackOrder(orderInput.value);
@@ -211,9 +187,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ============================================================
-    // CHECK URL PARAMETERS
-    // ============================================================
     const urlParams = new URLSearchParams(window.location.search);
     const orderParam = urlParams.get('order');
     if (orderParam) {
@@ -221,9 +194,6 @@ document.addEventListener('DOMContentLoaded', function() {
         trackOrder(orderParam);
     }
 
-    // ============================================================
-    // HELPER FUNCTIONS
-    // ============================================================
     function escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');
@@ -233,20 +203,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showToast(message, type = 'info') {
         let container = document.getElementById('toast-container');
-        
         if (!container) {
             container = document.createElement('div');
             container.id = 'toast-container';
             container.className = 'toast-container';
             document.body.appendChild(container);
         }
-
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.textContent = message;
-
         container.appendChild(toast);
-
         setTimeout(() => {
             toast.style.opacity = '0';
             toast.style.transform = 'translateX(100%)';
