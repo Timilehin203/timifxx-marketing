@@ -298,9 +298,7 @@
         .hero-wave { position: absolute; bottom: -2px; left: 0; right: 0; z-index: 1; }
         .hero-wave svg { width: 100%; height: 60px; display: block; }
 
-        /* ============================================================
-           NEW: ADS APPROVAL SECTION
-           ============================================================ */
+        /* Ads Approval Section */
         .ads-approval-section {
             padding: 80px 0;
             background: var(--bg-dark);
@@ -373,9 +371,7 @@
             margin-top: 8px;
         }
 
-        /* ============================================================
-           NEW: FAQ SECTION
-           ============================================================ */
+        /* FAQ Section */
         .faq-section {
             padding: 80px 0;
             background: var(--bg-card);
@@ -425,9 +421,7 @@
             transform: rotate(180deg);
         }
 
-        /* ============================================================
-           Services (existing)
-           ============================================================ */
+        /* Services */
         .services { padding: 80px 0; background: var(--bg-dark); }
         .services-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
         .service-card {
@@ -569,36 +563,148 @@
         .cta-content p { color: var(--text-secondary); font-size: 18px; max-width: 560px; margin: 0 auto 32px; }
         .cta-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
 
-        /* Contact */
-        .contact { padding: 80px 0; background: var(--bg-card); }
-        .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
-        .contact-info { display: flex; flex-direction: column; gap: 24px; }
-        .contact-item {
+        /* ============================================================
+           PROFESSIONAL CONTACT SECTION - ICONS ONLY
+           ============================================================ */
+        .contact {
+            padding: 80px 0;
+            background: var(--bg-card);
+        }
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+        }
+        .contact-info {
             display: flex;
-            align-items: flex-start;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        /* Professional Contact Icons */
+        .contact-icons-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 16px;
-            padding: 20px;
+        }
+        .contact-icon-card {
             background: var(--bg-dark);
             border: 1px solid var(--border-color);
             border-radius: var(--radius);
+            padding: 24px 16px;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .contact-icon-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            opacity: 0;
             transition: var(--transition);
         }
-        .contact-item:hover { border-color: var(--primary); }
-        .contact-icon {
-            width: 44px;
-            height: 44px;
+        .contact-icon-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-hover);
+        }
+        .contact-icon-card:hover::before {
+            opacity: 1;
+        }
+        .contact-icon-card .icon-wrapper {
+            width: 56px;
+            height: 56px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(0, 136, 204, 0.12);
-            border-radius: 10px;
-            color: var(--primary-light);
-            font-size: 18px;
-            flex-shrink: 0;
+            margin: 0 auto 10px;
+            border-radius: 14px;
+            font-size: 24px;
+            transition: var(--transition);
         }
-        .contact-item h4 { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 2px; }
-        .contact-item a, .contact-item p { color: white; font-size: 15px; }
-        .contact-item a:hover { color: var(--primary-light); }
+        .contact-icon-card:hover .icon-wrapper {
+            transform: scale(1.1);
+        }
+        .contact-icon-card .icon-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        
+        /* Individual Brand Colors */
+        .contact-icon-card.telegram-support .icon-wrapper {
+            background: rgba(0, 136, 204, 0.2);
+            color: #0088cc;
+        }
+        .contact-icon-card.telegram-support::before {
+            background: #0088cc;
+        }
+        .contact-icon-card.telegram-support:hover {
+            border-color: #0088cc;
+        }
+        
+        .contact-icon-card.telegram-main .icon-wrapper {
+            background: rgba(0, 136, 204, 0.15);
+            color: #00a2e8;
+        }
+        .contact-icon-card.telegram-main::before {
+            background: #00a2e8;
+        }
+        .contact-icon-card.telegram-main:hover {
+            border-color: #00a2e8;
+        }
+        
+        .contact-icon-card.email .icon-wrapper {
+            background: rgba(234, 67, 53, 0.2);
+            color: #ea4335;
+        }
+        .contact-icon-card.email::before {
+            background: #ea4335;
+        }
+        .contact-icon-card.email:hover {
+            border-color: #ea4335;
+        }
+        
+        .contact-icon-card.twitter .icon-wrapper {
+            background: rgba(29, 161, 242, 0.2);
+            color: #1da1f2;
+        }
+        .contact-icon-card.twitter::before {
+            background: #1da1f2;
+        }
+        .contact-icon-card.twitter:hover {
+            border-color: #1da1f2;
+        }
+        
+        .contact-icon-card.youtube .icon-wrapper {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff0000;
+        }
+        .contact-icon-card.youtube::before {
+            background: #ff0000;
+        }
+        .contact-icon-card.youtube:hover {
+            border-color: #ff0000;
+        }
+        
+        .contact-icon-card.working-hours .icon-wrapper {
+            background: rgba(0, 255, 136, 0.15);
+            color: #00ff88;
+        }
+        .contact-icon-card.working-hours::before {
+            background: #00ff88;
+        }
+        .contact-icon-card.working-hours:hover {
+            border-color: #00ff88;
+        }
+
         .contact-form-wrapper {
             background: var(--bg-dark);
             border: 1px solid var(--border-color);
@@ -727,6 +833,7 @@
             .ads-approval-content { grid-template-columns: 1fr; text-align: center; }
             .ads-approval-cta { justify-content: center; }
             .faq-grid { grid-template-columns: 1fr; }
+            .contact-icons-grid { grid-template-columns: repeat(3, 1fr); }
         }
 
         @media (max-width: 768px) {
@@ -748,6 +855,7 @@
             .floating-icon { display: none; }
             .ads-approval-content h2 { font-size: 28px; }
             .faq-item { padding: 18px 20px; }
+            .contact-icons-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
         @media (max-width: 480px) {
@@ -757,6 +865,9 @@
             .hero-card { padding: 20px; }
             .contact-form-wrapper { padding: 20px; }
             .ads-approval-image .approval-card { padding: 24px; }
+            .contact-icons-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .contact-icon-card { padding: 16px 12px; }
+            .contact-icon-card .icon-wrapper { width: 44px; height: 44px; font-size: 20px; }
         }
     </style>
 </head>
@@ -860,9 +971,7 @@
         </div>
     </section>
 
-    <!-- ============================================================
-    NEW: ADS APPROVAL SECTION
-    ============================================================ -->
+    <!-- Ads Approval Section -->
     <section class="ads-approval-section" id="ads-approval">
         <div class="container">
             <div class="ads-approval-content">
@@ -990,9 +1099,7 @@
         </div>
     </section>
 
-    <!-- ============================================================
-    NEW: FAQ SECTION
-    ============================================================ -->
+    <!-- FAQ Section -->
     <section class="faq-section" id="faq">
         <div class="container">
             <div class="section-header">
@@ -1077,61 +1184,72 @@
         </div>
     </section>
 
-    <!-- Contact Section -->
+    <!-- ============================================================
+    PROFESSIONAL CONTACT SECTION - ICONS ONLY
+    ============================================================ -->
     <section id="contact" class="contact">
         <div class="container">
             <div class="section-header">
-                <span class="section-tag">Contact</span>
+                <span class="section-tag">Connect With Us</span>
                 <h2>Get In <span class="gradient-text">Touch</span></h2>
-                <p>Have questions? We're here to help you grow your Telegram presence</p>
+                <p>Reach out through your preferred platform</p>
             </div>
             <div class="contact-grid">
                 <div class="contact-info">
-                    <div class="contact-item">
-                        <div class="contact-icon"><i class="fab fa-telegram"></i></div>
-                        <div>
-                            <h4>Telegram (Support)</h4>
-                            <a href="https://t.me/tiimex_203" target="_blank">@tiimex_203</a>
-                        </div>
-                    </div>
-                    <div class="contact-item">
-                        <div class="contact-icon"><i class="fab fa-telegram"></i></div>
-                        <div>
-                            <h4>Telegram (Main)</h4>
-                            <a href="https://t.me/timifxx203" target="_blank">@timifxx203</a>
-                        </div>
-                    </div>
-                    <div class="contact-item">
-                        <div class="contact-icon"><i class="fas fa-envelope"></i></div>
-                        <div>
-                            <h4>Email</h4>
-                            <a href="mailto:timinii156@gmail.com">timinii156@gmail.com</a>
-                        </div>
-                    </div>
-                    <div class="contact-item">
-                        <div class="contact-icon"><i class="fab fa-twitter"></i></div>
-                        <div>
-                            <h4>Twitter/X</h4>
-                            <a href="https://x.com/Emilyclair50" target="_blank">@Emilyclair50</a>
-                        </div>
-                    </div>
-                    <div class="contact-item">
-                        <div class="contact-icon"><i class="fab fa-youtube"></i></div>
-                        <div>
-                            <h4>YouTube</h4>
-                            <a href="https://www.youtube.com/channel/UCTg72W6flDX6_xbIZxyQMzQ" target="_blank">TimiFxx YouTube</a>
-                        </div>
-                    </div>
-                    <div class="contact-item">
-                        <div class="contact-icon"><i class="fas fa-clock"></i></div>
-                        <div>
-                            <h4>Working Hours</h4>
-                            <p>24/7 Support Available</p>
+                    <div class="contact-icons-grid">
+                        <!-- Telegram Support -->
+                        <a href="https://t.me/tiimex_203" target="_blank" class="contact-icon-card telegram-support" title="Telegram Support">
+                            <div class="icon-wrapper">
+                                <i class="fab fa-telegram-plane"></i>
+                            </div>
+                            <span class="icon-label">Telegram Support</span>
+                        </a>
+                        
+                        <!-- Telegram Main -->
+                        <a href="https://t.me/timifxx203" target="_blank" class="contact-icon-card telegram-main" title="Telegram Main">
+                            <div class="icon-wrapper">
+                                <i class="fab fa-telegram"></i>
+                            </div>
+                            <span class="icon-label">Telegram</span>
+                        </a>
+                        
+                        <!-- Email -->
+                        <a href="mailto:timinii156@gmail.com" class="contact-icon-card email" title="Email">
+                            <div class="icon-wrapper">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <span class="icon-label">Email</span>
+                        </a>
+                        
+                        <!-- Twitter/X -->
+                        <a href="https://x.com/Emilyclair50" target="_blank" class="contact-icon-card twitter" title="Twitter/X">
+                            <div class="icon-wrapper">
+                                <i class="fab fa-x-twitter"></i>
+                            </div>
+                            <span class="icon-label">Twitter / X</span>
+                        </a>
+                        
+                        <!-- YouTube -->
+                        <a href="https://www.youtube.com/channel/UCTg72W6flDX6_xbIZxyQMzQ" target="_blank" class="contact-icon-card youtube" title="YouTube">
+                            <div class="icon-wrapper">
+                                <i class="fab fa-youtube"></i>
+                            </div>
+                            <span class="icon-label">YouTube</span>
+                        </a>
+                        
+                        <!-- Working Hours -->
+                        <div class="contact-icon-card working-hours">
+                            <div class="icon-wrapper">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <span class="icon-label">24/7 Support</span>
                         </div>
                     </div>
                 </div>
                 <div class="contact-form-wrapper">
                     <form id="contact-form" class="contact-form">
+                        <h3 style="color:white;font-size:20px;margin-bottom:4px;">Send a Message</h3>
+                        <p style="color:var(--text-secondary);font-size:14px;margin-bottom:8px;">We'll respond within 24 hours</p>
                         <input type="text" placeholder="Your Name" required>
                         <input type="email" placeholder="Your Email" required>
                         <input type="text" placeholder="Telegram Username">
@@ -1163,7 +1281,7 @@
                     <div class="social-links">
                         <a href="https://t.me/timifxx203" target="_blank"><i class="fab fa-telegram"></i></a>
                         <a href="https://t.me/tiimex_203" target="_blank"><i class="fab fa-telegram"></i></a>
-                        <a href="https://x.com/Emilyclair50" target="_blank"><i class="fab fa-twitter"></i></a>
+                        <a href="https://x.com/Emilyclair50" target="_blank"><i class="fab fa-x-twitter"></i></a>
                         <a href="https://www.youtube.com/channel/UCTg72W6flDX6_xbIZxyQMzQ" target="_blank"><i class="fab fa-youtube"></i></a>
                         <a href="#"><i class="fab fa-linkedin"></i></a>
                     </div>
