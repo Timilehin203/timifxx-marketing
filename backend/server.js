@@ -11,16 +11,56 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ============================================================
-// MIDDLEWARE
+// CORS CONFIGURATION - FIXED
 // ============================================================
-// CORS - Allow only frontend origin
+
+// Allow specific origins
+const allowedOrigins = [
+    'https://timilehin203.github.io',
+    'https://timilehin203.github.io/timifxx-marketing',
+    'https://timifxx-marketing-production.up.railway.app',
+    'http://localhost:3000',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
+console.log('✅ Allowed origins:', allowedOrigins);
+
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        // Check if origin is allowed
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.log('❌ Blocked CORS origin:', origin);
+            // For development, still allow
+            if (process.env.NODE_ENV === 'development') {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        }
+    },
+    credentials: true,
     optionsSuccessStatus: 200
 };
+
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use(express.json());
+
+// ============================================================
+// LOGGING MIDDLEWARE
+// ============================================================
+app.use((req, res, next) => {
+    console.log(`📡 ${req.method} ${req.url} from ${req.headers.origin || 'unknown'}`);
+    next();
+});
 
 // ============================================================
 // ROUTES
@@ -33,7 +73,9 @@ app.use('/api/services', servicesRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Health check
+// ============================================================
+// HEALTH CHECK
+// ============================================================
 app.get('/api/health', async (req, res) => {
     const { pool } = require('./config/database');
     let dbStatus = 'disconnected';
@@ -60,7 +102,7 @@ app.get('/api/health', async (req, res) => {
 // ERROR HANDLING
 // ============================================================
 app.use((err, req, res, next) => {
-    console.error('Server error:', err);
+    console.error('❌ Server error:', err);
     res.status(500).json({
         error: 'Something went wrong. Please try again later.'
     });
@@ -70,6 +112,7 @@ app.use((err, req, res, next) => {
 // START SERVER
 // ============================================================
 app.listen(PORT, () => {
-    console.log(`TimiFxx Marketing Backend running on port ${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🚀 TimiFxx Marketing Backend running on port ${PORT}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`✅ Allowed CORS origins:`, allowedOrigins);
 });
