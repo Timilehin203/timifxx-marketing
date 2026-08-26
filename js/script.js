@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================================
-// LOAD SERVICES - FIXED VERSION
+// LOAD SERVICES - FIXED WITH BETTER VISIBILITY
 // ============================================================
 async function loadServices() {
     const container = document.getElementById('services-container');
@@ -178,23 +178,68 @@ async function loadServices() {
             'fa-regular fa-shield-halved'
         ];
 
-        container.innerHTML = services.map((service, index) => `
-            <div class="service-card">
-                <div class="service-card-icon">
-                    <i class="${serviceIcons[index % serviceIcons.length]}"></i>
+        // Build HTML for services with clear styling
+        let html = '';
+        services.forEach((service, index) => {
+            html += `
+                <div class="service-card" style="
+                    background: #111827;
+                    border: 1px solid #1e2d45;
+                    border-radius: 16px;
+                    padding: 28px;
+                    transition: all 0.3s ease;
+                    position: relative;
+                    overflow: hidden;
+                ">
+                    <div class="service-card-icon" style="
+                        width: 48px;
+                        height: 48px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        background: rgba(0, 136, 204, 0.12);
+                        border-radius: 12px;
+                        margin-bottom: 16px;
+                        color: #33aadd;
+                        font-size: 20px;
+                    ">
+                        <i class="${serviceIcons[index % serviceIcons.length]}"></i>
+                    </div>
+                    <h3 style="font-size: 18px; font-weight: 700; color: white; margin-bottom: 8px;">${escapeHtml(service.name)}</h3>
+                    <p class="service-desc" style="color: #a0b4c8; font-size: 14px; margin-bottom: 16px; line-height: 1.6;">${escapeHtml(service.description || 'Professional Telegram marketing service')}</p>
+                    <div class="service-price" style="font-size: 24px; font-weight: 700; color: white; margin-bottom: 4px;">$${service.price}</div>
+                    <div class="service-price-type" style="font-size: 13px; color: #6b7f96; margin-bottom: 16px;">${service.price_type === 'starting_from' ? 'Starting from' : 'Fixed price'}</div>
+                    <div class="service-status ${service.is_active ? 'active' : 'inactive'}" style="
+                        display: inline-block;
+                        padding: 4px 12px;
+                        border-radius: 50px;
+                        font-size: 12px;
+                        font-weight: 600;
+                        margin-bottom: 16px;
+                        ${service.is_active ? 'background: rgba(0, 255, 136, 0.15); color: #00ff88;' : 'background: rgba(255, 68, 68, 0.15); color: #ff4444;'}
+                    ">
+                        ${service.is_active ? 'Active' : 'Inactive'}
+                    </div>
+                    <a href="order.html?service=${service.id}" class="btn-order" style="
+                        display: block;
+                        width: 100%;
+                        padding: 10px;
+                        background: rgba(0, 136, 204, 0.15);
+                        color: #33aadd;
+                        border: 1px solid rgba(0, 136, 204, 0.2);
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        text-align: center;
+                        text-decoration: none;
+                    ">Order Now</a>
                 </div>
-                <h3>${escapeHtml(service.name)}</h3>
-                <p class="service-desc">${escapeHtml(service.description || 'Professional Telegram marketing service')}</p>
-                <div class="service-price">$${service.price}</div>
-                <div class="service-price-type">${service.price_type === 'starting_from' ? 'Starting from' : 'Fixed price'}</div>
-                <div class="service-status ${service.is_active ? 'active' : 'inactive'}">
-                    ${service.is_active ? 'Active' : 'Inactive'}
-                </div>
-                <a href="order.html?service=${service.id}" class="btn-order">Order Now</a>
-            </div>
-        `).join('');
+            `;
+        });
 
-        console.log('✅ Services rendered successfully!');
+        container.innerHTML = html;
+        console.log('✅ Services rendered successfully!', container.children.length, 'cards shown');
 
     } catch (error) {
         console.error('❌ Error loading services:', error);
