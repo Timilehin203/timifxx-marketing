@@ -1,5 +1,5 @@
 // ============================================================
-// ADMIN ROUTES - WITH EMAIL LOGIN
+// ADMIN ROUTES - COMPLETE FIXED
 // ============================================================
 
 const express = require('express');
@@ -10,7 +10,7 @@ const { query } = require('../config/database');
 const { authenticate } = require('../middleware/auth');
 
 // ============================================================
-// ADMIN LOGIN - WITH EMAIL SUPPORT
+// ADMIN LOGIN - WITH DEBUGGING
 // ============================================================
 router.post('/login', async (req, res) => {
     try {
@@ -34,9 +34,12 @@ router.post('/login', async (req, res) => {
         }
 
         const admin = result.rows[0];
+        console.log('✅ Admin found:', admin.email);
 
         // Verify password
         const isPasswordValid = await bcrypt.compare(password, admin.password_hash);
+        console.log('🔐 Password valid:', isPasswordValid);
+
         if (!isPasswordValid) {
             console.log('❌ Invalid password for:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
@@ -44,15 +47,12 @@ router.post('/login', async (req, res) => {
 
         // Generate JWT
         const token = jwt.sign(
-            { 
-                id: admin.id, 
-                email: admin.email 
-            },
+            { id: admin.id, email: admin.email },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
 
-        console.log('✅ Admin logged in:', email);
+        console.log('✅ Login successful:', email);
 
         res.json({
             token,
@@ -69,7 +69,7 @@ router.post('/login', async (req, res) => {
 });
 
 // ============================================================
-// GET DASHBOARD STATS (Protected)
+// GET DASHBOARD STATS
 // ============================================================
 router.get('/dashboard', authenticate, async (req, res) => {
     try {
@@ -104,7 +104,7 @@ router.get('/dashboard', authenticate, async (req, res) => {
 });
 
 // ============================================================
-// GET ALL ORDERS (Protected)
+// GET ALL ORDERS
 // ============================================================
 router.get('/orders', authenticate, async (req, res) => {
     try {
@@ -118,13 +118,13 @@ router.get('/orders', authenticate, async (req, res) => {
 
         res.json(result.rows);
     } catch (error) {
-        console.error('❌ Error fetching orders:', error);
+        console.error('❌ Orders error:', error);
         res.status(500).json({ error: 'Failed to load orders' });
     }
 });
 
 // ============================================================
-// GET SINGLE ORDER (Protected)
+// GET SINGLE ORDER
 // ============================================================
 router.get('/orders/:id', authenticate, async (req, res) => {
     try {
@@ -143,13 +143,13 @@ router.get('/orders/:id', authenticate, async (req, res) => {
 
         res.json(result.rows[0]);
     } catch (error) {
-        console.error('❌ Error fetching order:', error);
+        console.error('❌ Order detail error:', error);
         res.status(500).json({ error: 'Failed to load order details' });
     }
 });
 
 // ============================================================
-// UPDATE ORDER STATUS (Protected)
+// UPDATE ORDER STATUS
 // ============================================================
 router.patch('/orders/:id/status', authenticate, async (req, res) => {
     try {
@@ -180,13 +180,13 @@ router.patch('/orders/:id/status', authenticate, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ Error updating order status:', error);
+        console.error('❌ Status update error:', error);
         res.status(500).json({ error: 'Failed to update order status' });
     }
 });
 
 // ============================================================
-// UPDATE ORDER NOTES (Protected)
+// UPDATE ORDER NOTES
 // ============================================================
 router.patch('/orders/:id/notes', authenticate, async (req, res) => {
     try {
@@ -212,13 +212,13 @@ router.patch('/orders/:id/notes', authenticate, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ Error saving notes:', error);
+        console.error('❌ Notes error:', error);
         res.status(500).json({ error: 'Failed to save notes' });
     }
 });
 
 // ============================================================
-// GET ALL SERVICES (Admin - Protected)
+// GET ALL SERVICES (Admin)
 // ============================================================
 router.get('/services', authenticate, async (req, res) => {
     try {
@@ -230,13 +230,13 @@ router.get('/services', authenticate, async (req, res) => {
 
         res.json(result.rows);
     } catch (error) {
-        console.error('❌ Error fetching services:', error);
+        console.error('❌ Services error:', error);
         res.status(500).json({ error: 'Failed to load services' });
     }
 });
 
 // ============================================================
-// UPDATE SERVICE PRICE (Protected)
+// UPDATE SERVICE PRICE
 // ============================================================
 router.patch('/services/:id/price', authenticate, async (req, res) => {
     try {
@@ -266,13 +266,13 @@ router.patch('/services/:id/price', authenticate, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ Error updating price:', error);
+        console.error('❌ Price update error:', error);
         res.status(500).json({ error: 'Failed to update price' });
     }
 });
 
 // ============================================================
-// UPDATE SERVICE STATUS (Protected)
+// UPDATE SERVICE STATUS
 // ============================================================
 router.patch('/services/:id/status', authenticate, async (req, res) => {
     try {
@@ -302,13 +302,13 @@ router.patch('/services/:id/status', authenticate, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('❌ Error updating service status:', error);
+        console.error('❌ Service status error:', error);
         res.status(500).json({ error: 'Failed to update service status' });
     }
 });
 
 // ============================================================
-// CHANGE ADMIN PASSWORD (Protected)
+// CHANGE ADMIN PASSWORD
 // ============================================================
 router.post('/change-password', authenticate, async (req, res) => {
     try {
@@ -348,7 +348,7 @@ router.post('/change-password', authenticate, async (req, res) => {
         res.json({ success: true, message: 'Password changed successfully' });
 
     } catch (error) {
-        console.error('❌ Error changing password:', error);
+        console.error('❌ Password change error:', error);
         res.status(500).json({ error: 'Failed to change password' });
     }
 });
