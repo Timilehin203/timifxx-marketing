@@ -2,14 +2,17 @@
 // TIMI FXX MARKETING - MAIN JAVASCRIPT
 // ============================================================
 
-// API_BASE_URL is set in config.js
-// If config.js is not loaded, fallback to this
+// Get API URL from config
 const API_BASE_URL = window.API_BASE_URL || 'https://timifxx-marketing-production.up.railway.app';
+
+console.log('🚀 Script loaded, API_URL:', API_BASE_URL);
 
 // ============================================================
 // NAVIGATION
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM loaded');
+
     // Navbar scroll effect
     const navbar = document.querySelector('.navbar');
     if (navbar) {
@@ -41,7 +44,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Close mobile nav on link click
     const mobileLinks = document.querySelectorAll('.mobile-nav ul li a');
     mobileLinks.forEach(link => {
         link.addEventListener('click', function() {
@@ -50,7 +52,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Close mobile nav on overlay click
     if (mobileOverlay) {
         mobileOverlay.addEventListener('click', function(e) {
             if (e.target === this) {
@@ -80,7 +81,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData(this);
             const data = Object.fromEntries(formData);
             
-            // Simple validation
             if (!data['Your Name'] || !data['Your Email'] || !data['Your Message']) {
                 showToast('Please fill in all required fields', 'error');
                 return;
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ============================================================
-    // SMOOTH SCROLL FOR ANCHOR LINKS
+    // SMOOTH SCROLL
     // ============================================================
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
@@ -129,22 +129,31 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================================
-// LOAD SERVICES
+// LOAD SERVICES - FIXED VERSION
 // ============================================================
 async function loadServices() {
     const container = document.getElementById('services-container');
-    if (!container) return;
+    if (!container) {
+        console.error('❌ Services container not found!');
+        return;
+    }
 
+    console.log('🔄 Loading services...');
     container.innerHTML = '<div class="loading-spinner"></div>';
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/services`);
+        const url = `${API_BASE_URL}/api/services`;
+        console.log('📡 Fetching from:', url);
+        
+        const response = await fetch(url);
+        console.log('📡 Response status:', response.status);
         
         if (!response.ok) {
-            throw new Error('Failed to load services');
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
         const services = await response.json();
+        console.log('✅ Services loaded:', services.length, services);
 
         if (!services || services.length === 0) {
             container.innerHTML = `
@@ -185,11 +194,16 @@ async function loadServices() {
             </div>
         `).join('');
 
+        console.log('✅ Services rendered successfully!');
+
     } catch (error) {
-        console.error('Error loading services:', error);
+        console.error('❌ Error loading services:', error);
         container.innerHTML = `
             <div style="text-align:center;padding:40px;color:var(--text-secondary);">
                 <p>Unable to load services. Please try again later.</p>
+                <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">
+                    Error: ${error.message}
+                </p>
                 <button onclick="loadServices()" style="margin-top:16px;padding:10px 24px;background:var(--primary-gradient);border:none;border-radius:8px;color:white;cursor:pointer;">Retry</button>
             </div>
         `;
@@ -267,3 +281,5 @@ function escapeHtml(text) {
 window.loadServices = loadServices;
 window.showToast = showToast;
 window.API_BASE_URL = API_BASE_URL;
+
+console.log('✅ script.js loaded successfully');
