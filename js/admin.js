@@ -2,7 +2,7 @@
 // TIMI FXX MARKETING - ADMIN JAVASCRIPT
 // ============================================================
 
-const API_BASE_URL = window.API_BASE_URL || 'https://timifxx-marketing-production.up.railway.app';
+const API_BASE_URL = 'https://timifxx-marketing-production.up.railway.app';
 
 let adminToken = localStorage.getItem('adminToken');
 let currentSection = 'dashboard';
@@ -12,8 +12,15 @@ const adminDashboard = document.getElementById('admin-dashboard');
 const loginForm = document.getElementById('admin-login-form');
 const loginError = document.getElementById('login-error');
 
+// ============================================================
+// CHECK AUTH
+// ============================================================
 async function checkAuth() {
+    console.log('🔐 Checking authentication...');
+    console.log('📝 Token exists:', !!adminToken);
+
     if (!adminToken) {
+        console.log('❌ No token found, showing login');
         showLogin();
         return;
     }
@@ -25,35 +32,49 @@ async function checkAuth() {
             }
         });
 
+        console.log('📡 Auth check response:', response.status);
+
         if (response.ok) {
+            console.log('✅ Auth successful');
             showDashboard();
             loadDashboard();
         } else {
+            console.log('❌ Auth failed, clearing token');
             localStorage.removeItem('adminToken');
             adminToken = null;
             showLogin();
         }
     } catch (error) {
-        console.error('Auth check error:', error);
+        console.error('❌ Auth check error:', error);
         showLogin();
     }
 }
 
+// ============================================================
+// SHOW/HIDE
+// ============================================================
 function showLogin() {
-    loginOverlay.classList.remove('hidden');
-    adminDashboard.style.display = 'none';
+    console.log('🔓 Showing login');
+    if (loginOverlay) loginOverlay.classList.remove('hidden');
+    if (adminDashboard) adminDashboard.style.display = 'none';
 }
 
 function showDashboard() {
-    loginOverlay.classList.add('hidden');
-    adminDashboard.style.display = 'flex';
+    console.log('🔒 Showing dashboard');
+    if (loginOverlay) loginOverlay.classList.add('hidden');
+    if (adminDashboard) adminDashboard.style.display = 'flex';
 }
 
+// ============================================================
+// ADMIN LOGIN
+// ============================================================
 if (loginForm) {
     loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         const email = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-password').value.trim();
+
+        console.log('🔑 Login attempt:', email);
 
         loginError.textContent = '';
         const submitBtn = this.querySelector('button[type="submit"]');
@@ -70,6 +91,7 @@ if (loginForm) {
             });
 
             const data = await response.json();
+            console.log('📡 Login response:', response.status);
 
             if (!response.ok) {
                 throw new Error(data.error || 'Login failed');
@@ -78,10 +100,13 @@ if (loginForm) {
             adminToken = data.token;
             localStorage.setItem('adminToken', adminToken);
             document.getElementById('admin-user-email').textContent = email;
+            
+            console.log('✅ Login successful!');
             showDashboard();
             loadDashboard();
 
         } catch (error) {
+            console.error('❌ Login error:', error);
             loginError.textContent = error.message || 'Invalid email or password. Please try again.';
         } finally {
             submitBtn.disabled = false;
@@ -90,14 +115,21 @@ if (loginForm) {
     });
 }
 
+// ============================================================
+// ADMIN LOGOUT
+// ============================================================
 document.getElementById('admin-logout')?.addEventListener('click', function(e) {
     e.preventDefault();
+    console.log('🔓 Logging out');
     localStorage.removeItem('adminToken');
     adminToken = null;
     showLogin();
     document.getElementById('login-password').value = '';
 });
 
+// ============================================================
+// SIDEBAR NAVIGATION
+// ============================================================
 document.querySelectorAll('.sidebar-link[data-section]').forEach(link => {
     link.addEventListener('click', function(e) {
         e.preventDefault();
@@ -107,6 +139,7 @@ document.querySelectorAll('.sidebar-link[data-section]').forEach(link => {
 });
 
 function switchSection(section) {
+    console.log('📂 Switching to:', section);
     currentSection = section;
     document.querySelectorAll('.sidebar-link[data-section]').forEach(l => l.classList.remove('active'));
     document.querySelector(`.sidebar-link[data-section="${section}"]`)?.classList.add('active');
@@ -124,7 +157,11 @@ function switchSection(section) {
     if (section === 'services') loadAdminServices();
 }
 
+// ============================================================
+// LOAD DASHBOARD
+// ============================================================
 async function loadDashboard() {
+    console.log('📊 Loading dashboard...');
     const statsGrid = document.getElementById('stats-grid');
     const recentOrdersTable = document.getElementById('recent-orders-table');
 
@@ -140,6 +177,7 @@ async function loadDashboard() {
         }
 
         const data = await response.json();
+        console.log('📊 Dashboard data:', data);
 
         statsGrid.innerHTML = `
             <div class="stat-card total">
@@ -176,12 +214,16 @@ async function loadDashboard() {
         }
 
     } catch (error) {
-        console.error('Error loading dashboard:', error);
+        console.error('❌ Error loading dashboard:', error);
         statsGrid.innerHTML = `<p style="color:var(--text-secondary);">Failed to load dashboard data.</p>`;
     }
 }
 
+// ============================================================
+// LOAD ORDERS
+// ============================================================
 async function loadOrders() {
+    console.log('📋 Loading orders...');
     const tableContainer = document.getElementById('orders-table');
     tableContainer.innerHTML = '<div class="loading-spinner"></div>';
 
@@ -197,6 +239,7 @@ async function loadOrders() {
         }
 
         const orders = await response.json();
+        console.log('📋 Orders loaded:', orders.length);
 
         if (orders && orders.length > 0) {
             tableContainer.innerHTML = createOrdersTable(orders);
@@ -207,11 +250,14 @@ async function loadOrders() {
         setupOrderFilters();
 
     } catch (error) {
-        console.error('Error loading orders:', error);
+        console.error('❌ Error loading orders:', error);
         tableContainer.innerHTML = `<p style="color:var(--text-secondary);">Failed to load orders.</p>`;
     }
 }
 
+// ============================================================
+// CREATE ORDERS TABLE
+// ============================================================
 function createOrdersTable(orders) {
     if (!orders || orders.length === 0) {
         return `<p style="color:var(--text-secondary);padding:20px 0;">No orders found.</p>`;
@@ -252,6 +298,9 @@ function createOrdersTable(orders) {
     `;
 }
 
+// ============================================================
+// ORDER FILTERS
+// ============================================================
 function setupOrderFilters() {
     const searchInput = document.getElementById('order-search');
     const statusFilter = document.getElementById('order-status-filter');
@@ -281,7 +330,11 @@ function applyOrderFilters() {
     });
 }
 
+// ============================================================
+// VIEW ORDER DETAILS
+// ============================================================
 async function viewOrder(orderId) {
+    console.log('👁️ Viewing order:', orderId);
     const modal = document.getElementById('order-detail-modal');
     const content = document.getElementById('order-detail-content');
     modal.classList.add('active');
@@ -299,6 +352,7 @@ async function viewOrder(orderId) {
         }
 
         const order = await response.json();
+        console.log('👁️ Order details:', order);
 
         content.innerHTML = `
             <div class="order-detail-row">
@@ -363,11 +417,14 @@ async function viewOrder(orderId) {
         `;
 
     } catch (error) {
-        console.error('Error loading order details:', error);
+        console.error('❌ Error loading order details:', error);
         content.innerHTML = `<p style="color:var(--text-secondary);">Failed to load order details.</p>`;
     }
 }
 
+// ============================================================
+// SAVE ADMIN NOTES
+// ============================================================
 async function saveAdminNotes(orderId) {
     const textarea = document.getElementById('admin-notes-textarea');
     if (!textarea) return;
@@ -390,11 +447,14 @@ async function saveAdminNotes(orderId) {
         showToast('Notes saved successfully!', 'success');
 
     } catch (error) {
-        console.error('Error saving notes:', error);
+        console.error('❌ Error saving notes:', error);
         showToast('Failed to save notes.', 'error');
     }
 }
 
+// ============================================================
+// STATUS MODAL
+// ============================================================
 function openStatusModal(orderId, currentStatus) {
     const modal = document.getElementById('status-modal');
     const orderIdInput = document.getElementById('status-order-id');
@@ -433,11 +493,14 @@ document.getElementById('status-change-form')?.addEventListener('submit', async 
         if (currentSection === 'orders') loadOrders();
 
     } catch (error) {
-        console.error('Error updating status:', error);
+        console.error('❌ Error updating status:', error);
         showToast('Failed to update order status.', 'error');
     }
 });
 
+// ============================================================
+// LOAD ADMIN SERVICES
+// ============================================================
 async function loadAdminServices() {
     const tableContainer = document.getElementById('services-table');
     tableContainer.innerHTML = '<div class="loading-spinner"></div>';
@@ -498,11 +561,14 @@ async function loadAdminServices() {
         }
 
     } catch (error) {
-        console.error('Error loading services:', error);
+        console.error('❌ Error loading services:', error);
         tableContainer.innerHTML = `<p style="color:var(--text-secondary);">Failed to load services.</p>`;
     }
 }
 
+// ============================================================
+// PRICE MODAL
+// ============================================================
 function openPriceModal(serviceId, currentPrice) {
     const modal = document.getElementById('price-modal');
     const serviceIdInput = document.getElementById('price-service-id');
@@ -545,11 +611,14 @@ document.getElementById('price-change-form')?.addEventListener('submit', async f
         loadAdminServices();
 
     } catch (error) {
-        console.error('Error updating price:', error);
+        console.error('❌ Error updating price:', error);
         showToast('Failed to update service price.', 'error');
     }
 });
 
+// ============================================================
+// TOGGLE SERVICE STATUS
+// ============================================================
 async function toggleServiceStatus(serviceId, currentStatus) {
     const newStatus = !currentStatus;
 
@@ -571,11 +640,14 @@ async function toggleServiceStatus(serviceId, currentStatus) {
         loadAdminServices();
 
     } catch (error) {
-        console.error('Error updating service status:', error);
+        console.error('❌ Error updating service status:', error);
         showToast('Failed to update service status.', 'error');
     }
 }
 
+// ============================================================
+// CHANGE PASSWORD
+// ============================================================
 document.getElementById('change-password-btn')?.addEventListener('click', function() {
     document.getElementById('password-modal').classList.add('active');
 });
@@ -620,7 +692,7 @@ document.getElementById('password-change-form')?.addEventListener('submit', asyn
         this.reset();
 
     } catch (error) {
-        console.error('Error changing password:', error);
+        console.error('❌ Error changing password:', error);
         showToast(error.message || 'Failed to change password.', 'error');
     }
 });
@@ -655,9 +727,7 @@ function showToast(message, type = 'info') {
     setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            toast.remove();
-        }, 300);
+        setTimeout(() => toast.remove(), 300);
     }, 4000);
 }
 
@@ -670,4 +740,11 @@ window.loadOrders = loadOrders;
 window.loadAdminServices = loadAdminServices;
 window.loadDashboard = loadDashboard;
 
+console.log('🔐 Admin credentials:');
+console.log('   Email: timinii156@gmail.com');
+console.log('   Password: Admin2034462');
+
+// ============================================================
+// INIT
+// ============================================================
 checkAuth();
