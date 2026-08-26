@@ -1,5 +1,5 @@
 // ============================================================
-// ORDERS ROUTES - WITH FIXED TELEGRAM NOTIFICATIONS
+// ORDERS ROUTES - COMPLETE FIXED VERSION
 // ============================================================
 
 const express = require('express');
@@ -8,7 +8,7 @@ const { query } = require('../config/database');
 const { generateOrderNumber } = require('../utils/orderNumber');
 
 // ============================================================
-// TELEGRAM NOTIFICATION FUNCTION - FIXED
+// TELEGRAM NOTIFICATION - FIXED
 // ============================================================
 async function sendTelegramNotification(orderDetails) {
     const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -20,20 +20,20 @@ async function sendTelegramNotification(orderDetails) {
     }
 
     try {
-        // Build the message WITHOUT Markdown to avoid parsing errors
+        // Clean the message - NO Markdown formatting
         const message = 
 `🔔 NEW ORDER RECEIVED!
 
-📋 Order Number: ${orderDetails.order_number}
-👤 Customer: ${orderDetails.customer_name}
-📧 Email: ${orderDetails.customer_email}
-📱 Telegram: ${orderDetails.telegram_username}
-📞 WhatsApp: ${orderDetails.whatsapp_number || 'N/A'}
-🛒 Service: ${orderDetails.service_name}
-💰 Price: $${orderDetails.price}
-📝 Details: ${orderDetails.details || 'N/A'}
+Order Number: ${orderDetails.order_number}
+Customer: ${orderDetails.customer_name}
+Email: ${orderDetails.customer_email}
+Telegram: ${orderDetails.telegram_username}
+WhatsApp: ${orderDetails.whatsapp_number || 'N/A'}
+Service: ${orderDetails.service_name}
+Price: $${orderDetails.price}
+Details: ${orderDetails.details || 'N/A'}
 
-🔗 Track Order: https://timilehin203.github.io/timifxx-marketing/order-status.html?order=${orderDetails.order_number}`;
+Track Order: https://timilehin203.github.io/timifxx-marketing/order-status.html?order=${orderDetails.order_number}`;
 
         const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
         const response = await fetch(url, {
@@ -44,34 +44,30 @@ async function sendTelegramNotification(orderDetails) {
             body: JSON.stringify({
                 chat_id: ADMIN_CHAT_ID,
                 text: message,
-                parse_mode: ''  // NO Markdown parsing
+                parse_mode: ''  // NO Markdown
             })
         });
 
         const result = await response.json();
         if (result.ok) {
-            console.log('✅ Telegram notification sent successfully!');
+            console.log('✅ Telegram notification sent!');
         } else {
-            console.log('❌ Telegram notification failed:', result.description);
+            console.log('❌ Telegram error:', result.description);
         }
     } catch (error) {
-        console.error('❌ Error sending Telegram notification:', error);
+        console.error('❌ Telegram error:', error.message);
     }
 }
 
 // ============================================================
-// VALIDATION HELPERS
+// VALIDATION
 // ============================================================
 function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function isValidTelegram(username) {
-    return username && username.length >= 3;
-}
-
 // ============================================================
-// CREATE ORDER (Public)
+// CREATE ORDER
 // ============================================================
 router.post('/', async (req, res) => {
     try {
@@ -84,39 +80,30 @@ router.post('/', async (req, res) => {
             details
         } = req.body;
 
-        console.log('📝 New order request:', req.body);
+        console.log('📝 New order:', { service_id, customer_name, customer_email, telegram_username });
 
-        // Validate required fields
+        // Validate
         if (!service_id || !customer_name || !customer_email || !telegram_username) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        // Validate email
         if (!isValidEmail(customer_email)) {
             return res.status(400).json({ error: 'Invalid email address' });
         }
 
-        // Validate telegram username
-        if (!isValidTelegram(telegram_username)) {
-            return res.status(400).json({ error: 'Invalid Telegram username' });
-        }
-
-        // Get service from database
+        // Get service
         const serviceResult = await query(
-            `SELECT id, name, price, price_type, is_active 
-             FROM services 
-             WHERE id = $1 AND is_active = true`,
+            `SELECT id, name, price FROM services WHERE id = $1 AND is_active = true`,
             [service_id]
         );
 
         if (serviceResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Service not found or inactive' });
+            return res.status(404).json({ error: 'Service not found' });
         }
 
         const service = serviceResult.rows[0];
-        const price = service.price;
 
-        // Generate unique order number
+        // Generate order number
         const orderNumber = generateOrderNumber();
 
         // Insert order
@@ -124,8 +111,8 @@ router.post('/', async (req, res) => {
             `INSERT INTO orders (
                 order_number, service_id, customer_name, customer_email, 
                 telegram_username, whatsapp_number, details, price, status
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING id, order_number, status, created_at`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')
+            RETURNING id, order_number`,
             [
                 orderNumber,
                 service_id,
@@ -134,14 +121,13 @@ router.post('/', async (req, res) => {
                 telegram_username,
                 whatsapp_number || null,
                 details || null,
-                price,
-                'pending'
+                service.price
             ]
         );
 
         const order = result.rows[0];
 
-        // Send Telegram notification to admin
+        // Send Telegram notification
         await sendTelegramNotification({
             order_number: order.order_number,
             customer_name: customer_name,
@@ -149,7 +135,7 @@ router.post('/', async (req, res) => {
             telegram_username: telegram_username,
             whatsapp_number: whatsapp_number,
             service_name: service.name,
-            price: price,
+            price: service.price,
             details: details
         });
 
@@ -158,33 +144,27 @@ router.post('/', async (req, res) => {
         res.status(201).json({
             success: true,
             orderNumber: order.order_number,
-            status: order.status,
-            createdAt: order.created_at,
             message: 'Order created successfully'
         });
 
     } catch (error) {
-        console.error('❌ Error creating order:', error);
-        res.status(500).json({ error: 'Order could not be submitted. Please try again.' });
+        console.error('❌ Order error:', error);
+        res.status(500).json({ error: 'Order could not be submitted' });
     }
 });
 
 // ============================================================
-// GET ORDER STATUS (Public)
+// GET ORDER STATUS
 // ============================================================
 router.get('/status/:orderNumber', async (req, res) => {
     try {
         const { orderNumber } = req.params;
 
-        if (!orderNumber || orderNumber.length < 10) {
-            return res.status(400).json({ error: 'Invalid order number' });
-        }
-
         const result = await query(
             `SELECT 
-                o.id, o.order_number, o.customer_name, o.customer_email,
+                o.order_number, o.customer_name, o.customer_email,
                 o.telegram_username, o.whatsapp_number, o.details,
-                o.price, o.status, o.admin_notes, o.created_at, o.updated_at,
+                o.price, o.status, o.created_at,
                 s.name as service_name
              FROM orders o
              LEFT JOIN services s ON o.service_id = s.id
@@ -196,13 +176,10 @@ router.get('/status/:orderNumber', async (req, res) => {
             return res.status(404).json({ error: 'Order not found' });
         }
 
-        const order = result.rows[0];
-        delete order.admin_notes;
-
-        res.json(order);
+        res.json(result.rows[0]);
 
     } catch (error) {
-        console.error('❌ Error fetching order status:', error);
+        console.error('❌ Status error:', error);
         res.status(500).json({ error: 'Unable to retrieve order status' });
     }
 });
