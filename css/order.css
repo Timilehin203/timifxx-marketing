@@ -35,9 +35,6 @@
     gap: 40px;
 }
 
-/* ============================================================
-   ORDER FORM
-   ============================================================ */
 .order-form-wrapper {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -111,7 +108,6 @@
     color: var(--text-muted);
 }
 
-/* Service Price Display */
 .service-price-display {
     display: flex;
     align-items: center;
@@ -155,9 +151,6 @@
     transform: none !important;
 }
 
-/* ============================================================
-   ORDER INFO
-   ============================================================ */
 .order-info {
     display: flex;
     flex-direction: column;
@@ -219,7 +212,6 @@
     text-decoration: underline;
 }
 
-/* Payment Methods */
 .payment-methods {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -260,9 +252,6 @@
     color: var(--text-muted);
 }
 
-/* ============================================================
-   ORDER MODAL
-   ============================================================ */
 .order-modal {
     position: fixed;
     top: 0;
@@ -389,14 +378,41 @@
     color: white;
 }
 
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+}
+
+.toast {
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: white;
+    font-size: 14px;
+    box-shadow: var(--shadow);
+    animation: slideInRight 0.3s ease;
+}
+
+.toast.success { border-left: 4px solid #00ff88; }
+.toast.error { border-left: 4px solid #ff4444; }
+.toast.info { border-left: 4px solid var(--primary-light); }
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
 @media (max-width: 992px) {
     .order-grid {
         grid-template-columns: 1fr;
     }
-
     .order-section {
         padding: 120px 0 60px;
     }
@@ -406,11 +422,9 @@
     .order-header h1 {
         font-size: 30px;
     }
-
     .order-form-wrapper {
         padding: 24px;
     }
-
     .order-modal-content {
         padding: 32px 24px;
     }
@@ -420,16 +434,13 @@
     .order-form-wrapper {
         padding: 16px;
     }
-
     .payment-icons {
         gap: 10px;
     }
-
     .payment-icons span {
         font-size: 12px;
         padding: 4px 10px;
     }
-
     .order-number {
         font-size: 18px;
     }
