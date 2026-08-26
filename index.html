@@ -581,7 +581,6 @@
             gap: 20px;
         }
         
-        /* Professional Contact Icons */
         .contact-icons-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -705,6 +704,9 @@
             border-color: #00ff88;
         }
 
+        /* ============================================================
+           FIXED CONTACT FORM - SENDS TO TELEGRAM
+           ============================================================ */
         .contact-form-wrapper {
             background: var(--bg-dark);
             border: 1px solid var(--border-color);
@@ -1185,7 +1187,7 @@
     </section>
 
     <!-- ============================================================
-    PROFESSIONAL CONTACT SECTION - ICONS ONLY
+    PROFESSIONAL CONTACT SECTION - ICONS ONLY WITH WORKING FORM
     ============================================================ -->
     <section id="contact" class="contact">
         <div class="container">
@@ -1246,15 +1248,21 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- FIXED CONTACT FORM - SENDS TO TELEGRAM -->
                 <div class="contact-form-wrapper">
-                    <form id="contact-form" class="contact-form">
+                    <form id="contact-form" class="contact-form" onsubmit="sendToTelegram(event)">
                         <h3 style="color:white;font-size:20px;margin-bottom:4px;">Send a Message</h3>
                         <p style="color:var(--text-secondary);font-size:14px;margin-bottom:8px;">We'll respond within 24 hours</p>
-                        <input type="text" placeholder="Your Name" required>
-                        <input type="email" placeholder="Your Email" required>
-                        <input type="text" placeholder="Telegram Username">
-                        <textarea rows="4" placeholder="Your Message" required></textarea>
-                        <button type="submit" class="btn-primary">Send Message</button>
+                        
+                        <input type="text" id="form-name" placeholder="Your Name" required>
+                        <input type="email" id="form-email" placeholder="Your Email" required>
+                        <input type="text" id="form-telegram" placeholder="Telegram Username">
+                        <textarea id="form-message" rows="4" placeholder="Your Message" required></textarea>
+                        
+                        <button type="submit" class="btn-primary" id="form-submit-btn">
+                            <i class="fab fa-telegram"></i> Send via Telegram
+                        </button>
                     </form>
                 </div>
             </div>
@@ -1412,24 +1420,6 @@
             // Load services
             loadServices();
             loadFooterServices();
-
-            // Contact form
-            const contactForm = document.getElementById('contact-form');
-            if (contactForm) {
-                contactForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const formData = new FormData(this);
-                    const data = Object.fromEntries(formData);
-                    
-                    if (!data['Your Name'] || !data['Your Email'] || !data['Your Message']) {
-                        showToast('Please fill in all required fields', 'error');
-                        return;
-                    }
-
-                    showToast('Thank you! We will get back to you soon.', 'success');
-                    this.reset();
-                });
-            }
 
             // Newsletter forms
             document.querySelectorAll('.newsletter-form').forEach(form => {
@@ -1601,6 +1591,48 @@
         }
 
         // ============================================================
+        // CONTACT FORM - SENDS TO TELEGRAM (FIXED)
+        // ============================================================
+        function sendToTelegram(event) {
+            event.preventDefault();
+            
+            // Get form values
+            const name = document.getElementById('form-name').value.trim();
+            const email = document.getElementById('form-email').value.trim();
+            const telegram = document.getElementById('form-telegram').value.trim();
+            const message = document.getElementById('form-message').value.trim();
+            
+            // Validate
+            if (!name || !email || !message) {
+                showToast('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            // Build the message for Telegram
+            const telegramMessage = `🔔 New Contact Form Message!
+            
+👤 Name: ${name}
+📧 Email: ${email}
+📱 Telegram: ${telegram || 'Not provided'}
+💬 Message: ${message}`;
+            
+            // Your Telegram Support Username - CHANGE THIS TO YOURS
+            const telegramUsername = 'tiimex_203';
+            
+            // Create the Telegram deep link URL
+            const telegramUrl = `https://t.me/${telegramUsername}?text=${encodeURIComponent(telegramMessage)}`;
+            
+            // Open Telegram in new window
+            window.open(telegramUrl, '_blank');
+            
+            // Show success message
+            showToast('Opening Telegram to send your message! 🚀', 'success');
+            
+            // Reset form
+            document.getElementById('contact-form').reset();
+        }
+
+        // ============================================================
         // UTILITY FUNCTIONS
         // ============================================================
         function escapeHtml(text) {
@@ -1613,6 +1645,7 @@
         // Expose functions globally
         window.loadServices = loadServices;
         window.showToast = showToast;
+        window.sendToTelegram = sendToTelegram;
         window.API_BASE_URL = API_BASE_URL;
 
         console.log('✅ Script loaded successfully');
