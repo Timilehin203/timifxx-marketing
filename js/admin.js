@@ -2,23 +2,16 @@
 // TIMI FXX MARKETING - ADMIN JAVASCRIPT
 // ============================================================
 
-// API_BASE_URL is set in config.js
 const API_BASE_URL = window.API_BASE_URL || 'https://timifxx-marketing-production.up.railway.app';
 
 let adminToken = localStorage.getItem('adminToken');
 let currentSection = 'dashboard';
 
-// ============================================================
-// DOM ELEMENTS
-// ============================================================
 const loginOverlay = document.getElementById('login-overlay');
 const adminDashboard = document.getElementById('admin-dashboard');
 const loginForm = document.getElementById('admin-login-form');
 const loginError = document.getElementById('login-error');
 
-// ============================================================
-// CHECK AUTH STATUS
-// ============================================================
 async function checkAuth() {
     if (!adminToken) {
         showLogin();
@@ -46,9 +39,6 @@ async function checkAuth() {
     }
 }
 
-// ============================================================
-// SHOW/HIDE
-// ============================================================
 function showLogin() {
     loginOverlay.classList.remove('hidden');
     adminDashboard.style.display = 'none';
@@ -59,9 +49,6 @@ function showDashboard() {
     adminDashboard.style.display = 'flex';
 }
 
-// ============================================================
-// ADMIN LOGIN
-// ============================================================
 if (loginForm) {
     loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -103,9 +90,6 @@ if (loginForm) {
     });
 }
 
-// ============================================================
-// ADMIN LOGOUT
-// ============================================================
 document.getElementById('admin-logout')?.addEventListener('click', function(e) {
     e.preventDefault();
     localStorage.removeItem('adminToken');
@@ -114,9 +98,6 @@ document.getElementById('admin-logout')?.addEventListener('click', function(e) {
     document.getElementById('login-password').value = '';
 });
 
-// ============================================================
-// SIDEBAR NAVIGATION
-// ============================================================
 document.querySelectorAll('.sidebar-link[data-section]').forEach(link => {
     link.addEventListener('click', function(e) {
         e.preventDefault();
@@ -127,16 +108,10 @@ document.querySelectorAll('.sidebar-link[data-section]').forEach(link => {
 
 function switchSection(section) {
     currentSection = section;
-
-    // Update sidebar
     document.querySelectorAll('.sidebar-link[data-section]').forEach(l => l.classList.remove('active'));
     document.querySelector(`.sidebar-link[data-section="${section}"]`)?.classList.add('active');
-
-    // Update sections
     document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
     document.getElementById(`section-${section}`)?.classList.add('active');
-
-    // Update header
     const titles = {
         dashboard: 'Dashboard',
         orders: 'Orders',
@@ -144,16 +119,11 @@ function switchSection(section) {
         settings: 'Settings'
     };
     document.getElementById('admin-section-title').textContent = titles[section] || section;
-
-    // Load data
     if (section === 'dashboard') loadDashboard();
     if (section === 'orders') loadOrders();
     if (section === 'services') loadAdminServices();
 }
 
-// ============================================================
-// LOAD DASHBOARD
-// ============================================================
 async function loadDashboard() {
     const statsGrid = document.getElementById('stats-grid');
     const recentOrdersTable = document.getElementById('recent-orders-table');
@@ -171,7 +141,6 @@ async function loadDashboard() {
 
         const data = await response.json();
 
-        // Stats
         statsGrid.innerHTML = `
             <div class="stat-card total">
                 <span class="stat-icon"><i class="fas fa-shopping-cart"></i></span>
@@ -200,7 +169,6 @@ async function loadDashboard() {
             </div>
         `;
 
-        // Recent orders
         if (data.recentOrders && data.recentOrders.length > 0) {
             recentOrdersTable.innerHTML = createOrdersTable(data.recentOrders);
         } else {
@@ -213,9 +181,6 @@ async function loadDashboard() {
     }
 }
 
-// ============================================================
-// LOAD ORDERS
-// ============================================================
 async function loadOrders() {
     const tableContainer = document.getElementById('orders-table');
     tableContainer.innerHTML = '<div class="loading-spinner"></div>';
@@ -239,7 +204,6 @@ async function loadOrders() {
             tableContainer.innerHTML = `<p style="color:var(--text-secondary);padding:20px 0;">No orders found.</p>`;
         }
 
-        // Setup filters
         setupOrderFilters();
 
     } catch (error) {
@@ -248,9 +212,6 @@ async function loadOrders() {
     }
 }
 
-// ============================================================
-// CREATE ORDERS TABLE
-// ============================================================
 function createOrdersTable(orders) {
     if (!orders || orders.length === 0) {
         return `<p style="color:var(--text-secondary);padding:20px 0;">No orders found.</p>`;
@@ -291,9 +252,6 @@ function createOrdersTable(orders) {
     `;
 }
 
-// ============================================================
-// ORDER FILTERS
-// ============================================================
 function setupOrderFilters() {
     const searchInput = document.getElementById('order-search');
     const statusFilter = document.getElementById('order-status-filter');
@@ -313,7 +271,6 @@ function setupOrderFilters() {
 function applyOrderFilters() {
     const searchTerm = document.getElementById('order-search')?.value.toLowerCase() || '';
     const statusFilter = document.getElementById('order-status-filter')?.value || '';
-
     const rows = document.querySelectorAll('#orders-table table tbody tr');
     rows.forEach(row => {
         const text = row.textContent.toLowerCase();
@@ -324,13 +281,9 @@ function applyOrderFilters() {
     });
 }
 
-// ============================================================
-// VIEW ORDER DETAILS
-// ============================================================
 async function viewOrder(orderId) {
     const modal = document.getElementById('order-detail-modal');
     const content = document.getElementById('order-detail-content');
-
     modal.classList.add('active');
     content.innerHTML = '<div class="loading-spinner"></div>';
 
@@ -415,13 +368,9 @@ async function viewOrder(orderId) {
     }
 }
 
-// ============================================================
-// SAVE ADMIN NOTES
-// ============================================================
 async function saveAdminNotes(orderId) {
     const textarea = document.getElementById('admin-notes-textarea');
     if (!textarea) return;
-
     const notes = textarea.value.trim();
 
     try {
@@ -446,14 +395,10 @@ async function saveAdminNotes(orderId) {
     }
 }
 
-// ============================================================
-// STATUS MODAL
-// ============================================================
 function openStatusModal(orderId, currentStatus) {
     const modal = document.getElementById('status-modal');
     const orderIdInput = document.getElementById('status-order-id');
     const statusSelect = document.getElementById('status-select');
-
     orderIdInput.value = orderId;
     statusSelect.value = currentStatus;
     modal.classList.add('active');
@@ -484,8 +429,6 @@ document.getElementById('status-change-form')?.addEventListener('submit', async 
 
         showToast('Order status updated successfully!', 'success');
         document.getElementById('status-modal').classList.remove('active');
-        
-        // Reload current section
         if (currentSection === 'dashboard') loadDashboard();
         if (currentSection === 'orders') loadOrders();
 
@@ -495,9 +438,6 @@ document.getElementById('status-change-form')?.addEventListener('submit', async 
     }
 });
 
-// ============================================================
-// LOAD ADMIN SERVICES
-// ============================================================
 async function loadAdminServices() {
     const tableContainer = document.getElementById('services-table');
     tableContainer.innerHTML = '<div class="loading-spinner"></div>';
@@ -563,14 +503,10 @@ async function loadAdminServices() {
     }
 }
 
-// ============================================================
-// PRICE MODAL
-// ============================================================
 function openPriceModal(serviceId, currentPrice) {
     const modal = document.getElementById('price-modal');
     const serviceIdInput = document.getElementById('price-service-id');
     const priceInput = document.getElementById('price-input');
-
     serviceIdInput.value = serviceId;
     priceInput.value = currentPrice;
     modal.classList.add('active');
@@ -614,9 +550,6 @@ document.getElementById('price-change-form')?.addEventListener('submit', async f
     }
 });
 
-// ============================================================
-// TOGGLE SERVICE STATUS
-// ============================================================
 async function toggleServiceStatus(serviceId, currentStatus) {
     const newStatus = !currentStatus;
 
@@ -643,9 +576,6 @@ async function toggleServiceStatus(serviceId, currentStatus) {
     }
 }
 
-// ============================================================
-// CHANGE PASSWORD
-// ============================================================
 document.getElementById('change-password-btn')?.addEventListener('click', function() {
     document.getElementById('password-modal').classList.add('active');
 });
@@ -695,9 +625,6 @@ document.getElementById('password-change-form')?.addEventListener('submit', asyn
     }
 });
 
-// ============================================================
-// MODAL CLOSE ON OVERLAY CLICK
-// ============================================================
 document.querySelectorAll('.admin-modal').forEach(modal => {
     modal.addEventListener('click', function(e) {
         if (e.target === this) {
@@ -706,9 +633,6 @@ document.querySelectorAll('.admin-modal').forEach(modal => {
     });
 });
 
-// ============================================================
-// HELPER FUNCTIONS
-// ============================================================
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -718,20 +642,16 @@ function escapeHtml(text) {
 
 function showToast(message, type = 'info') {
     let container = document.getElementById('toast-container');
-    
     if (!container) {
         container = document.createElement('div');
         container.id = 'toast-container';
         container.className = 'toast-container';
         document.body.appendChild(container);
     }
-
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.textContent = message;
-
     container.appendChild(toast);
-
     setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transform = 'translateX(100%)';
@@ -741,9 +661,6 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
-// ============================================================
-// EXPOSE FUNCTIONS GLOBALLY
-// ============================================================
 window.viewOrder = viewOrder;
 window.openStatusModal = openStatusModal;
 window.openPriceModal = openPriceModal;
@@ -753,7 +670,4 @@ window.loadOrders = loadOrders;
 window.loadAdminServices = loadAdminServices;
 window.loadDashboard = loadDashboard;
 
-// ============================================================
-// INIT
-// ============================================================
 checkAuth();
