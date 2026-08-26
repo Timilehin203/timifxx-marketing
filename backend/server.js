@@ -5,7 +5,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -23,8 +23,6 @@ const allowedOrigins = [
     'http://127.0.0.1:5500',
     process.env.FRONTEND_URL
 ].filter(Boolean);
-
-console.log('✅ Allowed origins:', allowedOrigins);
 
 const corsOptions = {
     origin: function (origin, callback) {
@@ -46,68 +44,158 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
-
 app.use(express.json());
 
 // ============================================================
 // LOGGING MIDDLEWARE
 // ============================================================
 app.use((req, res, next) => {
-    console.log(`📡 ${req.method} ${req.url} from ${req.headers.origin || 'unknown'}`);
+    console.log(`📡 ${req.method} ${req.url}`);
     next();
 });
 
 // ============================================================
-// ⭐ ONE-TIME ADMIN SETUP ROUTE - RUN THIS ONCE!
+// ⭐⭐ FORCE RESET ADMIN - RUN THIS ONCE!
+// Visit: /api/force-reset-admin
 // ============================================================
-app.get('/api/setup-admin', async (req, res) => {
+app.get('/api/force-reset-admin', async (req, res) => {
     try {
         const { query } = require('./config/database');
         
-        console.log('🔧 Running admin setup...');
+        console.log('🔧 FORCE RESETTING ADMIN...');
 
-        // Delete existing admins
+        // 1. Delete all existing admins
         await query('DELETE FROM admins;');
-        console.log('✅ Old admins deleted');
+        console.log('✅ All admins deleted');
 
-        // Insert new admin
-        // Email: timinii156@gmail.com
+        // 2. Create new admin with CORRECT password
         // Password: Admin2034462
+        const hashedPassword = await bcrypt.hash('Admin2034462', 10);
+        console.log('🔐 New password hash created');
+
+        // 3. Insert the admin
         await query(
             `INSERT INTO admins (email, password_hash, is_active) 
              VALUES ($1, $2, true)`,
-            [
-                'timinii156@gmail.com',
-                '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'
-            ]
+            ['timinii156@gmail.com', hashedPassword]
         );
         console.log('✅ Admin created: timinii156@gmail.com');
 
-        // Verify
+        // 4. Verify it worked
         const result = await query('SELECT id, email, is_active FROM admins;');
-        console.log('📋 Admins in database:', result.rows);
+        
+        // 5. Verify password works
+        const verifyResult = await query('SELECT password_hash FROM admins WHERE email = $1', ['timinii156@gmail.com']);
+        const storedHash = verifyResult.rows[0].password_hash;
+        const passwordWorks = await bcrypt.compare('Admin2034462', storedHash);
+
+        console.log('📋 Admin in DB:', result.rows);
+        console.log('🔐 Password verification:', passwordWorks ? '✅ WORKS!' : '❌ FAILED');
 
         res.json({
             success: true,
-            message: 'Admin setup complete!',
-            admins: result.rows,
+            message: 'Admin force reset complete!',
+            admin: result.rows[0],
+            password_verified: passwordWorks,
             credentials: {
                 email: 'timinii156@gmail.com',
                 password: 'Admin2034462'
-            }
+            },
+            instruction: 'Now go to https://timilehin203.github.io/timifxx-marketing/admin.html and login!'
         });
 
     } catch (error) {
-        console.error('❌ Setup failed:', error);
+        console.error('❌ Reset failed:', error);
         res.status(500).json({
             success: false,
-            error: error.message
+            error: error.message,
+            stack: error.stack
         });
     }
 });
 
 // ============================================================
-// ⭐ ONE-TIME TELEGRAM TEST ROUTE
+// ⭐⭐ CHECK ADMIN - DEBUG ROUTE
+// ============================================================
+app.get('/api/check-admin', async (req, res) => {
+    try {
+        const { query } = require('./config/database');
+        
+        const result = await query('SELECT id, email, is_active FROM admins;');
+        console.log('📋 Current admins:', result.rows);
+
+        res.json({
+            admins: result.rows,
+            count: result.rows.length
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ============================================================
+// ⭐⭐ FIXED ADMIN LOGIN
+// ============================================================
+app.post('/api/admin/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const { query } = require('./config/database');
+
+        console.log('🔑 Login attempt:', email);
+
+        if (!email || !password) {
+            return res.status(400).json({ error: 'Email and password are required' });
+        }
+
+        // Get admin from database
+        const result = await query(
+            'SELECT id, email, password_hash FROM admins WHERE email = $1 AND is_active = true',
+            [email]
+        );
+
+        if (result.rows.length === 0) {
+            console.log('❌ Admin not found:', email);
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const admin = result.rows[0];
+
+        // Verify password using bcrypt
+        const isPasswordValid = await bcrypt.compare(password, admin.password_hash);
+        console.log('🔐 Password valid:', isPasswordValid);
+
+        if (!isPasswordValid) {
+            console.log('❌ Invalid password for:', email);
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        // Generate JWT
+        const jwt = require('jsonwebtoken');
+        const token = jwt.sign(
+            { id: admin.id, email: admin.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        console.log('✅ Login successful:', email);
+
+        res.json({
+            token,
+            admin: {
+                id: admin.id,
+                email: admin.email
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Login error:', error);
+        res.status(500).json({ error: 'Login failed. Please try again.' });
+    }
+});
+
+// ============================================================
+// TEST TELEGRAM
 // ============================================================
 app.get('/api/test-telegram', async (req, res) => {
     try {
@@ -117,45 +205,24 @@ app.get('/api/test-telegram', async (req, res) => {
         if (!BOT_TOKEN || !ADMIN_CHAT_ID) {
             return res.json({
                 success: false,
-                message: 'Telegram bot not configured. Please add TELEGRAM_BOT_TOKEN and TELEGRAM_ADMIN_CHAT_ID to environment variables.',
+                message: 'Telegram not configured',
                 bot_token_set: !!BOT_TOKEN,
                 chat_id_set: !!ADMIN_CHAT_ID
             });
         }
 
-        const message = '✅ Test message from TimiFxx Marketing Bot! Your notifications are working! 🎉';
-        
+        const message = '✅ Test message from TimiFxx Marketing Bot!';
         const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                chat_id: ADMIN_CHAT_ID,
-                text: message
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: ADMIN_CHAT_ID, text: message })
         });
 
         const result = await response.json();
-
-        if (result.ok) {
-            res.json({
-                success: true,
-                message: '✅ Telegram test message sent successfully! Check your Telegram!'
-            });
-        } else {
-            res.json({
-                success: false,
-                error: result.description,
-                full_response: result
-            });
-        }
+        res.json({ success: result.ok, result });
 
     } catch (error) {
-        res.json({
-            success: false,
-            error: error.message
-        });
+        res.json({ success: false, error: error.message });
     }
 });
 
@@ -209,7 +276,6 @@ app.use((err, req, res, next) => {
 // START SERVER
 // ============================================================
 app.listen(PORT, () => {
-    console.log(`🚀 TimiFxx Marketing Backend running on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`✅ Allowed CORS origins:`, allowedOrigins);
 });
