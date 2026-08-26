@@ -2,7 +2,6 @@
 // TIMI FXX MARKETING - ORDER JAVASCRIPT
 // ============================================================
 
-// API_BASE_URL is set in config.js
 const API_BASE_URL = window.API_BASE_URL || 'https://timifxx-marketing-production.up.railway.app';
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -17,9 +16,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let services = [];
 
-    // ============================================================
-    // LOAD SERVICES INTO SELECT
-    // ============================================================
     async function loadServicesForSelect() {
         try {
             const response = await fetch(`${API_BASE_URL}/api/services`);
@@ -45,7 +41,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 `).join('')}
             `;
 
-            // Check for pre-selected service from URL
             const urlParams = new URLSearchParams(window.location.search);
             const serviceId = urlParams.get('service');
             if (serviceId) {
@@ -63,9 +58,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ============================================================
-    // UPDATE PRICE DISPLAY
-    // ============================================================
     function updatePriceDisplay(serviceId) {
         const selectedOption = serviceSelect.querySelector(`option[value="${serviceId}"]`);
         if (selectedOption && selectedOption.value) {
@@ -79,18 +71,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ============================================================
-    // SERVICE SELECT CHANGE
-    // ============================================================
     if (serviceSelect) {
         serviceSelect.addEventListener('change', function() {
             updatePriceDisplay(this.value);
         });
     }
 
-    // ============================================================
-    // ORDER FORM SUBMIT
-    // ============================================================
     if (orderForm) {
         orderForm.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -107,7 +93,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const whatsapp = document.getElementById('whatsapp-number').value.trim();
             const message = document.getElementById('order-message').value.trim();
 
-            // Validation
             if (!name) {
                 showToast('Please enter your full name', 'error');
                 return;
@@ -123,7 +108,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const serviceId = selectedOption.value;
 
-            // Disable submit button
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
 
@@ -151,12 +135,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     throw new Error(data.error || 'Failed to submit order');
                 }
 
-                // Show success modal
                 orderNumberDisplay.textContent = data.orderNumber;
                 modal.classList.add('active');
                 document.body.style.overflow = 'hidden';
 
-                // Reset form
                 orderForm.reset();
                 displayPrice.textContent = '$0';
                 displayPriceType.textContent = 'Select a service';
@@ -171,9 +153,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ============================================================
-    // MODAL CONTROLS
-    // ============================================================
     if (modalClose) {
         modalClose.addEventListener('click', function() {
             modal.classList.remove('active');
@@ -190,9 +169,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ============================================================
-    // VALIDATION HELPERS
-    // ============================================================
     function isValidEmail(email) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
@@ -204,8 +180,5 @@ document.addEventListener('DOMContentLoaded', function() {
         return div.innerHTML;
     }
 
-    // ============================================================
-    // INIT
-    // ============================================================
     loadServicesForSelect();
 });
