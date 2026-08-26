@@ -3,9 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimiFxx Marketing - Telegram Ads Marketing Solutions</title>
+    
+    <!-- ============================================================ -->
+    <!-- BROWSER TAB TITLE & ICON (FAVICON) -->
+    <!-- ============================================================ -->
+    <title>TimiFxx Marketing - Telegram Ads Expertise</title>
+    
+    <!-- Favicon - Shows in browser tab -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230088cc'/><path d='M70 35L40 55L30 45L25 50L40 65L75 40L70 35Z' fill='white'/></svg>">
+    
+    <!-- Apple Touch Icon (for iOS devices) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230088cc'/><path d='M70 35L40 55L30 45L25 50L40 65L75 40L70 35Z' fill='white'/></svg>">
+    
+    <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- ============================================================ -->
+    <!-- ALL STYLES EMBEDDED HERE -->
+    <!-- ============================================================ -->
     <style>
         /* ============================================================
            ALL STYLES EMBEDDED HERE
@@ -1490,8 +1506,6 @@
         // CONFIGURATION
         // ============================================================
         const API_BASE_URL = 'https://timifxx-marketing-production.up.railway.app';
-        const ADMIN_EMAIL = 'admin@timifxx.com';
-        const ADMIN_PASSWORD = 'Admin123!';
 
         console.log('🔗 API Base URL:', API_BASE_URL);
         console.log('🌐 Current URL:', window.location.href);
@@ -1605,7 +1619,7 @@
         });
 
         // ============================================================
-        // SERVICE ICONS - UNIQUE AVATARS FOR EACH SERVICE
+        // SERVICE ICONS
         // ============================================================
         const serviceIcons = [
             { icon: 'fa-solid fa-check-double', color: '#00ff88' },
@@ -1750,14 +1764,6 @@
             div.textContent = text;
             return div.innerHTML;
         }
-
-        // ============================================================
-        // ADMIN LOGIN HELPER (for debugging)
-        // ============================================================
-        console.log('🔑 Admin Login:');
-        console.log(`   Email: ${ADMIN_EMAIL}`);
-        console.log(`   Password: ${ADMIN_PASSWORD}`);
-        console.log('📍 Admin URL: https://timilehin203.github.io/timifxx-marketing/admin.html');
 
         // Expose functions globally
         window.loadServices = loadServices;
