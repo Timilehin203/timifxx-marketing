@@ -594,16 +594,23 @@
         }
 
         .service-card-icon {
-            width: 48px;
-            height: 48px;
+            width: 64px;
+            height: 64px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: rgba(0, 136, 204, 0.12);
-            border-radius: 12px;
+            border-radius: 16px;
             margin-bottom: 16px;
             color: var(--primary-light);
-            font-size: 20px;
+            font-size: 28px;
+            transition: var(--transition);
+        }
+
+        .service-card:hover .service-card-icon {
+            background: var(--primary-gradient);
+            color: white;
+            transform: scale(1.05);
         }
 
         .service-card h3 {
@@ -1170,6 +1177,7 @@
                     <li><a href="#contact">Contact</a></li>
                     <li><a href="order.html" class="btn-primary btn-small">Order Now</a></li>
                     <li><a href="order-status.html" class="btn-outline btn-small">Track Order</a></li>
+                    <li><a href="admin.html" class="btn-outline btn-small">Admin</a></li>
                 </ul>
                 <button class="hamburger" aria-label="Menu">
                     <span></span>
@@ -1379,6 +1387,13 @@
                         </div>
                     </div>
                     <div class="contact-item">
+                        <div class="contact-icon"><i class="fab fa-youtube"></i></div>
+                        <div>
+                            <h4>YouTube</h4>
+                            <a href="https://www.youtube.com/channel/UCTg72W6flDX6_xbIZxyQMzQ" target="_blank">TimiFxx YouTube</a>
+                        </div>
+                    </div>
+                    <div class="contact-item">
                         <div class="contact-icon"><i class="fas fa-clock"></i></div>
                         <div>
                             <h4>Working Hours</h4>
@@ -1418,9 +1433,9 @@
                     <p>Professional Telegram advertising and marketing solutions for businesses looking to grow their presence.</p>
                     <div class="social-links">
                         <a href="https://t.me/timifxx203" target="_blank"><i class="fab fa-telegram"></i></a>
+                        <a href="https://www.youtube.com/channel/UCTg72W6flDX6_xbIZxyQMzQ" target="_blank"><i class="fab fa-youtube"></i></a>
                         <a href="#"><i class="fab fa-twitter"></i></a>
                         <a href="#"><i class="fab fa-linkedin"></i></a>
-                        <a href="#"><i class="fab fa-youtube"></i></a>
                     </div>
                 </div>
                 <div class="footer-links">
@@ -1464,6 +1479,7 @@
                 <li><a href="#contact">Contact</a></li>
                 <li><a href="order.html" class="btn-primary btn-small">Order Now</a></li>
                 <li><a href="order-status.html" class="btn-outline btn-small">Track Order</a></li>
+                <li><a href="admin.html" class="btn-outline btn-small">Admin</a></li>
             </ul>
         </div>
     </div>
@@ -1474,6 +1490,8 @@
         // CONFIGURATION
         // ============================================================
         const API_BASE_URL = 'https://timifxx-marketing-production.up.railway.app';
+        const ADMIN_EMAIL = 'admin@timifxx.com';
+        const ADMIN_PASSWORD = 'Admin123!';
 
         console.log('🔗 API Base URL:', API_BASE_URL);
         console.log('🌐 Current URL:', window.location.href);
@@ -1587,6 +1605,23 @@
         });
 
         // ============================================================
+        // SERVICE ICONS - UNIQUE AVATARS FOR EACH SERVICE
+        // ============================================================
+        const serviceIcons = [
+            { icon: 'fa-solid fa-check-double', color: '#00ff88' },
+            { icon: 'fa-solid fa-robot', color: '#33aadd' },
+            { icon: 'fa-solid fa-window-maximize', color: '#ff6b6b' },
+            { icon: 'fa-solid fa-thumbs-up', color: '#ffd93d' },
+            { icon: 'fa-solid fa-gear', color: '#6c5ce7' },
+            { icon: 'fa-solid fa-pen-fancy', color: '#fd79a8' },
+            { icon: 'fa-solid fa-chart-line', color: '#00b894' },
+            { icon: 'fa-solid fa-file-circle-exclamation', color: '#fdcb6e' },
+            { icon: 'fa-solid fa-shield-halved', color: '#74b9ff' },
+            { icon: 'fa-solid fa-magnifying-glass-chart', color: '#a29bfe' },
+            { icon: 'fa-solid fa-fingerprint', color: '#55efc4' }
+        ];
+
+        // ============================================================
         // LOAD SERVICES
         // ============================================================
         async function loadServices() {
@@ -1621,30 +1656,17 @@
                     return;
                 }
 
-                const serviceIcons = [
-                    'fa-regular fa-circle-check',
-                    'fa-regular fa-comment-dots',
-                    'fa-regular fa-window-maximize',
-                    'fa-regular fa-thumbs-up',
-                    'fa-regular fa-gear',
-                    'fa-regular fa-pen-to-square',
-                    'fa-regular fa-chart-simple',
-                    'fa-regular fa-file-lines',
-                    'fa-regular fa-shield',
-                    'fa-regular fa-magnifying-glass-chart',
-                    'fa-regular fa-shield-halved'
-                ];
-
                 let html = '';
                 services.forEach((service, index) => {
                     const statusClass = service.is_active ? 'active' : 'inactive';
                     const statusText = service.is_active ? 'Active' : 'Inactive';
                     const priceTypeText = service.price_type === 'starting_from' ? 'Starting from' : 'Fixed price';
+                    const iconData = serviceIcons[index % serviceIcons.length];
                     
                     html += `
                         <div class="service-card">
-                            <div class="service-card-icon">
-                                <i class="${serviceIcons[index % serviceIcons.length]}"></i>
+                            <div class="service-card-icon" style="background: rgba(0, 136, 204, 0.12); color: ${iconData.color};">
+                                <i class="${iconData.icon}"></i>
                             </div>
                             <h3>${escapeHtml(service.name)}</h3>
                             <p class="service-desc">${escapeHtml(service.description || 'Professional Telegram marketing service')}</p>
@@ -1728,6 +1750,14 @@
             div.textContent = text;
             return div.innerHTML;
         }
+
+        // ============================================================
+        // ADMIN LOGIN HELPER (for debugging)
+        // ============================================================
+        console.log('🔑 Admin Login:');
+        console.log(`   Email: ${ADMIN_EMAIL}`);
+        console.log(`   Password: ${ADMIN_PASSWORD}`);
+        console.log('📍 Admin URL: https://timilehin203.github.io/timifxx-marketing/admin.html');
 
         // Expose functions globally
         window.loadServices = loadServices;
