@@ -1,5 +1,5 @@
 // ============================================================
-// ORDERS ROUTES - WITH TELEGRAM NOTIFICATIONS
+// ORDERS ROUTES - WITH FIXED TELEGRAM NOTIFICATIONS
 // ============================================================
 
 const express = require('express');
@@ -8,7 +8,7 @@ const { query } = require('../config/database');
 const { generateOrderNumber } = require('../utils/orderNumber');
 
 // ============================================================
-// TELEGRAM NOTIFICATION FUNCTION
+// TELEGRAM NOTIFICATION FUNCTION - FIXED
 // ============================================================
 async function sendTelegramNotification(orderDetails) {
     const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -20,20 +20,20 @@ async function sendTelegramNotification(orderDetails) {
     }
 
     try {
-        const message = `
-🆕 **NEW ORDER RECEIVED!**
+        // Build the message WITHOUT Markdown to avoid parsing errors
+        const message = 
+`🔔 NEW ORDER RECEIVED!
 
-📋 **Order Number:** ${orderDetails.order_number}
-👤 **Customer:** ${orderDetails.customer_name}
-📧 **Email:** ${orderDetails.customer_email}
-📱 **Telegram:** ${orderDetails.telegram_username}
-📞 **WhatsApp:** ${orderDetails.whatsapp_number || 'N/A'}
-🛒 **Service:** ${orderDetails.service_name}
-💰 **Price:** $${orderDetails.price}
-📝 **Details:** ${orderDetails.details || 'N/A'}
+📋 Order Number: ${orderDetails.order_number}
+👤 Customer: ${orderDetails.customer_name}
+📧 Email: ${orderDetails.customer_email}
+📱 Telegram: ${orderDetails.telegram_username}
+📞 WhatsApp: ${orderDetails.whatsapp_number || 'N/A'}
+🛒 Service: ${orderDetails.service_name}
+💰 Price: $${orderDetails.price}
+📝 Details: ${orderDetails.details || 'N/A'}
 
-🔗 **Track Order:** https://timilehin203.github.io/timifxx-marketing/order-status.html?order=${orderDetails.order_number}
-        `;
+🔗 Track Order: https://timilehin203.github.io/timifxx-marketing/order-status.html?order=${orderDetails.order_number}`;
 
         const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
         const response = await fetch(url, {
@@ -44,7 +44,7 @@ async function sendTelegramNotification(orderDetails) {
             body: JSON.stringify({
                 chat_id: ADMIN_CHAT_ID,
                 text: message,
-                parse_mode: 'Markdown'
+                parse_mode: ''  // NO Markdown parsing
             })
         });
 
