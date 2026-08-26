@@ -1,5 +1,5 @@
 // ============================================================
-// ADMIN ROUTES
+// ADMIN ROUTES - WITH EMAIL LOGIN
 // ============================================================
 
 const express = require('express');
@@ -10,11 +10,13 @@ const { query } = require('../config/database');
 const { authenticate } = require('../middleware/auth');
 
 // ============================================================
-// ADMIN LOGIN
+// ADMIN LOGIN - WITH EMAIL SUPPORT
 // ============================================================
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
+
+        console.log('🔑 Login attempt:', email);
 
         if (!email || !password) {
             return res.status(400).json({ error: 'Email and password are required' });
@@ -27,6 +29,7 @@ router.post('/login', async (req, res) => {
         );
 
         if (result.rows.length === 0) {
+            console.log('❌ Admin not found:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -35,6 +38,7 @@ router.post('/login', async (req, res) => {
         // Verify password
         const isPasswordValid = await bcrypt.compare(password, admin.password_hash);
         if (!isPasswordValid) {
+            console.log('❌ Invalid password for:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
@@ -48,6 +52,8 @@ router.post('/login', async (req, res) => {
             { expiresIn: '7d' }
         );
 
+        console.log('✅ Admin logged in:', email);
+
         res.json({
             token,
             admin: {
@@ -57,7 +63,7 @@ router.post('/login', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error);
         res.status(500).json({ error: 'Login failed. Please try again.' });
     }
 });
@@ -92,7 +98,7 @@ router.get('/dashboard', authenticate, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Dashboard error:', error);
+        console.error('❌ Dashboard error:', error);
         res.status(500).json({ error: 'Failed to load dashboard' });
     }
 });
@@ -112,7 +118,7 @@ router.get('/orders', authenticate, async (req, res) => {
 
         res.json(result.rows);
     } catch (error) {
-        console.error('Error fetching orders:', error);
+        console.error('❌ Error fetching orders:', error);
         res.status(500).json({ error: 'Failed to load orders' });
     }
 });
@@ -137,7 +143,7 @@ router.get('/orders/:id', authenticate, async (req, res) => {
 
         res.json(result.rows[0]);
     } catch (error) {
-        console.error('Error fetching order:', error);
+        console.error('❌ Error fetching order:', error);
         res.status(500).json({ error: 'Failed to load order details' });
     }
 });
@@ -174,7 +180,7 @@ router.patch('/orders/:id/status', authenticate, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error updating order status:', error);
+        console.error('❌ Error updating order status:', error);
         res.status(500).json({ error: 'Failed to update order status' });
     }
 });
@@ -206,7 +212,7 @@ router.patch('/orders/:id/notes', authenticate, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error saving notes:', error);
+        console.error('❌ Error saving notes:', error);
         res.status(500).json({ error: 'Failed to save notes' });
     }
 });
@@ -224,7 +230,7 @@ router.get('/services', authenticate, async (req, res) => {
 
         res.json(result.rows);
     } catch (error) {
-        console.error('Error fetching services:', error);
+        console.error('❌ Error fetching services:', error);
         res.status(500).json({ error: 'Failed to load services' });
     }
 });
@@ -260,7 +266,7 @@ router.patch('/services/:id/price', authenticate, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error updating price:', error);
+        console.error('❌ Error updating price:', error);
         res.status(500).json({ error: 'Failed to update price' });
     }
 });
@@ -296,7 +302,7 @@ router.patch('/services/:id/status', authenticate, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error updating service status:', error);
+        console.error('❌ Error updating service status:', error);
         res.status(500).json({ error: 'Failed to update service status' });
     }
 });
@@ -317,7 +323,6 @@ router.post('/change-password', authenticate, async (req, res) => {
             return res.status(400).json({ error: 'Password must be at least 6 characters' });
         }
 
-        // Get current admin
         const adminResult = await query(
             'SELECT password_hash FROM admins WHERE id = $1',
             [adminId]
@@ -327,17 +332,14 @@ router.post('/change-password', authenticate, async (req, res) => {
             return res.status(404).json({ error: 'Admin not found' });
         }
 
-        // Verify current password
         const isPasswordValid = await bcrypt.compare(currentPassword, adminResult.rows[0].password_hash);
         if (!isPasswordValid) {
             return res.status(401).json({ error: 'Current password is incorrect' });
         }
 
-        // Hash new password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-        // Update password
         await query(
             'UPDATE admins SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
             [hashedPassword, adminId]
@@ -346,7 +348,7 @@ router.post('/change-password', authenticate, async (req, res) => {
         res.json({ success: true, message: 'Password changed successfully' });
 
     } catch (error) {
-        console.error('Error changing password:', error);
+        console.error('❌ Error changing password:', error);
         res.status(500).json({ error: 'Failed to change password' });
     }
 });
