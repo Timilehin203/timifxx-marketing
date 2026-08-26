@@ -11,10 +11,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ============================================================
-// CORS CONFIGURATION - FIXED
+// CORS CONFIGURATION
 // ============================================================
 
-// Allow specific origins
 const allowedOrigins = [
     'https://timilehin203.github.io',
     'https://timilehin203.github.io/timifxx-marketing',
@@ -29,15 +28,11 @@ console.log('✅ Allowed origins:', allowedOrigins);
 
 const corsOptions = {
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
-        
-        // Check if origin is allowed
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
             console.log('❌ Blocked CORS origin:', origin);
-            // For development, still allow
             if (process.env.NODE_ENV === 'development') {
                 callback(null, true);
             } else {
